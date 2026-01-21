@@ -4,7 +4,6 @@ import { useForm } from 'react-hook-form';
 import { supabase } from '../../lib/supabase';
 import { ArrowLeft, Save } from 'lucide-react';
 import { cn } from '../../lib/utils';
-import type { Property } from '../../types';
 
 interface PropertyFormData {
     name: string;
