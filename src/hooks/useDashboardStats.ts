@@ -9,8 +9,9 @@ export interface DashboardStats {
     topProperties: {
         name: string;
         bookings: number;
-        value: number; // Placeholder for now as value isn't in schema
+        value: number;
     }[];
+    monthlyRevenue: { name: string; total: number }[];
     loading: boolean;
     error: string | null;
 }
@@ -22,6 +23,7 @@ export function useDashboardStats() {
         activeProperties: 0,
         totalConsultants: 0,
         topProperties: [],
+        monthlyRevenue: [],
         loading: true,
         error: null,
     });
@@ -47,9 +49,7 @@ export function useDashboardStats() {
                 if (propertiesError) throw propertiesError;
                 if (consultantsError) throw consultantsError;
 
-                // Fetch aggregation for top properties
-                // Since we don't have a backend aggregation function, we'll fetch basic info to aggregate locally
-                // Limit to 100 recent bookings to avoid heavy load
+                // Fetch data for Top Properties (limit 100 recent)
                 const { data: recentBookings, error: recentBookingsError } = await supabase
                     .from('booking_vouchers')
                     .select('property_name')
@@ -58,6 +58,17 @@ export function useDashboardStats() {
 
                 if (recentBookingsError) throw recentBookingsError;
 
+                // Fetch data for Monthly Revenue (issued bookings only)
+                // We fetch specific columns to minimize data transfer
+                const { data: revenueData, error: revenueError } = await supabase
+                    .from('booking_vouchers')
+                    .select('created_at, quotation_price')
+                    .eq('status', 'issued')
+                    .not('quotation_price', 'is', null);
+
+                if (revenueError) throw revenueError;
+
+                // Process Top Properties
                 const propertyCounts: Record<string, number> = {};
                 recentBookings?.forEach((booking) => {
                     const name = booking.property_name;
@@ -70,8 +81,31 @@ export function useDashboardStats() {
                     .map(([name, count]) => ({
                         name,
                         bookings: count,
-                        value: 0, // No value in schema
+                        value: 0,
                     }));
+
+                // Process Monthly Revenue
+                const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+                const revenueByMonth = new Array(12).fill(0);
+
+                revenueData?.forEach((booking) => {
+                    if (booking.created_at && booking.quotation_price) {
+                        const date = new Date(booking.created_at);
+                        const monthIndex = date.getMonth(); // 0-11
+                        // Check if it's current year? Or just all time aggregated by month?
+                        // Usually dashboard shows current year or last 12 months. 
+                        // For simplicity let's do all time aggregated by month if not specified, 
+                        // OR we can filter for current year. Let's filter for current year to be cleaner.
+                        if (date.getFullYear() === new Date().getFullYear()) {
+                            revenueByMonth[monthIndex] += Number(booking.quotation_price);
+                        }
+                    }
+                });
+
+                const monthlyRevenue = monthNames.map((name, index) => ({
+                    name,
+                    total: revenueByMonth[index]
+                }));
 
                 setStats({
                     totalBookings: bookingsCount || 0,
@@ -79,6 +113,7 @@ export function useDashboardStats() {
                     activeProperties: propertiesCount || 0,
                     totalConsultants: consultantsCount || 0,
                     topProperties,
+                    monthlyRevenue,
                     loading: false,
                     error: null,
                 });

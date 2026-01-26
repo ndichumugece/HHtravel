@@ -27,6 +27,7 @@ export interface BookingVoucher {
     number_of_rooms: number;
     number_of_adults: number;
     number_of_children: number;
+    quotation_price?: number;
     special_requests?: string;
     flight_details?: string;
     arrival_time?: string;

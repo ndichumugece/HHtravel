@@ -404,6 +404,26 @@ export default function BookingForm() {
                             </div>
                         </CardContent>
                     </Card>
+
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="text-base">Internal Details</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <div>
+                                <label className="text-sm font-medium leading-none">Quotation Price (KSH)</label>
+                                <Input
+                                    type="number"
+                                    {...register('quotation_price')}
+                                    className="mt-2"
+                                    placeholder="e.g. 50000"
+                                />
+                                <p className="text-xs text-muted-foreground mt-1">
+                                    For analytics only. Hidden from PDF.
+                                </p>
+                            </div>
+                        </CardContent>
+                    </Card>
                 </div>
             </form>
 

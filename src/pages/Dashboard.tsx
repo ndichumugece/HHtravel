@@ -76,7 +76,7 @@ export default function Dashboard() {
 
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-7">
                 {/* Analytics Chart */}
-                <BookingAnalytics />
+                <BookingAnalytics data={stats.monthlyRevenue || []} />
 
                 {/* Top Properties */}
                 <Card className="col-span-3 border-none shadow-sm bg-white dark:bg-card">
