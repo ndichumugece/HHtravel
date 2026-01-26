@@ -142,30 +142,7 @@ const styles = StyleSheet.create({
         marginBottom: 15,
     },
 
-    // Amenities
-    amenitiesSection: {
-        backgroundColor: theme.bgLight,
-        padding: 15,
-        borderRadius: 8,
-        marginBottom: 20,
-    },
-    amenityRow: {
-        flexDirection: 'row',
-        gap: 15,
-    },
-    amenityItem: {
-        flexDirection: 'row',
-        alignItems: 'center',
-    },
-    amenityDot: {
-        fontSize: 10,
-        marginRight: 5,
-        color: theme.textMuted,
-    },
-    amenityText: {
-        fontSize: 10,
-        color: theme.textMuted,
-    },
+
 
     // Additional Info
     additionalSection: {
@@ -325,19 +302,7 @@ export default function BookingPDF({ voucher, settings }: BookingPDFProps) {
                     </View>
                 </View>
 
-                {/* Amenities - Static for now as not in voucher type, but matching design */}
-                <Text style={styles.sectionTitle}>Paid Hotel Amenities:</Text>
-                <View style={styles.amenitiesSection}>
-                    <View style={styles.amenityRow}>
-                        {/* Placeholders as per design */}
-                        {['Wifi', 'Drinks', 'Massage'].map((amenity, i) => (
-                            <View key={i} style={styles.amenityItem}>
-                                <Text style={styles.amenityDot}>✓</Text>
-                                <Text style={styles.amenityText}>{amenity}</Text>
-                            </View>
-                        ))}
-                    </View>
-                </View>
+
 
                 {/* Additional Information */}
                 {(voucher.special_requests || voucher.flight_details) && (
