@@ -152,46 +152,39 @@ export default function BookingForm() {
                 </div>
 
                 <div className="flex flex-col sm:flex-row gap-3 w-full xl:w-auto">
-                    {(() => {
-                        const selectedProperty = properties.find(p => p.name === formValues.property_name);
-                        return (
-                            <>
-                                <BlobProvider document={<BookingPDF voucher={formValues as BookingVoucher} settings={settings} property={selectedProperty} />}>
-                                    {({ url, loading: pdfLoading }) => (
-                                        <Button
-                                            variant="outline"
-                                            disabled={pdfLoading}
-                                            onClick={() => url && window.open(url, '_blank')}
-                                            className="w-full sm:w-auto"
-                                        >
-                                            {pdfLoading ? (
-                                                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                                            ) : (
-                                                <Eye className="h-4 w-4 mr-2" />
-                                            )}
-                                            Preview PDF
-                                        </Button>
-                                    )}
-                                </BlobProvider>
-                                <PDFDownloadLink
-                                    document={<BookingPDF voucher={formValues as BookingVoucher} settings={settings} property={selectedProperty} />}
-                                    fileName={getVoucherFileName()}
-                                    className="w-full sm:w-auto"
-                                >
-                                    {({ loading: pdfLoading }) => (
-                                        <Button variant="outline" disabled={pdfLoading} className="w-full sm:w-auto">
-                                            {pdfLoading ? (
-                                                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                                            ) : (
-                                                <FileDown className="h-4 w-4 mr-2" />
-                                            )}
-                                            Download PDF
-                                        </Button>
-                                    )}
-                                </PDFDownloadLink>
-                            </>
-                        );
-                    })()}
+                    <BlobProvider document={<BookingPDF voucher={formValues as BookingVoucher} settings={settings} />}>
+                        {({ url, loading: pdfLoading }) => (
+                            <Button
+                                variant="outline"
+                                disabled={pdfLoading}
+                                onClick={() => url && window.open(url, '_blank')}
+                                className="w-full sm:w-auto"
+                            >
+                                {pdfLoading ? (
+                                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                ) : (
+                                    <Eye className="h-4 w-4 mr-2" />
+                                )}
+                                Preview PDF
+                            </Button>
+                        )}
+                    </BlobProvider>
+                    <PDFDownloadLink
+                        document={<BookingPDF voucher={formValues as BookingVoucher} settings={settings} />}
+                        fileName={getVoucherFileName()}
+                        className="w-full sm:w-auto"
+                    >
+                        {({ loading: pdfLoading }) => (
+                            <Button variant="outline" disabled={pdfLoading} className="w-full sm:w-auto">
+                                {pdfLoading ? (
+                                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                ) : (
+                                    <FileDown className="h-4 w-4 mr-2" />
+                                )}
+                                Download PDF
+                            </Button>
+                        )}
+                    </PDFDownloadLink>
                     <Button onClick={handleSubmit(onSubmit)} disabled={loading} className="w-full sm:w-auto">
                         {loading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
                         {!loading && <Save className="h-4 w-4 mr-2" />}

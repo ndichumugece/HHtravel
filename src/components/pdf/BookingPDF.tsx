@@ -1,5 +1,5 @@
 import { Document, Page, Text, View, StyleSheet, Image, Font } from '@react-pdf/renderer';
-import type { BookingVoucher, CompanySettings, Property } from '../../types';
+import type { BookingVoucher, CompanySettings } from '../../types';
 import { format } from 'date-fns';
 
 // Register fonts
@@ -243,10 +243,9 @@ const styles = StyleSheet.create({
 interface BookingPDFProps {
     voucher: BookingVoucher;
     settings?: CompanySettings;
-    property?: Property;
 }
 
-export default function BookingPDF({ voucher, settings, property }: BookingPDFProps) {
+export default function BookingPDF({ voucher, settings }: BookingPDFProps) {
     if (!voucher) return null;
 
     const formatDate = (dateStr?: string) => {
@@ -311,18 +310,8 @@ export default function BookingPDF({ voucher, settings, property }: BookingPDFPr
                 <View style={styles.resCard}>
                     {/* Property Header */}
                     <View style={styles.propertyHeader}>
-                        {property?.images?.[0] ? (
-                            <Image src={property.images[0]} style={styles.propertyImage} />
-                        ) : (
-                            <View style={[styles.propertyImage, { justifyContent: 'center', alignItems: 'center' }]}>
-                                <Text style={{ fontSize: 10, color: '#94a3b8' }}>No Image</Text>
-                            </View>
-                        )}
                         <View style={styles.propertyInfo}>
                             <Text style={styles.propertyName}>{voucher.property_name}</Text>
-                            <View style={styles.locationBadge}>
-                                <Text style={styles.locationText}>{property?.location || 'Location Not Specified'}</Text>
-                            </View>
                         </View>
                     </View>
 
