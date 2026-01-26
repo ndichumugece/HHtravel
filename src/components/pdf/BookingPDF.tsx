@@ -118,17 +118,8 @@ const styles = StyleSheet.create({
         marginBottom: 20,
     },
     propertyHeader: {
-        flexDirection: 'row',
         marginBottom: 15,
         alignItems: 'center',
-    },
-    propertyImage: {
-        width: 120,
-        height: 80,
-        backgroundColor: '#e2e8f0',
-        borderRadius: 8,
-        marginRight: 15,
-        objectFit: 'cover',
     },
     propertyInfo: {
         flex: 1,
@@ -139,17 +130,7 @@ const styles = StyleSheet.create({
         fontWeight: 'bold', // Keep property name bold as it is a title
         marginBottom: 5,
     },
-    locationBadge: {
-        backgroundColor: '#e2e8f0',
-        paddingHorizontal: 8,
-        paddingVertical: 4,
-        borderRadius: 4,
-        alignSelf: 'flex-start',
-    },
-    locationText: {
-        fontSize: 8,
-        color: theme.textMuted,
-    },
+
 
     // Grid for booking details
     grid: {
