@@ -12,6 +12,7 @@ import { AddPropertyModal } from '../../components/properties/AddPropertyModal';
 import { Input } from '../../components/ui/Input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../../components/ui/Card';
 import { format } from 'date-fns';
+import { nationalities } from '../../data/nationalities';
 
 export default function BookingForm() {
     const { id } = useParams();
@@ -209,7 +210,17 @@ export default function BookingForm() {
                             </div>
                             <div>
                                 <label className="text-sm font-medium leading-none">Nationality</label>
-                                <Input {...register('guest_nationality')} className="mt-2" placeholder="e.g. American" />
+                                <Input
+                                    {...register('guest_nationality')}
+                                    className="mt-2"
+                                    placeholder="e.g. American"
+                                    list="nationality-list"
+                                />
+                                <datalist id="nationality-list">
+                                    {nationalities.map((n) => (
+                                        <option key={n} value={n} />
+                                    ))}
+                                </datalist>
                             </div>
                             <div>
                                 <label className="text-sm font-medium leading-none">Contact Info</label>
