@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { FileText, TrendingUp, TrendingDown, BookOpen, Users } from 'lucide-react';
+import { FileText, TrendingUp, TrendingDown, BookOpen } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/Card';
 import { cn } from '../../lib/utils';
 
