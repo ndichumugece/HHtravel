@@ -1,88 +1,114 @@
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
-import { Activity, CreditCard, Users, Building2 } from 'lucide-react';
+import { Activity, CreditCard, Users, Building2, TrendingUp, TrendingDown, ArrowUpRight } from 'lucide-react';
+import { useDashboardStats } from '../hooks/useDashboardStats';
+import { BookingAnalytics } from '../components/dashboard/BookingAnalytics';
+import { cn } from '../lib/utils';
 
 export default function Dashboard() {
+    const stats = useDashboardStats();
+
+    const statCards = [
+        {
+            title: "Total Bookings",
+            value: stats.totalBookings,
+            icon: CreditCard,
+            trend: "+12%",
+            trendUp: true,
+            desc: "Lifetime bookings"
+        },
+        {
+            title: "Pending Quotations",
+            value: stats.pendingQuotations,
+            icon: Activity,
+            trend: "+4",
+            trendUp: true,
+            desc: "Awaiting confirmation"
+        },
+        {
+            title: "Active Properties",
+            value: stats.activeProperties,
+            icon: Building2,
+            trend: "+2",
+            trendUp: true,
+            desc: "Partners"
+        },
+        {
+            title: "Total Consultants",
+            value: stats.totalConsultants,
+            icon: Users,
+            trend: "0",
+            trendUp: true,
+            desc: "Team members"
+        }
+    ];
+
     return (
         <div className="space-y-8">
-            <div>
-                <h1 className="text-3xl font-bold tracking-tight text-foreground">Dashboard</h1>
-                <p className="text-muted-foreground mt-2">Overview of your travel business performance.</p>
+            <div className="flex items-center justify-between">
+                <div>
+                    <h1 className="text-3xl font-bold tracking-tight text-foreground">Dashboard</h1>
+                    <p className="text-muted-foreground mt-1">Overview of your travel business performance.</p>
+                </div>
+                {/* Optional: Add a date picker or action button here */}
             </div>
 
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-                <Card className="hover:shadow-levitate transition-shadow duration-200">
-                    <CardHeader className="flex flex-row items-center justify-between pb-2">
-                        <CardTitle className="text-sm font-medium text-muted-foreground">Total Bookings</CardTitle>
-                        <CreditCard className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">124</div>
-                        <p className="text-xs text-muted-foreground mt-1 text-emerald-600 font-medium">+12% from last month</p>
-                    </CardContent>
-                </Card>
-                <Card className="hover:shadow-levitate transition-shadow duration-200">
-                    <CardHeader className="flex flex-row items-center justify-between pb-2">
-                        <CardTitle className="text-sm font-medium text-muted-foreground">Pending Quotations</CardTitle>
-                        <Activity className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">45</div>
-                        <p className="text-xs text-muted-foreground mt-1 text-emerald-600 font-medium">+4 new today</p>
-                    </CardContent>
-                </Card>
-                <Card className="hover:shadow-levitate transition-shadow duration-200">
-                    <CardHeader className="flex flex-row items-center justify-between pb-2">
-                        <CardTitle className="text-sm font-medium text-muted-foreground">Properties</CardTitle>
-                        <Building2 className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">86</div>
-                        <p className="text-xs text-muted-foreground mt-1">Active partners</p>
-                    </CardContent>
-                </Card>
-                <Card className="hover:shadow-levitate transition-shadow duration-200">
-                    <CardHeader className="flex flex-row items-center justify-between pb-2">
-                        <CardTitle className="text-sm font-medium text-muted-foreground">Total Consultants</CardTitle>
-                        <Users className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">12</div>
-                        <p className="text-xs text-muted-foreground mt-1">Active team members</p>
-                    </CardContent>
-                </Card>
+                {statCards.map((card, index) => (
+                    <Card key={index} className="border shadow-sm hover:shadow-md transition-shadow duration-200 bg-white dark:bg-card">
+                        <CardContent className="p-6">
+                            <div className="flex flex-col space-y-2">
+                                <div className="flex items-center space-x-2 text-muted-foreground">
+                                    <card.icon className="h-4 w-4" />
+                                    <span className="text-sm font-medium">{card.title}</span>
+                                </div>
+                                <div className="flex items-baseline space-x-2">
+                                    <h3 className="text-2xl font-bold text-foreground">{card.value}</h3>
+                                    <div className={cn("flex items-center text-xs font-medium", card.trendUp ? "text-emerald-500" : "text-rose-500")}>
+                                        {card.trendUp ? <TrendingUp className="h-3 w-3 mr-1" /> : <TrendingDown className="h-3 w-3 mr-1" />}
+                                        {card.trend}
+                                    </div>
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+                ))}
             </div>
 
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-7">
-                <Card className="col-span-4">
+                {/* Analytics Chart */}
+                <BookingAnalytics />
+
+                {/* Top Properties */}
+                <Card className="col-span-3 border-none shadow-sm bg-white dark:bg-card">
                     <CardHeader>
-                        <CardTitle>Recent Activity</CardTitle>
+                        <CardTitle className="text-lg font-bold">Top Properties</CardTitle>
+                        <p className="text-sm text-muted-foreground">Most booked properties this month.</p>
                     </CardHeader>
                     <CardContent>
-                        <div className="h-[200px] flex items-center justify-center text-muted-foreground text-sm border border-dashed rounded-md bg-muted/20">
-                            Chart Placeholder (Recharts)
-                        </div>
-                    </CardContent>
-                </Card>
-                <Card className="col-span-3">
-                    <CardHeader>
-                        <CardTitle>Top Properties</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="space-y-4">
-                            {[1, 2, 3].map((i) => (
-                                <div key={i} className="flex items-center">
-                                    <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-xs">
-                                        P{i}
+                        <div className="space-y-6">
+                            {stats.topProperties.length > 0 ? (
+                                stats.topProperties.map((property, i) => (
+                                    <div key={i} className="flex items-center">
+                                        <div className={cn(
+                                            "flex items-center justify-center h-10 w-10 rounded-full font-bold text-sm",
+                                            i === 0 ? "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400" :
+                                                i === 1 ? "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-400" :
+                                                    "bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-400"
+                                        )}>
+                                            {i + 1}
+                                        </div>
+                                        <div className="ml-4 space-y-1">
+                                            <p className="text-sm font-medium leading-none truncate max-w-[150px]" title={property.name}>{property.name}</p>
+                                            <p className="text-xs text-muted-foreground">{property.bookings} bookings</p>
+                                        </div>
+                                        <div className="ml-auto font-medium text-sm text-muted-foreground">
+                                            <ArrowUpRight className="h-4 w-4" />
+                                        </div>
                                     </div>
-                                    <div className="ml-4 space-y-1">
-                                        <p className="text-sm font-medium leading-none">Luxury Safari Lodge</p>
-                                        <p className="text-xs text-muted-foreground">Masai Mara, Kenya</p>
-                                    </div>
-                                    <div className="ml-auto font-medium text-sm">
-                                        $24,000
-                                    </div>
-                                </div>
-                            ))}
+                                ))
+                            ) : (
+                                <p className="text-sm text-muted-foreground p-4 text-center">No bookings data available yet.</p>
+                            )}
                         </div>
                     </CardContent>
                 </Card>

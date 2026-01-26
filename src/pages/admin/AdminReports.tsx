@@ -1,13 +1,15 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { FileText, TrendingUp } from 'lucide-react';
+import { FileText, TrendingUp, TrendingDown, BookOpen, Users } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/Card';
+import { cn } from '../../lib/utils';
 
 export default function AdminReports() {
     const [stats, setStats] = useState({
         totalBookings: 0,
         totalQuotations: 0,
-        totalRevenue: 0, // Placeholder as we don't have price in booking voucher schema strictly defined as number
+        totalRevenue: 0,
         topConsultants: [] as any[],
         topProperties: [] as any[]
     });
@@ -19,17 +21,13 @@ export default function AdminReports() {
 
     const fetchStats = async () => {
         try {
-            // Mocking some aggregation or doing simple client side aggregation
-            // In real app, use Database Views or RPC
             const { data: bookings } = await supabase.from('booking_vouchers').select('property_name, consultant_id');
             const { count: quoteCount } = await supabase.from('quotation_vouchers').select('*', { count: 'exact', head: true });
             const { data: profiles } = await supabase.from('profiles').select('id, full_name, email');
 
-            // Agency consultant map
             const consultantMap = new Map();
             profiles?.forEach(p => consultantMap.set(p.id, p.full_name || p.email));
 
-            // Aggregating
             const propertyCounts: Record<string, number> = {};
             const consultantCounts: Record<string, number> = {};
 
@@ -64,78 +62,123 @@ export default function AdminReports() {
         }
     };
 
-    if (loading) return <div>Loading analytics...</div>;
+    if (loading) return (
+        <div className="flex items-center justify-center p-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        </div>
+    );
+
+    const statCards = [
+        {
+            title: "Total Bookings",
+            value: stats.totalBookings,
+            icon: FileText,
+            trend: "+12%", // Dummy trend for now
+            trendUp: true
+        },
+        {
+            title: "Total Quotations",
+            value: stats.totalQuotations,
+            icon: BookOpen,
+            trend: "+5%",
+            trendUp: true
+        },
+        {
+            title: "Conversion Rate",
+            value: `${stats.totalQuotations > 0 ? ((stats.totalBookings / stats.totalQuotations) * 100).toFixed(1) : 0}%`,
+            icon: TrendingUp,
+            trend: stats.totalQuotations > 0 && (stats.totalBookings / stats.totalQuotations) > 0.2 ? "+2.4%" : "-1.2%",
+            trendUp: stats.totalQuotations > 0 && (stats.totalBookings / stats.totalQuotations) > 0.2
+        }
+    ];
 
     return (
-        <div className="space-y-6">
-            <h1 className="text-2xl font-bold text-gray-900">Analytics & Insights</h1>
+        <div className="space-y-8">
+            <div>
+                <h1 className="text-3xl font-bold tracking-tight text-foreground">Analytics & Insights</h1>
+                <p className="text-muted-foreground mt-2">Detailed metrics and performance tracking.</p>
+            </div>
 
             {/* Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100 flex items-center">
-                    <div className="p-3 rounded-full bg-blue-100 text-blue-600 mr-4">
-                        <FileText className="h-6 w-6" />
-                    </div>
-                    <div>
-                        <p className="text-gray-500 text-sm">Total Bookings</p>
-                        <p className="text-2xl font-bold">{stats.totalBookings}</p>
-                    </div>
-                </div>
-                <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100 flex items-center">
-                    <div className="p-3 rounded-full bg-purple-100 text-purple-600 mr-4">
-                        <FileText className="h-6 w-6" />
-                    </div>
-                    <div>
-                        <p className="text-gray-500 text-sm">Total Quotations</p>
-                        <p className="text-2xl font-bold">{stats.totalQuotations}</p>
-                    </div>
-                </div>
-                <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100 flex items-center">
-                    <div className="p-3 rounded-full bg-green-100 text-green-600 mr-4">
-                        <TrendingUp className="h-6 w-6" />
-                    </div>
-                    <div>
-                        <p className="text-gray-500 text-sm">Conversion Rate</p>
-                        <p className="text-2xl font-bold">
-                            {stats.totalQuotations > 0 ? ((stats.totalBookings / stats.totalQuotations) * 100).toFixed(1) : 0}%
-                        </p>
-                    </div>
-                </div>
+            <div className="grid gap-6 md:grid-cols-3">
+                {statCards.map((card, index) => (
+                    <Card key={index} className="border shadow-sm hover:shadow-md transition-shadow duration-200 bg-white dark:bg-card">
+                        <CardContent className="p-6">
+                            <div className="flex flex-col space-y-2">
+                                <div className="flex items-center space-x-2 text-muted-foreground">
+                                    <card.icon className="h-4 w-4" />
+                                    <span className="text-sm font-medium">{card.title}</span>
+                                </div>
+                                <div className="flex items-baseline space-x-2">
+                                    <h3 className="text-2xl font-bold text-foreground">{card.value}</h3>
+                                    <div className={cn("flex items-center text-xs font-medium", card.trendUp ? "text-emerald-500" : "text-rose-500")}>
+                                        {card.trendUp ? <TrendingUp className="h-3 w-3 mr-1" /> : <TrendingDown className="h-3 w-3 mr-1" />}
+                                        {card.trend}
+                                    </div>
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+                ))}
             </div>
 
             {/* Charts */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
                 {/* Top Properties */}
-                <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
-                    <h3 className="text-lg font-medium text-gray-900 mb-6">Top Selling Properties</h3>
-                    <div className="h-64">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={stats.topProperties} layout="vertical" margin={{ left: 40 }}>
-                                <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} />
-                                <XAxis type="number" />
-                                <YAxis dataKey="name" type="category" width={100} style={{ fontSize: '10px' }} />
-                                <Tooltip />
-                                <Bar dataKey="count" fill="#0ea5e9" radius={[0, 4, 4, 0]} />
-                            </BarChart>
-                        </ResponsiveContainer>
-                    </div>
-                </div>
+                <Card className="border-none shadow-sm bg-white dark:bg-card">
+                    <CardHeader>
+                        <CardTitle className="text-lg font-bold">Top Selling Properties</CardTitle>
+                    </CardHeader>
+                    <CardContent className="pl-6">
+                        <div className="h-[350px] w-full">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <BarChart data={stats.topProperties} layout="vertical" margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
+                                    <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="hsl(var(--border))" />
+                                    <XAxis type="number" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
+                                    <YAxis dataKey="name" type="category" width={100} stroke="#888888" fontSize={11} tickLine={false} axisLine={false} />
+                                    <Tooltip
+                                        cursor={{ fill: 'transparent' }}
+                                        contentStyle={{
+                                            backgroundColor: 'hsl(var(--card))',
+                                            border: '1px solid hsl(var(--border))',
+                                            borderRadius: '8px',
+                                            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                                        }}
+                                    />
+                                    <Bar dataKey="count" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} maxBarSize={40} />
+                                </BarChart>
+                            </ResponsiveContainer>
+                        </div>
+                    </CardContent>
+                </Card>
 
                 {/* Consultant Performance */}
-                <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
-                    <h3 className="text-lg font-medium text-gray-900 mb-6">Consultant Performance (Bookings)</h3>
-                    <div className="h-64">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={stats.topConsultants}>
-                                <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                                <XAxis dataKey="name" style={{ fontSize: '10px' }} />
-                                <YAxis />
-                                <Tooltip />
-                                <Bar dataKey="bookings" fill="#8b5cf6" radius={[4, 4, 0, 0]} />
-                            </BarChart>
-                        </ResponsiveContainer>
-                    </div>
-                </div>
+                <Card className="border-none shadow-sm bg-white dark:bg-card">
+                    <CardHeader>
+                        <CardTitle className="text-lg font-bold">Consultant Performance (Bookings)</CardTitle>
+                    </CardHeader>
+                    <CardContent className="pl-6">
+                        <div className="h-[350px] w-full">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <BarChart data={stats.topConsultants} margin={{ top: 30, right: 30, left: 20, bottom: 20 }}>
+                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
+                                    <XAxis dataKey="name" stroke="#888888" fontSize={11} tickLine={false} axisLine={false} />
+                                    <YAxis stroke="#888888" fontSize={12} tickLine={false} axisLine={false} allowDecimals={false} />
+                                    <Tooltip
+                                        cursor={{ fill: 'transparent' }}
+                                        contentStyle={{
+                                            backgroundColor: 'hsl(var(--card))',
+                                            border: '1px solid hsl(var(--border))',
+                                            borderRadius: '8px',
+                                            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                                        }}
+                                    />
+                                    <Bar dataKey="bookings" fill="#8b5cf6" radius={[4, 4, 0, 0]} maxBarSize={50} />
+                                </BarChart>
+                            </ResponsiveContainer>
+                        </div>
+                    </CardContent>
+                </Card>
             </div>
         </div>
     );

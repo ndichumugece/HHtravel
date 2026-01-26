@@ -238,18 +238,37 @@ export default function Settings() {
                                                         <TableCell className="capitalize">{invite.role}</TableCell>
                                                         <TableCell>{new Date(invite.created_at).toLocaleDateString()}</TableCell>
                                                         <TableCell className="text-right">
-                                                            <Button
-                                                                variant="ghost"
-                                                                size="sm"
-                                                                onClick={() => {
-                                                                    const link = `${window.location.origin}/login?signup=true&email=${encodeURIComponent(invite.email)}`;
-                                                                    setInviteLink(link);
-                                                                    copyToClipboard(link);
-                                                                }}
-                                                            >
-                                                                <Copy className="h-4 w-4 mr-2" />
-                                                                Copy Link
-                                                            </Button>
+                                                            <div className="flex items-center justify-end space-x-2">
+                                                                <Button
+                                                                    variant="ghost"
+                                                                    size="sm"
+                                                                    onClick={() => {
+                                                                        const link = `${window.location.origin}/login?signup=true&email=${encodeURIComponent(invite.email)}`;
+                                                                        setInviteLink(link);
+                                                                        copyToClipboard(link);
+                                                                    }}
+                                                                >
+                                                                    <Copy className="h-4 w-4 mr-2" />
+                                                                    Copy Link
+                                                                </Button>
+                                                                <Button
+                                                                    variant="ghost"
+                                                                    size="icon"
+                                                                    className="text-muted-foreground hover:text-destructive"
+                                                                    onClick={async () => {
+                                                                        if (!confirm('Are you sure you want to delete this invite?')) return;
+                                                                        try {
+                                                                            const { error } = await supabase.from('user_invites').delete().eq('id', invite.id);
+                                                                            if (error) throw error;
+                                                                            fetchPendingInvites();
+                                                                        } catch (err: any) {
+                                                                            alert('Failed to delete invite: ' + err.message);
+                                                                        }
+                                                                    }}
+                                                                >
+                                                                    <Trash2 className="h-4 w-4" />
+                                                                </Button>
+                                                            </div>
                                                         </TableCell>
                                                     </TableRow>
                                                 ))}

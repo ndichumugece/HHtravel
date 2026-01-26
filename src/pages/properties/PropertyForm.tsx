@@ -2,15 +2,13 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { supabase } from '../../lib/supabase';
-import { ArrowLeft, Save } from 'lucide-react';
-import { cn } from '../../lib/utils';
+import { ArrowLeft, Save, Loader2 } from 'lucide-react';
+import { Button } from '../../components/ui/Button';
+import { Input } from '../../components/ui/Input';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '../../components/ui/Card';
 
 interface PropertyFormData {
     name: string;
-    location: string;
-    phone: string;
-    email: string;
-    website: string;
 }
 
 export default function PropertyForm() {
@@ -34,18 +32,14 @@ export default function PropertyForm() {
         try {
             const { data, error } = await supabase
                 .from('properties')
-                .select('*')
+                .select('name') // Only fetch name
                 .eq('id', id)
                 .single();
 
             if (error) throw error;
             if (data) {
                 reset({
-                    name: data.name,
-                    location: data.location || '',
-                    phone: data.contact_info?.phone || '',
-                    email: data.contact_info?.email || '',
-                    website: data.contact_info?.website || ''
+                    name: data.name
                 });
             }
         } catch (error) {
@@ -61,17 +55,11 @@ export default function PropertyForm() {
         setSaving(true);
         try {
             const propertyData = {
-                name: data.name,
-                location: data.location,
-                contact_info: {
-                    phone: data.phone,
-                    email: data.email,
-                    website: data.website
-                },
-                // Preserve existing images if editing, or initialize empty
-                // In a real app we'd fetch current images first to append/modify, 
-                // but since we aren't editing images here yet, we should be careful not to overwrite with empty array if update
-                // For now, let's just not update images on edit, only on create.
+                name: data.name
+                // implicit: ignoring other fields or letting them stay as is in DB if partial update, 
+                // but for insert we need to respect schema if non-nullable. 
+                // Checks: location etc are likely nullable or have default? 
+                // Modal insert used empty strings.
             };
 
             let error;
@@ -84,7 +72,12 @@ export default function PropertyForm() {
             } else {
                 const { error: insertError } = await supabase
                     .from('properties')
-                    .insert({ ...propertyData, images: [] });
+                    .insert({
+                        ...propertyData,
+                        location: '',
+                        contact_info: { phone: '', email: '', website: '' },
+                        images: []
+                    });
                 error = insertError;
             }
 
@@ -101,112 +94,52 @@ export default function PropertyForm() {
     if (loading) {
         return (
             <div className="flex items-center justify-center p-8 h-64">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
             </div>
         );
     }
 
     return (
-        <div className="max-w-2xl mx-auto">
-            <div className="flex items-center mb-6">
-                <button
-                    onClick={() => navigate('/properties')}
-                    className="mr-4 p-2 rounded-full hover:bg-gray-100 text-gray-600"
-                >
+        <div className="max-w-2xl mx-auto space-y-6">
+            <div className="flex items-center space-x-4">
+                <Button variant="ghost" size="icon" onClick={() => navigate('/properties')}>
                     <ArrowLeft className="h-5 w-5" />
-                </button>
-                <h1 className="text-2xl font-bold text-gray-900">{isEditing ? 'Edit Property' : 'Add New Property'}</h1>
+                </Button>
+                <div>
+                    <h1 className="text-2xl font-bold tracking-tight text-foreground">{isEditing ? 'Edit Property' : 'Add New Property'}</h1>
+                    <p className="text-sm text-muted-foreground">{isEditing ? 'Update property details' : 'Create a new property'}</p>
+                </div>
             </div>
 
-            <div className="bg-white shadow rounded-lg overflow-hidden">
-                <form onSubmit={handleSubmit(onSubmit)} className="p-6 space-y-6">
-
-                    <div className="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
-                        <div className="sm:col-span-6">
-                            <label htmlFor="name" className="block text-sm font-medium text-gray-700">Property Name</label>
-                            <div className="mt-1">
-                                <input
-                                    type="text"
-                                    id="name"
-                                    {...register('name', { required: 'Property name is required' })}
-                                    className={cn(
-                                        "shadow-sm focus:ring-brand-500 focus:border-brand-500 block w-full sm:text-sm border-gray-300 rounded-md p-2 border",
-                                        errors.name && "border-red-300 focus:ring-red-500 focus:border-red-500"
-                                    )}
-                                />
-                                {errors.name && <p className="mt-1 text-sm text-red-600">{errors.name.message}</p>}
-                            </div>
+            <Card>
+                <form onSubmit={handleSubmit(onSubmit)}>
+                    <CardHeader>
+                        <CardTitle>Property Details</CardTitle>
+                        <CardDescription>Enter the name of the property.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium leading-none">Property Name</label>
+                            <Input
+                                {...register('name', { required: 'Property name is required' })}
+                                placeholder="e.g. Sarova Stanley"
+                                className={errors.name ? 'border-red-500' : ''}
+                            />
+                            {errors.name && <p className="text-sm text-red-500">{errors.name.message}</p>}
                         </div>
-
-                        <div className="sm:col-span-6">
-                            <label htmlFor="location" className="block text-sm font-medium text-gray-700">Address / Location</label>
-                            <div className="mt-1">
-                                <input
-                                    type="text"
-                                    id="location"
-                                    {...register('location')}
-                                    className="shadow-sm focus:ring-brand-500 focus:border-brand-500 block w-full sm:text-sm border-gray-300 rounded-md p-2 border"
-                                />
-                            </div>
-                        </div>
-
-                        <div className="sm:col-span-3">
-                            <label htmlFor="phone" className="block text-sm font-medium text-gray-700">Phone</label>
-                            <div className="mt-1">
-                                <input
-                                    type="text"
-                                    id="phone"
-                                    {...register('phone')}
-                                    className="shadow-sm focus:ring-brand-500 focus:border-brand-500 block w-full sm:text-sm border-gray-300 rounded-md p-2 border"
-                                />
-                            </div>
-                        </div>
-
-                        <div className="sm:col-span-3">
-                            <label htmlFor="email" className="block text-sm font-medium text-gray-700">Email</label>
-                            <div className="mt-1">
-                                <input
-                                    type="email"
-                                    id="email"
-                                    {...register('email')}
-                                    className="shadow-sm focus:ring-brand-500 focus:border-brand-500 block w-full sm:text-sm border-gray-300 rounded-md p-2 border"
-                                />
-                            </div>
-                        </div>
-
-                        <div className="sm:col-span-6">
-                            <label htmlFor="website" className="block text-sm font-medium text-gray-700">Website</label>
-                            <div className="mt-1">
-                                <input
-                                    type="text"
-                                    id="website"
-                                    {...register('website')}
-                                    className="shadow-sm focus:ring-brand-500 focus:border-brand-500 block w-full sm:text-sm border-gray-300 rounded-md p-2 border"
-                                    placeholder="https://"
-                                />
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="pt-5 border-t border-gray-200 flex justify-end">
-                        <button
-                            type="button"
-                            onClick={() => navigate('/properties')}
-                            className="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-500"
-                        >
+                    </CardContent>
+                    <CardFooter className="flex justify-end space-x-2 border-t pt-6">
+                        <Button type="button" variant="ghost" onClick={() => navigate('/properties')}>
                             Cancel
-                        </button>
-                        <button
-                            type="submit"
-                            disabled={saving}
-                            className="ml-3 inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-brand-600 hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-500 disabled:opacity-50"
-                        >
-                            <Save className="h-4 w-4 mr-2" />
+                        </Button>
+                        <Button type="submit" disabled={saving}>
+                            {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                            {!saving && <Save className="h-4 w-4 mr-2" />}
                             {saving ? 'Saving...' : 'Save Property'}
-                        </button>
-                    </div>
+                        </Button>
+                    </CardFooter>
                 </form>
-            </div>
+            </Card>
         </div>
     );
 }

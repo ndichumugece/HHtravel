@@ -5,9 +5,10 @@ import { supabase } from '../../lib/supabase';
 import type { Property, BookingVoucher, CompanySettings } from '../../types';
 import { PDFDownloadLink, BlobProvider } from '@react-pdf/renderer';
 import BookingPDF from '../../components/pdf/BookingPDF';
-import { ArrowLeft, Save, FileDown, Loader2, Eye } from 'lucide-react';
+import { ArrowLeft, Save, FileDown, Loader2, Eye, Plus } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { Button } from '../../components/ui/Button';
+import { AddPropertyModal } from '../../components/properties/AddPropertyModal';
 import { Input } from '../../components/ui/Input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../../components/ui/Card';
 import { format } from 'date-fns';
@@ -20,6 +21,7 @@ export default function BookingForm() {
     const [settings, setSettings] = useState<CompanySettings>();
     const [loading, setLoading] = useState(false);
     const [isEditMode] = useState(!!id);
+    const [isPropertyModalOpen, setIsPropertyModalOpen] = useState(false);
 
     const { register, handleSubmit, setValue, control } = useForm<Partial<BookingVoucher>>({
         defaultValues: {
@@ -229,19 +231,31 @@ export default function BookingForm() {
                             <CardTitle>Stay Details</CardTitle>
                             <CardDescription>Property, dates, and room configuration.</CardDescription>
                         </CardHeader>
-                        <CardContent className="grid gap-6 is-grid-cols-2">
+                        <CardContent className="grid gap-6 sm:grid-cols-2">
                             <div className="col-span-2">
                                 <label className="text-sm font-medium leading-none">Property</label>
-                                <select
-                                    {...register('property_name', { required: true })}
-                                    className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 mt-2"
-                                    onChange={(e) => setValue('property_name', e.target.value)}
-                                >
-                                    <option value="">Select a property</option>
-                                    {properties.map(p => (
-                                        <option key={p.id} value={p.name}>{p.name}</option>
-                                    ))}
-                                </select>
+                                <div className="flex gap-2 items-center mt-2">
+                                    <select
+                                        {...register('property_name', { required: true })}
+                                        className="flex h-10 flex-1 items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                        onChange={(e) => setValue('property_name', e.target.value)}
+                                    >
+                                        <option value="">Select a property</option>
+                                        {properties.map(p => (
+                                            <option key={p.id} value={p.name}>{p.name}</option>
+                                        ))}
+                                    </select>
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="icon"
+                                        className="shrink-0"
+                                        onClick={() => setIsPropertyModalOpen(true)}
+                                        title="Add New Property"
+                                    >
+                                        <Plus className="h-4 w-4" />
+                                    </Button>
+                                </div>
                             </div>
 
                             <div className="grid grid-cols-2 gap-4 col-span-2">
@@ -257,11 +271,64 @@ export default function BookingForm() {
                             <div className="grid grid-cols-2 gap-4 col-span-2">
                                 <div>
                                     <label className="text-sm font-medium leading-none">Room Type</label>
-                                    <Input {...register('room_type')} className="mt-2" placeholder="e.g. Deluxe Room" />
+                                    <select
+                                        {...register('room_type')}
+                                        className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 mt-2"
+                                    >
+                                        <option value="">Select Room Type</option>
+                                        <option value="Single Room">Single Room</option>
+                                        <option value="Double Room">Double Room</option>
+                                        <option value="Twin Room">Twin Room</option>
+                                        <option value="Triple Room">Triple Room</option>
+                                        <option value="Quad Room">Quad Room</option>
+                                        <option value="Standard Room">Standard Room</option>
+                                        <option value="Deluxe Room">Deluxe Room</option>
+                                        <option value="Superior Room">Superior Room</option>
+                                        <option value="Executive Room">Executive Room</option>
+                                        <option value="Junior Suite">Junior Suite</option>
+                                        <option value="Suite">Suite</option>
+                                        <option value="Presidential Suite">Presidential Suite</option>
+                                        <option value="Studio Room">Studio Room</option>
+                                        <option value="Family Room">Family Room</option>
+                                        <option value="Connecting Rooms">Connecting Rooms</option>
+                                        <option value="Accessible Room">Accessible Room</option>
+                                        <option value="Luxury Tent">Luxury Tent</option>
+                                    </select>
                                 </div>
                                 <div>
                                     <label className="text-sm font-medium leading-none">Meal Plan</label>
-                                    <Input {...register('meal_plan')} className="mt-2" placeholder="e.g. Full Board" />
+                                    <select
+                                        {...register('meal_plan')}
+                                        className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 mt-2"
+                                    >
+                                        <option value="">Select Meal Plan</option>
+                                        <option value="Room Only">Room Only</option>
+                                        <option value="Bed & Breakfast">Bed & Breakfast</option>
+                                        <option value="Breakfast Only">Breakfast Only</option>
+                                        <option value="Half Board">Half Board</option>
+                                        <option value="Full Board">Full Board</option>
+                                        <option value="All Inclusive">All Inclusive</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4 col-span-2">
+                                <div>
+                                    <label className="text-sm font-medium leading-none">Mode of Transport</label>
+                                    <select
+                                        {...register('mode_of_transport')}
+                                        className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 mt-2"
+                                    >
+                                        <option value="">Select Transport</option>
+                                        <option value="Self Drive">Self Drive</option>
+                                        <option value="Train">Train</option>
+                                        <option value="Flying">Flying</option>
+                                        <option value="H&H Road Package">H&H Road Package</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="text-sm font-medium leading-none">Estimated Arrival Time</label>
+                                    <Input type="time" {...register('arrival_time')} className="mt-2" />
                                 </div>
                             </div>
 
@@ -335,6 +402,15 @@ export default function BookingForm() {
                     </Card>
                 </div>
             </form>
+
+            <AddPropertyModal
+                isOpen={isPropertyModalOpen}
+                onClose={() => setIsPropertyModalOpen(false)}
+                onSuccess={(newProperty) => {
+                    setProperties(prev => [...prev, newProperty].sort((a, b) => a.name.localeCompare(b.name)));
+                    setValue('property_name', newProperty.name);
+                }}
+            />
         </div>
     );
 }

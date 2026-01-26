@@ -30,8 +30,12 @@ export interface BookingVoucher {
     special_requests?: string;
     flight_details?: string;
     arrival_time?: string;
+    mode_of_transport?: string;
     status: 'issued' | 'cancelled';
     created_at: string;
+    profiles?: {
+        full_name: string;
+    };
 }
 
 export interface QuotationVoucher {

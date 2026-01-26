@@ -30,7 +30,7 @@ export default function BookingList() {
         try {
             const { data, error } = await supabase
                 .from('booking_vouchers')
-                .select('*')
+                .select('*, profiles(full_name)')
                 .order('created_at', { ascending: false });
 
             if (error) throw error;
@@ -100,6 +100,7 @@ export default function BookingList() {
                                 <TableRow>
                                     <TableHead className="w-[50px]"></TableHead>
                                     <TableHead>Reference</TableHead>
+                                    <TableHead>Created By</TableHead>
                                     <TableHead>Guest & Property</TableHead>
                                     <TableHead>Dates</TableHead>
                                     <TableHead>Status</TableHead>
@@ -123,6 +124,9 @@ export default function BookingList() {
                                             </TableCell>
                                             <TableCell className="font-medium font-mono text-xs">
                                                 {voucher.reference_number}
+                                            </TableCell>
+                                            <TableCell className="text-sm text-muted-foreground">
+                                                {voucher.profiles?.full_name || 'Unknown'}
                                             </TableCell>
                                             <TableCell>
                                                 <div className="flex flex-col">

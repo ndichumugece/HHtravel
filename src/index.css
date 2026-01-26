@@ -16,9 +16,10 @@
     --popover: 0 0% 100%;
     --popover-foreground: 222 47% 11%;
 
-    /* Primary - Stripe Indigo #635BFF approx */
-    --primary: 243 100% 68%;
-    --primary-foreground: 210 40% 98%;
+    /* Primary - Emerald Green (Flup style) */
+    --primary: 158 64% 52%;
+    /* #34D399 */
+    --primary-foreground: 0 0% 100%;
 
     /* Secondary - Ghost/Muted */
     --secondary: 210 40% 96.1%;
