@@ -1,6 +1,6 @@
 import { Document, Page, Text, View, StyleSheet, Image, Font } from '@react-pdf/renderer';
 import type { BookingVoucher, CompanySettings } from '../../types';
-import { format, differenceInDays, parseISO } from 'date-fns';
+import { format, differenceInDays } from 'date-fns';
 
 // Register fonts
 Font.register({
