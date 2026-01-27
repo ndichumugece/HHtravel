@@ -1,6 +1,6 @@
 import { Document, Page, Text, View, StyleSheet, Image, Font } from '@react-pdf/renderer';
 import type { BookingVoucher, CompanySettings } from '../../types';
-import { format } from 'date-fns';
+import { format, differenceInDays, parseISO } from 'date-fns';
 
 // Register fonts
 Font.register({
@@ -175,7 +175,7 @@ const styles = StyleSheet.create({
         backgroundColor: '#f0f9ff',
         padding: 20,
         borderRadius: 8,
-        marginTop: 'auto', // Push to bottom if space permits, but usually relative flow
+        marginTop: 20,
     },
     contactTitle: {
         fontSize: 12,
@@ -215,6 +215,17 @@ export default function BookingPDF({ voucher, settings }: BookingPDFProps) {
         }
     };
 
+    const calculateNights = (checkIn?: string, checkOut?: string) => {
+        if (!checkIn || !checkOut) return 0;
+        try {
+            const start = new Date(checkIn);
+            const end = new Date(checkOut);
+            return differenceInDays(end, start);
+        } catch {
+            return 0;
+        }
+    };
+
     return (
         <Document>
             <Page size="A4" style={styles.page}>
@@ -239,8 +250,16 @@ export default function BookingPDF({ voucher, settings }: BookingPDFProps) {
                             <Text style={styles.headerValue}>{voucher.reference_number}</Text>
                         </View>
                         <View style={styles.headerInfoRow}>
+                            <Text style={styles.headerLabel}>Property Name:</Text>
+                            <Text style={styles.headerValue}>{voucher.property_name}</Text>
+                        </View>
+                        <View style={styles.headerInfoRow}>
                             <Text style={styles.headerLabel}>Issued Date:</Text>
                             <Text style={styles.headerValue}>{formatDate(voucher.created_at || new Date().toISOString())}</Text>
+                        </View>
+                        <View style={styles.headerInfoRow}>
+                            <Text style={styles.headerLabel}>Travel Consultant:</Text>
+                            <Text style={styles.headerValue}>{voucher.profiles?.full_name || 'N/A'}</Text>
                         </View>
                     </View>
                 </View>
@@ -249,11 +268,11 @@ export default function BookingPDF({ voucher, settings }: BookingPDFProps) {
                 <Text style={styles.sectionTitle}>Client Information</Text>
                 <View style={styles.clientCard}>
                     <View style={styles.clientCol}>
-                        <Text style={styles.infoLabel}>Lead Client</Text>
+                        <Text style={styles.infoLabel}>Guest Name</Text>
                         <Text style={styles.infoValue}>{voucher.guest_name}</Text>
                     </View>
                     <View style={styles.clientCol}>
-                        <Text style={styles.infoLabel}>Phone number:</Text>
+                        <Text style={styles.infoLabel}>Primary Contact:</Text>
                         <Text style={styles.infoValue}>{voucher.guest_contact || '-'}</Text>
                     </View>
                     <View style={[styles.clientCol, { flex: 1.5 }]}>
@@ -266,12 +285,7 @@ export default function BookingPDF({ voucher, settings }: BookingPDFProps) {
                 {/* Reservation Details */}
                 <Text style={styles.sectionTitle}>Reservation Details</Text>
                 <View style={styles.resCard}>
-                    {/* Property Header */}
-                    <View style={styles.propertyHeader}>
-                        <View style={styles.propertyInfo}>
-                            <Text style={styles.propertyName}>{voucher.property_name}</Text>
-                        </View>
-                    </View>
+
 
                     {/* Grid Info */}
                     <View style={styles.grid}>
@@ -281,7 +295,12 @@ export default function BookingPDF({ voucher, settings }: BookingPDFProps) {
                         </View>
                         <View style={styles.gridItem}>
                             <Text style={styles.infoLabel}>Check-out Date:</Text>
-                            <Text style={styles.infoValue}>{formatDate(voucher.check_out_date)}</Text>
+                            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                                <Text style={styles.infoValue}>{formatDate(voucher.check_out_date)}</Text>
+                                <Text style={[styles.infoValue, { marginLeft: 5, color: theme.textMuted, fontSize: 10 }]}>
+                                    ({calculateNights(voucher.check_in_date, voucher.check_out_date)} nights)
+                                </Text>
+                            </View>
                         </View>
                         <View style={styles.gridItem}>
                             <Text style={styles.infoLabel}>Guests:</Text>
@@ -295,9 +314,17 @@ export default function BookingPDF({ voucher, settings }: BookingPDFProps) {
                                 {voucher.number_of_rooms} x {voucher.room_type || 'Standard'}
                             </Text>
                         </View>
-                        <View style={[styles.gridItem, { width: '100%' }]}>
+                        <View style={styles.gridItem}>
                             <Text style={styles.infoLabel}>Meal plan</Text>
                             <Text style={styles.infoValue}>{voucher.meal_plan || 'Not Specified'}</Text>
+                        </View>
+                        <View style={styles.gridItem}>
+                            <Text style={styles.infoLabel}>Mode of Transport</Text>
+                            <Text style={styles.infoValue}>{voucher.mode_of_transport || 'Not Specified'}</Text>
+                        </View>
+                        <View style={[styles.gridItem, { width: '100%' }]}>
+                            <Text style={styles.infoLabel}>Estimated Arrival Time (EAT)</Text>
+                            <Text style={styles.infoValue}>{voucher.arrival_time || 'Not Specified'}</Text>
                         </View>
                     </View>
                 </View>
@@ -309,7 +336,7 @@ export default function BookingPDF({ voucher, settings }: BookingPDFProps) {
                     <>
                         <Text style={styles.sectionTitle}>Additional Information</Text>
                         <View style={styles.additionalSection}>
-                            <Text style={[styles.infoLabel, { marginBottom: 8 }]}>Additional Information</Text>
+
 
                             {voucher.flight_details && (
                                 <View style={styles.bulletPoint}>
@@ -325,15 +352,7 @@ export default function BookingPDF({ voucher, settings }: BookingPDFProps) {
                                 </View>
                             )}
 
-                            {/* Standard disclaimer */}
-                            <View style={styles.bulletPoint}>
-                                <View style={styles.bullet} />
-                                <Text style={styles.bulletText}>Check-in opens 3 hours before departure (if flight included).</Text>
-                            </View>
-                            <View style={styles.bulletPoint}>
-                                <View style={styles.bullet} />
-                                <Text style={styles.bulletText}>Please ensure all travel documents are in order.</Text>
-                            </View>
+
                         </View>
                     </>
                 )}

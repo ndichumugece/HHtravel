@@ -58,16 +58,6 @@ export function useDashboardStats() {
 
                 if (recentBookingsError) throw recentBookingsError;
 
-                // Fetch data for Monthly Revenue (issued bookings only)
-                // We fetch specific columns to minimize data transfer
-                const { data: revenueData, error: revenueError } = await supabase
-                    .from('booking_vouchers')
-                    .select('created_at, quotation_price')
-                    .eq('status', 'issued')
-                    .not('quotation_price', 'is', null);
-
-                if (revenueError) throw revenueError;
-
                 // Process Top Properties
                 const propertyCounts: Record<string, number> = {};
                 recentBookings?.forEach((booking) => {
@@ -84,28 +74,41 @@ export function useDashboardStats() {
                         value: 0,
                     }));
 
-                // Process Monthly Revenue
-                const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-                const revenueByMonth = new Array(12).fill(0);
+                // Fetch data for Monthly Revenue (issued bookings only)
+                // We wrap this in a try-catch so that missing columns (migrations) don't break the whole dashboard
+                let monthlyRevenue: { name: string; total: number }[] = [];
+                try {
+                    const { data: revenueData, error: revenueError } = await supabase
+                        .from('booking_vouchers')
+                        .select('created_at, quotation_price')
+                        .eq('status', 'issued')
+                        .not('quotation_price', 'is', null);
 
-                revenueData?.forEach((booking) => {
-                    if (booking.created_at && booking.quotation_price) {
-                        const date = new Date(booking.created_at);
-                        const monthIndex = date.getMonth(); // 0-11
-                        // Check if it's current year? Or just all time aggregated by month?
-                        // Usually dashboard shows current year or last 12 months. 
-                        // For simplicity let's do all time aggregated by month if not specified, 
-                        // OR we can filter for current year. Let's filter for current year to be cleaner.
-                        if (date.getFullYear() === new Date().getFullYear()) {
-                            revenueByMonth[monthIndex] += Number(booking.quotation_price);
-                        }
+                    if (revenueError) {
+                        console.warn('Revenue fetch error (possible missing column?):', revenueError);
+                    } else {
+                        // Process Monthly Revenue
+                        const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+                        const revenueByMonth = new Array(12).fill(0);
+
+                        revenueData?.forEach((booking) => {
+                            if (booking.created_at && booking.quotation_price) {
+                                const date = new Date(booking.created_at);
+                                const monthIndex = date.getMonth(); // 0-11
+                                if (date.getFullYear() === new Date().getFullYear()) {
+                                    revenueByMonth[monthIndex] += Number(booking.quotation_price);
+                                }
+                            }
+                        });
+
+                        monthlyRevenue = monthNames.map((name, index) => ({
+                            name,
+                            total: revenueByMonth[index]
+                        }));
                     }
-                });
-
-                const monthlyRevenue = monthNames.map((name, index) => ({
-                    name,
-                    total: revenueByMonth[index]
-                }));
+                } catch (e) {
+                    console.warn('Failed to process revenue data', e);
+                }
 
                 setStats({
                     totalBookings: bookingsCount || 0,

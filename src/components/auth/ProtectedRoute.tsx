@@ -21,7 +21,11 @@ export default function ProtectedRoute({ allowedRoles }: ProtectedRouteProps) {
     }
 
     if (allowedRoles && role && !allowedRoles.includes(role)) {
-        return <Navigate to="/" replace />; // Or unauthorized page
+        // If user is a consultant trying to access admin pages (or home if restricted), redirect to bookings
+        if (role === 'consultant') {
+            return <Navigate to="/bookings" replace />;
+        }
+        return <Navigate to="/" replace />;
     }
 
     return <Outlet />;

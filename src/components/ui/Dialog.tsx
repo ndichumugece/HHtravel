@@ -1,4 +1,5 @@
 import * as React from "react"
+import { createPortal } from "react-dom"
 import { cn } from "../../lib/utils"
 
 const Dialog = ({
@@ -12,7 +13,7 @@ const Dialog = ({
 }) => {
     if (!open) return null
 
-    return (
+    return createPortal(
         <div className="fixed inset-0 z-50 flex items-center justify-center">
             {/* Backdrop */}
             <div
@@ -21,7 +22,8 @@ const Dialog = ({
             />
             {/* Dialog */}
             <div className="z-50">{children}</div>
-        </div>
+        </div>,
+        document.body
     )
 }
 

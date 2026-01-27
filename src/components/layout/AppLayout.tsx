@@ -67,11 +67,13 @@ export default function AppLayout() {
     };
 
     const navigation = [
-        { name: 'Dashboard', href: '/', icon: LayoutDashboard },
+
+        // { name: 'Dashboard', href: '/', icon: LayoutDashboard }, // Moved to admin check
         { name: 'Bookings', href: '/bookings', icon: FileText },
         { name: 'Quotations', href: '/quotations', icon: FileBadge },
         { name: 'Properties', href: '/properties', icon: Hotel },
         ...(role === 'admin' ? [
+            { name: 'Dashboard', href: '/', icon: LayoutDashboard },
             { name: 'Consultants', href: '/users', icon: Users },
             { name: 'Reports', href: '/reports', icon: Settings }
         ] : []),
@@ -198,7 +200,7 @@ export default function AppLayout() {
     );
 
     return (
-        <div className="min-h-screen bg-background flex font-sans text-foreground">
+        <div className="min-h-screen bg-gray-50 flex font-sans text-foreground overflow-x-hidden">
             {/* Desktop Sidebar */}
             <div className={cn("hidden md:block fixed h-full z-30 transition-all duration-300", isCollapsed ? "w-20" : "w-64")}>
                 <SidebarContent collapsed={isCollapsed} />
@@ -230,7 +232,7 @@ export default function AppLayout() {
 
             {/* Main Content */}
             <div className={cn(
-                "flex-1 bg-muted/20 min-h-screen transition-all duration-300 pt-16 md:pt-0",
+                "flex-1 min-h-screen transition-all duration-300 pt-16 md:pt-0",
                 isCollapsed ? "md:ml-20" : "md:ml-64"
             )}>
                 <OfflineNotice />
