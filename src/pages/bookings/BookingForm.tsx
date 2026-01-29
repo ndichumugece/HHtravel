@@ -61,7 +61,7 @@ export default function BookingForm() {
         if (count > 0 && count !== roomDetails.length) {
             setRoomDetails(prev => {
                 if (count > prev.length) {
-                    const newRooms = Array(count - prev.length).fill(null).map((_, i) => ({
+                    const newRooms = Array(count - prev.length).fill(null).map(() => ({
                         id: crypto.randomUUID(),
                         room_type: '',
                         bed_type: '',
