@@ -14,6 +14,7 @@ import UsersList from './pages/admin/UsersList';
 import AdminReports from './pages/admin/AdminReports';
 import Settings from './pages/admin/Settings';
 import { isSupabaseConfigured } from './lib/supabase';
+import OptionsList from './pages/settings/OptionsList';
 
 function App() {
   if (!isSupabaseConfigured) {
@@ -76,6 +77,9 @@ function App() {
                 <Route path="/users" element={<UsersList />} />
                 <Route path="/reports" element={<AdminReports />} />
                 <Route path="/settings" element={<Settings />} />
+                <Route path="/settings/meal-plans" element={<OptionsList title="Meal Plans" tableName="meal_plans" />} />
+                <Route path="/settings/room-types" element={<OptionsList title="Room Types" tableName="room_types" />} />
+                <Route path="/settings/bed-types" element={<OptionsList title="Bed Types" tableName="bed_types" />} />
               </Route>
             </Route>
           </Route>

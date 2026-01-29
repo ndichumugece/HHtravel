@@ -281,6 +281,14 @@ export default function BookingPDF({ voucher, settings }: BookingPDFProps) {
                         <Text style={styles.infoValue}>{voucher.guest_nationality || '-'}</Text>
                     </View>
                 </View>
+                {voucher.additional_guest_info && (
+                    <View style={[styles.clientCard, { marginTop: -10, paddingTop: 0 }]}>
+                        <View style={styles.clientCol}>
+                            <Text style={styles.infoLabel}>Additional Guest Information:</Text>
+                            <Text style={styles.infoValue}>{voucher.additional_guest_info}</Text>
+                        </View>
+                    </View>
+                )}
 
                 {/* Reservation Details */}
                 <Text style={styles.sectionTitle}>Reservation Details</Text>
@@ -302,60 +310,77 @@ export default function BookingPDF({ voucher, settings }: BookingPDFProps) {
                                 </Text>
                             </View>
                         </View>
-                        <View style={styles.gridItem}>
-                            <Text style={styles.infoLabel}>Guests:</Text>
-                            <Text style={styles.infoValue}>
-                                {voucher.number_of_adults} adults, {voucher.number_of_children} children
-                            </Text>
-                        </View>
-                        <View style={styles.gridItem}>
-                            <Text style={styles.infoLabel}>Number of Rooms / Type:</Text>
-                            <Text style={styles.infoValue}>
-                                {voucher.number_of_rooms} x {voucher.room_type || 'Standard'}
-                            </Text>
-                        </View>
+                        {voucher.room_details && voucher.room_details.length > 0 ? (
+                            <View style={[styles.gridItem, { width: '100%', flexDirection: 'column', alignItems: 'flex-start' }]}>
+                                <Text style={[styles.infoLabel, { marginBottom: 5 }]}>Room Configuration:</Text>
+                                {voucher.room_details.map((room, index) => (
+                                    <View key={index} style={{ flexDirection: 'row', marginBottom: 2, width: '100%', flexWrap: 'wrap' }}>
+                                        <Text style={{ fontSize: 9, marginRight: 5 }}>• Room {index + 1}:</Text>
+                                        <Text style={{ fontSize: 9, fontFamily: 'Helvetica-Bold' }}>{room.room_type}</Text>
+                                        <Text style={{ fontSize: 9, marginHorizontal: 3 }}>|</Text>
+                                        <Text style={{ fontSize: 9 }}>{room.bed_type}</Text>
+                                        <Text style={{ fontSize: 9, marginHorizontal: 3 }}>|</Text>
+                                        <Text style={{ fontSize: 9 }}>{room.adults} Adults, {room.children} Child</Text>
+                                    </View>
+                                ))}
+                            </View>
+                        ) : (
+                            <View style={styles.gridItem}>
+                                <Text style={styles.infoLabel}>Room Configuration:</Text>
+                                <Text style={styles.infoValue}>
+                                    {voucher.number_of_rooms} Rooms (Details not specified)
+                                </Text>
+                            </View>
+                        )}
                         <View style={styles.gridItem}>
                             <Text style={styles.infoLabel}>Meal plan</Text>
                             <Text style={styles.infoValue}>{voucher.meal_plan || 'Not Specified'}</Text>
                         </View>
-                        <View style={styles.gridItem}>
-                            <Text style={styles.infoLabel}>Mode of Transport</Text>
-                            <Text style={styles.infoValue}>{voucher.mode_of_transport || 'Not Specified'}</Text>
-                        </View>
-                        <View style={[styles.gridItem, { width: '100%' }]}>
-                            <Text style={styles.infoLabel}>Estimated Arrival Time (EAT)</Text>
-                            <Text style={styles.infoValue}>{voucher.arrival_time || 'Not Specified'}</Text>
-                        </View>
+                    </View>
+                </View>
+
+                {/* Transport Details */}
+                <Text style={styles.sectionTitle}>Transport Details</Text>
+                <View style={styles.clientCard}>
+                    <View style={styles.clientCol}>
+                        <Text style={styles.infoLabel}>Mode of Transport:</Text>
+                        <Text style={styles.infoValue}>{voucher.mode_of_transport || 'Not Specified'}</Text>
+                    </View>
+                    <View style={styles.clientCol}>
+                        <Text style={styles.infoLabel}>Estimated Arrival Time:</Text>
+                        <Text style={styles.infoValue}>{voucher.arrival_time || 'Not Specified'}</Text>
                     </View>
                 </View>
 
 
 
                 {/* Additional Information */}
-                {(voucher.special_requests || voucher.flight_details) && (
-                    <>
-                        <Text style={styles.sectionTitle}>Additional Information</Text>
-                        <View style={styles.additionalSection}>
+                {
+                    (voucher.special_requests || voucher.flight_details) && (
+                        <>
+                            <Text style={styles.sectionTitle}>Additional Information</Text>
+                            <View style={styles.additionalSection}>
 
 
-                            {voucher.flight_details && (
-                                <View style={styles.bulletPoint}>
-                                    <View style={styles.bullet} />
-                                    <Text style={styles.bulletText}>{voucher.flight_details}</Text>
-                                </View>
-                            )}
+                                {voucher.flight_details && (
+                                    <View style={styles.bulletPoint}>
+                                        <View style={styles.bullet} />
+                                        <Text style={styles.bulletText}>{voucher.flight_details}</Text>
+                                    </View>
+                                )}
 
-                            {voucher.special_requests && (
-                                <View style={styles.bulletPoint}>
-                                    <View style={styles.bullet} />
-                                    <Text style={styles.bulletText}>{voucher.special_requests}</Text>
-                                </View>
-                            )}
+                                {voucher.special_requests && (
+                                    <View style={styles.bulletPoint}>
+                                        <View style={styles.bullet} />
+                                        <Text style={styles.bulletText}>{voucher.special_requests}</Text>
+                                    </View>
+                                )}
 
 
-                        </View>
-                    </>
-                )}
+                            </View>
+                        </>
+                    )
+                }
 
 
                 {/* Contact Information */}
@@ -390,7 +415,7 @@ export default function BookingPDF({ voucher, settings }: BookingPDFProps) {
                     <Text style={{ fontSize: 8, color: theme.divider }}>Generated by H&H Travel System</Text>
                 </View>
 
-            </Page>
-        </Document>
+            </Page >
+        </Document >
     );
 }

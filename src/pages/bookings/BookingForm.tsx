@@ -12,7 +12,7 @@ import { AddPropertyModal } from '../../components/properties/AddPropertyModal';
 import { Input } from '../../components/ui/Input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../../components/ui/Card';
 import { format } from 'date-fns';
-import { nationalities } from '../../data/nationalities';
+
 
 export default function BookingForm() {
     const { id } = useParams();
@@ -23,6 +23,16 @@ export default function BookingForm() {
     const [loading, setLoading] = useState(false);
     const [isEditMode] = useState(!!id);
     const [isPropertyModalOpen, setIsPropertyModalOpen] = useState(false);
+
+    // Dynamic Options State
+    const [mealPlans, setMealPlans] = useState<{ id: string, name: string }[]>([]);
+    const [roomTypes, setRoomTypes] = useState<{ id: string, name: string }[]>([]); // For the dynamic rows
+    const [bedTypes, setBedTypes] = useState<{ id: string, name: string }[]>([]);
+
+    // Room Details State
+    const [roomDetails, setRoomDetails] = useState<{ id: string, room_type: string, bed_type: string, adults: number, children: number }[]>([
+        { id: '1', room_type: '', bed_type: '', adults: 2, children: 0 }
+    ]);
 
     const { register, handleSubmit, setValue, control } = useForm<Partial<BookingVoucher>>({
         defaultValues: {
@@ -38,12 +48,45 @@ export default function BookingForm() {
     useEffect(() => {
         fetchProperties();
         fetchSettings();
+        fetchDynamicOptions();
         if (id) {
             fetchVoucher(id);
         } else {
             generateReference();
         }
     }, [id]);
+
+    useEffect(() => {
+        const count = parseInt(String(formValues.number_of_rooms || 0), 10);
+        if (count > 0 && count !== roomDetails.length) {
+            setRoomDetails(prev => {
+                if (count > prev.length) {
+                    const newRooms = Array(count - prev.length).fill(null).map((_, i) => ({
+                        id: crypto.randomUUID(),
+                        room_type: '',
+                        bed_type: '',
+                        adults: 2,
+                        children: 0
+                    }));
+                    return [...prev, ...newRooms];
+                } else {
+                    return prev.slice(0, count);
+                }
+            });
+        }
+    }, [formValues.number_of_rooms]);
+
+    const fetchDynamicOptions = async () => {
+        const { data: meals } = await supabase.from('meal_plans').select('id, name').order('name');
+        if (meals) setMealPlans(meals);
+
+        // Fetch room types for the dynamic rows
+        const { data: rooms } = await supabase.from('room_types').select('id, name').order('name');
+        if (rooms) setRoomTypes(rooms);
+
+        const { data: beds } = await supabase.from('bed_types').select('id, name').order('name');
+        if (beds) setBedTypes(beds);
+    };
 
     const generateReference = () => {
         const random = Math.floor(1000 + Math.random() * 9000);
@@ -74,7 +117,8 @@ export default function BookingForm() {
         try {
             const payload = {
                 ...data,
-                consultant_id: user?.id
+                consultant_id: user?.id,
+                room_details: roomDetails, // Include roomDetails in the payload
             };
 
             if (isEditMode && id) {
@@ -210,21 +254,28 @@ export default function BookingForm() {
                             </div>
                             <div>
                                 <label className="text-sm font-medium leading-none">Nationality</label>
-                                <Input
+                                <select
                                     {...register('guest_nationality')}
-                                    className="mt-2"
-                                    placeholder="e.g. American"
-                                    list="nationality-list"
-                                />
-                                <datalist id="nationality-list">
-                                    {nationalities.map((n) => (
-                                        <option key={n} value={n} />
-                                    ))}
-                                </datalist>
+                                    className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 mt-2"
+                                >
+                                    <option value="">Select Nationality</option>
+                                    <option value="Resident">Resident</option>
+                                    <option value="East Africa Resident">East Africa Resident</option>
+                                    <option value="Non-resident">Non-resident</option>
+                                </select>
                             </div>
                             <div>
                                 <label className="text-sm font-medium leading-none">Contact Info</label>
                                 <Input {...register('guest_contact')} className="mt-2" placeholder="Phone or Email" />
+                            </div>
+                            <div className="col-span-2">
+                                <label className="text-sm font-medium leading-none">Additional Guest Information</label>
+                                <textarea
+                                    {...register('additional_guest_info')}
+                                    rows={3}
+                                    className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 mt-2"
+                                    placeholder="Any additional details about the guest..."
+                                />
                             </div>
                         </CardContent>
                     </Card>
@@ -274,81 +325,146 @@ export default function BookingForm() {
                             </div>
                             <div className="grid grid-cols-2 gap-4 col-span-2">
                                 <div>
-                                    <label className="text-sm font-medium leading-none">Room Type</label>
+                                    <label className="text-sm font-medium leading-none">Package Type</label>
                                     <select
-                                        {...register('room_type')}
+                                        {...register('package_type')}
                                         className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 mt-2"
                                     >
-                                        <option value="">Select Room Type</option>
-                                        <option value="Single Room">Single Room</option>
-                                        <option value="Double Room">Double Room</option>
-                                        <option value="Twin Room">Twin Room</option>
-                                        <option value="Triple Room">Triple Room</option>
-                                        <option value="Quad Room">Quad Room</option>
-                                        <option value="Standard Room">Standard Room</option>
-                                        <option value="Deluxe Room">Deluxe Room</option>
-                                        <option value="Superior Room">Superior Room</option>
-                                        <option value="Executive Room">Executive Room</option>
-                                        <option value="Junior Suite">Junior Suite</option>
-                                        <option value="Suite">Suite</option>
-                                        <option value="Presidential Suite">Presidential Suite</option>
-                                        <option value="Studio Room">Studio Room</option>
-                                        <option value="Family Room">Family Room</option>
-                                        <option value="Connecting Rooms">Connecting Rooms</option>
-                                        <option value="Accessible Room">Accessible Room</option>
-                                        <option value="Luxury Tent">Luxury Tent</option>
+                                        <option value="">Select Package Type</option>
+                                        <option value="Full Board">Full Board</option>
+                                        <option value="Ground Package">Ground Package</option>
                                     </select>
                                 </div>
                                 <div>
-                                    <label className="text-sm font-medium leading-none">Meal Plan</label>
                                     <select
                                         {...register('meal_plan')}
                                         className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 mt-2"
                                     >
                                         <option value="">Select Meal Plan</option>
-                                        <option value="Room Only">Room Only</option>
-                                        <option value="Bed & Breakfast">Bed & Breakfast</option>
-                                        <option value="Breakfast Only">Breakfast Only</option>
-                                        <option value="Half Board">Half Board</option>
-                                        <option value="Full Board">Full Board</option>
-                                        <option value="All Inclusive">All Inclusive</option>
+                                        {mealPlans.map(mp => (
+                                            <option key={mp.id} value={mp.name}>{mp.name}</option>
+                                        ))}
                                     </select>
                                 </div>
                             </div>
-
                             <div className="grid grid-cols-2 gap-4 col-span-2">
                                 <div>
-                                    <label className="text-sm font-medium leading-none">Mode of Transport</label>
-                                    <select
-                                        {...register('mode_of_transport')}
-                                        className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 mt-2"
-                                    >
-                                        <option value="">Select Transport</option>
-                                        <option value="Self Drive">Self Drive</option>
-                                        <option value="Train">Train</option>
-                                        <option value="Flying">Flying</option>
-                                        <option value="H&H Road Package">H&H Road Package</option>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label className="text-sm font-medium leading-none">Estimated Arrival Time</label>
-                                    <Input type="time" {...register('arrival_time')} className="mt-2" />
+                                    <label className="text-sm font-medium leading-none">Number of Rooms</label>
+                                    <Input type="number" {...register('number_of_rooms')} className="mt-2" placeholder="e.g. 1" min={1} />
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-3 gap-4 col-span-2">
-                                <div>
-                                    <label className="text-sm font-medium leading-none">Rooms</label>
-                                    <Input type="number" {...register('number_of_rooms')} className="mt-2" />
-                                </div>
-                                <div>
-                                    <label className="text-sm font-medium leading-none">Adults</label>
-                                    <Input type="number" {...register('number_of_adults')} className="mt-2" />
-                                </div>
-                                <div>
-                                    <label className="text-sm font-medium leading-none">Children</label>
-                                    <Input type="number" {...register('number_of_children')} className="mt-2" />
-                                </div>
+                            {/* Dynamic Room Details Rows */}
+                            <div className="col-span-2 space-y-4 pt-4 border-t mt-4">
+                                <label className="text-sm font-semibold">Room Configuration</label>
+                                {roomDetails.map((room, index) => (
+                                    <div key={room.id} className="grid grid-cols-1 md:grid-cols-4 gap-4 p-4 border rounded-lg bg-muted/20 relative items-end">
+                                        <div className="absolute top-2 right-2 text-xs font-bold text-muted-foreground bg-muted px-2 py-1 rounded w-6 h-6 flex items-center justify-center">
+                                            {index + 1}
+                                        </div>
+
+                                        {/* 1. Room Type */}
+                                        <div className="md:col-span-1">
+                                            <label className="text-sm font-medium leading-none">Room Type</label>
+                                            <select
+                                                value={room.room_type}
+                                                onChange={(e) => {
+                                                    const newDetails = [...roomDetails];
+                                                    newDetails[index].room_type = e.target.value;
+                                                    setRoomDetails(newDetails);
+                                                }}
+                                                className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 mt-2"
+                                            >
+                                                <option value="">Select Room Type</option>
+                                                {roomTypes.map(rt => (
+                                                    <option key={rt.id} value={rt.name}>{rt.name}</option>
+                                                ))}
+                                            </select>
+                                        </div>
+
+                                        {/* 2. Adults */}
+                                        <div className="flex flex-col items-center justify-center border p-2 rounded bg-background h-full">
+                                            <span className="text-sm font-medium mb-1">Adults</span>
+                                            <div className="flex items-center gap-2">
+                                                <Button type="button" variant="ghost" size="icon" className="h-6 w-6" onClick={() => {
+                                                    const newDetails = [...roomDetails];
+                                                    if (newDetails[index].adults > 0) newDetails[index].adults--;
+                                                    setRoomDetails(newDetails);
+                                                }}>-</Button>
+                                                <span className="w-4 text-center">{room.adults}</span>
+                                                <Button type="button" variant="ghost" size="icon" className="h-6 w-6" onClick={() => {
+                                                    const newDetails = [...roomDetails];
+                                                    newDetails[index].adults++;
+                                                    setRoomDetails(newDetails);
+                                                }}>+</Button>
+                                            </div>
+                                        </div>
+
+                                        {/* 3. Children */}
+                                        <div className="flex flex-col items-center justify-center border p-2 rounded bg-background h-full">
+                                            <span className="text-sm font-medium mb-1">Children</span>
+                                            <div className="flex items-center gap-2">
+                                                <Button type="button" variant="ghost" size="icon" className="h-6 w-6" onClick={() => {
+                                                    const newDetails = [...roomDetails];
+                                                    if (newDetails[index].children > 0) newDetails[index].children--;
+                                                    setRoomDetails(newDetails);
+                                                }}>-</Button>
+                                                <span className="w-4 text-center">{room.children}</span>
+                                                <Button type="button" variant="ghost" size="icon" className="h-6 w-6" onClick={() => {
+                                                    const newDetails = [...roomDetails];
+                                                    newDetails[index].children++;
+                                                    setRoomDetails(newDetails);
+                                                }}>+</Button>
+                                            </div>
+                                        </div>
+
+                                        {/* 4. Bed Type */}
+                                        <div className="md:col-span-1">
+                                            <label className="text-sm font-medium leading-none">Bed Type</label>
+                                            <select
+                                                value={room.bed_type}
+                                                onChange={(e) => {
+                                                    const newDetails = [...roomDetails];
+                                                    newDetails[index].bed_type = e.target.value;
+                                                    setRoomDetails(newDetails);
+                                                }}
+                                                className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 mt-2"
+                                            >
+                                                <option value="">Select Bed Type</option>
+                                                {bedTypes.map(bt => (
+                                                    <option key={bt.id} value={bt.name}>{bt.name}</option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+
+                        </CardContent>
+                    </Card>
+
+                    {/* Transport Details */}
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Transport Details</CardTitle>
+                        </CardHeader>
+                        <CardContent className="grid gap-6 sm:grid-cols-2">
+                            <div>
+                                <label className="text-sm font-medium leading-none">Mode of Transport</label>
+                                <select
+                                    {...register('mode_of_transport')}
+                                    className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 mt-2"
+                                >
+                                    <option value="">Select Transport</option>
+                                    <option value="Self Drive">Self Drive</option>
+                                    <option value="Train">Train</option>
+                                    <option value="Flying">Flying</option>
+                                    <option value="H&H Road Package">H&H Road Package</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label className="text-sm font-medium leading-none">Estimated Arrival Time</label>
+                                <Input type="time" {...register('arrival_time')} className="mt-2" />
                             </div>
                         </CardContent>
                     </Card>
@@ -378,11 +494,11 @@ export default function BookingForm() {
                                 />
                             </div>
                         </CardContent>
-                    </Card>
-                </div>
+                    </Card >
+                </div >
 
                 {/* Sidebar Column */}
-                <div className="space-y-6">
+                < div className="space-y-6" >
                     <Card>
                         <CardHeader>
                             <CardTitle className="text-base">Voucher Settings</CardTitle>
@@ -424,8 +540,8 @@ export default function BookingForm() {
                             </div>
                         </CardContent>
                     </Card>
-                </div>
-            </form>
+                </div >
+            </form >
 
             <AddPropertyModal
                 isOpen={isPropertyModalOpen}
@@ -435,6 +551,6 @@ export default function BookingForm() {
                     setValue('property_name', newProperty.name);
                 }}
             />
-        </div>
+        </div >
     );
 }

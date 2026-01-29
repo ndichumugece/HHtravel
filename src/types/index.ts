@@ -17,12 +17,14 @@ export interface BookingVoucher {
     consultant_id: string;
     guest_name: string;
     guest_nationality?: string;
+    additional_guest_info?: string;
     guest_contact?: string;
     check_in_date: string;
     check_out_date: string;
     number_of_nights: number;
     property_name: string;
-    room_type?: string;
+    package_type?: string;
+    bed_type?: string;
     meal_plan?: string;
     number_of_rooms: number;
     number_of_adults: number;
@@ -34,9 +36,18 @@ export interface BookingVoucher {
     mode_of_transport?: string;
     status: 'issued' | 'cancelled';
     created_at: string;
+    room_details?: RoomDetail[];
     profiles?: {
         full_name: string;
     };
+}
+
+export interface RoomDetail {
+    id: string; // for key
+    room_type: string;
+    bed_type: string;
+    adults: number;
+    children: number;
 }
 
 export interface QuotationVoucher {
