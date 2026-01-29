@@ -30,8 +30,8 @@ export default function BookingForm() {
     const [bedTypes, setBedTypes] = useState<{ id: string, name: string }[]>([]);
 
     // Room Details State
-    const [roomDetails, setRoomDetails] = useState<{ id: string, room_type: string, bed_type: string, adults: number, children: number }[]>([
-        { id: '1', room_type: '', bed_type: '', adults: 2, children: 0 }
+    const [roomDetails, setRoomDetails] = useState<{ id: string, room_type: string, bed_type: string, adults: number, children: number, child_ages?: number[] }[]>([
+        { id: '1', room_type: '', bed_type: '', adults: 2, children: 0, child_ages: [] }
     ]);
 
     const { register, handleSubmit, setValue, control } = useForm<Partial<BookingVoucher>>({
@@ -66,7 +66,8 @@ export default function BookingForm() {
                         room_type: '',
                         bed_type: '',
                         adults: 2,
-                        children: 0
+                        children: 0,
+                        child_ages: []
                     }));
                     return [...prev, ...newRooms];
                 } else {
@@ -358,84 +359,124 @@ export default function BookingForm() {
                             <div className="col-span-2 space-y-4 pt-4 border-t mt-4">
                                 <label className="text-sm font-semibold">Room Configuration</label>
                                 {roomDetails.map((room, index) => (
-                                    <div key={room.id} className="grid grid-cols-1 md:grid-cols-4 gap-4 p-4 border rounded-lg bg-muted/20 relative items-end">
+                                    <div key={room.id} className="p-4 border rounded-lg bg-muted/20 relative space-y-4">
                                         <div className="absolute top-2 right-2 text-xs font-bold text-muted-foreground bg-muted px-2 py-1 rounded w-6 h-6 flex items-center justify-center">
                                             {index + 1}
                                         </div>
 
-                                        {/* 1. Room Type */}
-                                        <div className="md:col-span-1">
-                                            <label className="text-sm font-medium leading-none">Room Type</label>
-                                            <select
-                                                value={room.room_type}
-                                                onChange={(e) => {
-                                                    const newDetails = [...roomDetails];
-                                                    newDetails[index].room_type = e.target.value;
-                                                    setRoomDetails(newDetails);
-                                                }}
-                                                className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 mt-2"
-                                            >
-                                                <option value="">Select Room Type</option>
-                                                {roomTypes.map(rt => (
-                                                    <option key={rt.id} value={rt.name}>{rt.name}</option>
-                                                ))}
-                                            </select>
-                                        </div>
+                                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+                                            {/* 1. Room Type */}
+                                            <div className="md:col-span-1">
+                                                <label className="text-sm font-medium leading-none">Room Type</label>
+                                                <select
+                                                    value={room.room_type}
+                                                    onChange={(e) => {
+                                                        const newDetails = [...roomDetails];
+                                                        newDetails[index].room_type = e.target.value;
+                                                        setRoomDetails(newDetails);
+                                                    }}
+                                                    className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 mt-2"
+                                                >
+                                                    <option value="">Select Room Type</option>
+                                                    {roomTypes.map(rt => (
+                                                        <option key={rt.id} value={rt.name}>{rt.name}</option>
+                                                    ))}
+                                                </select>
+                                            </div>
 
-                                        {/* 2. Adults */}
-                                        <div className="flex flex-col items-center justify-center border p-2 rounded bg-background h-full">
-                                            <span className="text-sm font-medium mb-1">Adults</span>
-                                            <div className="flex items-center gap-2">
-                                                <Button type="button" variant="ghost" size="icon" className="h-6 w-6" onClick={() => {
-                                                    const newDetails = [...roomDetails];
-                                                    if (newDetails[index].adults > 0) newDetails[index].adults--;
-                                                    setRoomDetails(newDetails);
-                                                }}>-</Button>
-                                                <span className="w-4 text-center">{room.adults}</span>
-                                                <Button type="button" variant="ghost" size="icon" className="h-6 w-6" onClick={() => {
-                                                    const newDetails = [...roomDetails];
-                                                    newDetails[index].adults++;
-                                                    setRoomDetails(newDetails);
-                                                }}>+</Button>
+                                            {/* 2. Adults */}
+                                            <div className="flex flex-col items-center justify-center border p-2 rounded bg-background h-full">
+                                                <span className="text-sm font-medium mb-1">Adults</span>
+                                                <div className="flex items-center gap-2">
+                                                    <Button type="button" variant="ghost" size="icon" className="h-6 w-6" onClick={() => {
+                                                        const newDetails = [...roomDetails];
+                                                        if (newDetails[index].adults > 0) newDetails[index].adults--;
+                                                        setRoomDetails(newDetails);
+                                                    }}>-</Button>
+                                                    <span className="w-4 text-center">{room.adults}</span>
+                                                    <Button type="button" variant="ghost" size="icon" className="h-6 w-6" onClick={() => {
+                                                        const newDetails = [...roomDetails];
+                                                        newDetails[index].adults++;
+                                                        setRoomDetails(newDetails);
+                                                    }}>+</Button>
+                                                </div>
+                                            </div>
+
+                                            {/* 3. Children */}
+                                            <div className="flex flex-col items-center justify-center border p-2 rounded bg-background h-full">
+                                                <span className="text-sm font-medium mb-1">Children</span>
+                                                <div className="flex items-center gap-2">
+                                                    <Button type="button" variant="ghost" size="icon" className="h-6 w-6" onClick={() => {
+                                                        const newDetails = [...roomDetails];
+                                                        if (newDetails[index].children > 0) {
+                                                            newDetails[index].children--;
+                                                            // Remove last age slot
+                                                            const currentAges = newDetails[index].child_ages || [];
+                                                            newDetails[index].child_ages = currentAges.slice(0, -1);
+                                                            setRoomDetails(newDetails);
+                                                        }
+                                                    }}>-</Button>
+                                                    <span className="w-4 text-center">{room.children}</span>
+                                                    <Button type="button" variant="ghost" size="icon" className="h-6 w-6" onClick={() => {
+                                                        const newDetails = [...roomDetails];
+                                                        newDetails[index].children++;
+                                                        // Add age slot (default 0 or empty)
+                                                        const currentAges = newDetails[index].child_ages || [];
+                                                        newDetails[index].child_ages = [...currentAges, 0];
+                                                        setRoomDetails(newDetails);
+                                                    }}>+</Button>
+                                                </div>
+                                            </div>
+
+                                            {/* 4. Bed Type */}
+                                            <div className="md:col-span-1">
+                                                <label className="text-sm font-medium leading-none">Bed Type</label>
+                                                <select
+                                                    value={room.bed_type}
+                                                    onChange={(e) => {
+                                                        const newDetails = [...roomDetails];
+                                                        newDetails[index].bed_type = e.target.value;
+                                                        setRoomDetails(newDetails);
+                                                    }}
+                                                    className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 mt-2"
+                                                >
+                                                    <option value="">Select Bed Type</option>
+                                                    {bedTypes.map(bt => (
+                                                        <option key={bt.id} value={bt.name}>{bt.name}</option>
+                                                    ))}
+                                                </select>
                                             </div>
                                         </div>
 
-                                        {/* 3. Children */}
-                                        <div className="flex flex-col items-center justify-center border p-2 rounded bg-background h-full">
-                                            <span className="text-sm font-medium mb-1">Children</span>
-                                            <div className="flex items-center gap-2">
-                                                <Button type="button" variant="ghost" size="icon" className="h-6 w-6" onClick={() => {
-                                                    const newDetails = [...roomDetails];
-                                                    if (newDetails[index].children > 0) newDetails[index].children--;
-                                                    setRoomDetails(newDetails);
-                                                }}>-</Button>
-                                                <span className="w-4 text-center">{room.children}</span>
-                                                <Button type="button" variant="ghost" size="icon" className="h-6 w-6" onClick={() => {
-                                                    const newDetails = [...roomDetails];
-                                                    newDetails[index].children++;
-                                                    setRoomDetails(newDetails);
-                                                }}>+</Button>
+                                        {/* Child Ages Section */}
+                                        {room.children > 0 && (
+                                            <div className="w-full pt-2">
+                                                <div className="text-center mb-2">
+                                                    <em className="text-muted-foreground">Child age at time of travel</em>
+                                                </div>
+                                                <div className="flex flex-wrap gap-4 justify-center">
+                                                    {(room.child_ages || []).map((age, ageIndex) => (
+                                                        <select
+                                                            key={ageIndex}
+                                                            value={age || ''}
+                                                            onChange={(e) => {
+                                                                const newDetails = [...roomDetails];
+                                                                const newAges = [...(newDetails[index].child_ages || [])];
+                                                                newAges[ageIndex] = parseInt(e.target.value, 10);
+                                                                newDetails[index].child_ages = newAges;
+                                                                setRoomDetails(newDetails);
+                                                            }}
+                                                            className="flex h-10 px-3 py-2 bg-background border border-input rounded-md text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-red-300"
+                                                        >
+                                                            <option value="">Select Child {ageIndex + 1} Age</option>
+                                                            {Array.from({ length: 18 }, (_, i) => i).map((num) => (
+                                                                <option key={num} value={num}>{num} yrs</option>
+                                                            ))}
+                                                        </select>
+                                                    ))}
+                                                </div>
                                             </div>
-                                        </div>
-
-                                        {/* 4. Bed Type */}
-                                        <div className="md:col-span-1">
-                                            <label className="text-sm font-medium leading-none">Bed Type</label>
-                                            <select
-                                                value={room.bed_type}
-                                                onChange={(e) => {
-                                                    const newDetails = [...roomDetails];
-                                                    newDetails[index].bed_type = e.target.value;
-                                                    setRoomDetails(newDetails);
-                                                }}
-                                                className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 mt-2"
-                                            >
-                                                <option value="">Select Bed Type</option>
-                                                {bedTypes.map(bt => (
-                                                    <option key={bt.id} value={bt.name}>{bt.name}</option>
-                                                ))}
-                                            </select>
-                                        </div>
+                                        )}
                                     </div>
                                 ))}
                             </div>

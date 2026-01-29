@@ -48,6 +48,7 @@ export interface RoomDetail {
     bed_type: string;
     adults: number;
     children: number;
+    child_ages?: number[];
 }
 
 export interface QuotationVoucher {
