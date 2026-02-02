@@ -30,6 +30,16 @@ const AIRLINES = [
     "Scenic Air Safaris"
 ];
 
+const LEAD_SOURCES = [
+    'TikTok',
+    'Instagram',
+    'Facebook',
+    'Website',
+    'Twitter/X',
+    'Referral',
+    'Other'
+];
+
 
 export default function BookingForm() {
     const { id } = useParams();
@@ -161,8 +171,11 @@ export default function BookingForm() {
             const payload = {
                 ...data,
                 consultant_id: user?.id,
-                room_details: roomDetails, // Include roomDetails in the payload
+                room_details: roomDetails,
             };
+
+            // Remove joined fields that are not columns in the booking_vouchers table
+            delete (payload as any).profiles;
 
             if (isEditMode && id) {
                 const { error } = await supabase.from('booking_vouchers').update(payload).eq('id', id);
@@ -580,6 +593,25 @@ export default function BookingForm() {
                                             </div>
                                         </div>
                                     )}
+
+                                    {formValues.mode_of_transport === 'Train' && (
+                                        <div className="sm:col-span-2 grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                            <div>
+                                                <label className="text-sm font-medium leading-none">Train</label>
+                                                <div className="mt-2 flex h-10 w-full items-center rounded-md border border-input bg-muted px-3 py-2 text-sm text-muted-foreground cursor-not-allowed">
+                                                    Madaraka Express
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <label className="text-sm font-medium leading-none">Date</label>
+                                                <Input type="date" {...register('flight_arrival_date')} className="mt-2" />
+                                            </div>
+                                            <div>
+                                                <label className="text-sm font-medium leading-none">Estimate Arrival Time (EAT)</label>
+                                                <Input type="time" {...register('arrival_time')} className="mt-2" />
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
 
@@ -614,6 +646,25 @@ export default function BookingForm() {
                                                         <option key={airline} value={airline}>{airline}</option>
                                                     ))}
                                                 </select>
+                                            </div>
+                                            <div>
+                                                <label className="text-sm font-medium leading-none">Date</label>
+                                                <Input type="date" {...register('flight_departure_date')} className="mt-2" />
+                                            </div>
+                                            <div>
+                                                <label className="text-sm font-medium leading-none">Estimate Departure Time (EDT)</label>
+                                                <Input type="time" {...register('departure_time')} className="mt-2" />
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {formValues.departure_mode_of_transport === 'Train' && (
+                                        <div className="sm:col-span-2 grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                            <div>
+                                                <label className="text-sm font-medium leading-none">Train</label>
+                                                <div className="mt-2 flex h-10 w-full items-center rounded-md border border-input bg-muted px-3 py-2 text-sm text-muted-foreground cursor-not-allowed">
+                                                    Madaraka Express
+                                                </div>
                                             </div>
                                             <div>
                                                 <label className="text-sm font-medium leading-none">Date</label>
@@ -709,6 +760,18 @@ export default function BookingForm() {
                                 <p className="text-xs text-muted-foreground mt-1">
                                     For analytics only. Hidden from PDF.
                                 </p>
+                            </div>
+                            <div className="mt-4">
+                                <label className="text-sm font-medium leading-none">Lead Source</label>
+                                <select
+                                    {...register('lead_source')}
+                                    className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 mt-2"
+                                >
+                                    <option value="">Select Source</option>
+                                    {LEAD_SOURCES.map(source => (
+                                        <option key={source} value={source}>{source}</option>
+                                    ))}
+                                </select>
                             </div>
                         </CardContent>
                     </Card>

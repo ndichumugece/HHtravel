@@ -46,6 +46,7 @@ export interface BookingVoucher {
 
     status: 'issued' | 'cancelled';
     created_at: string;
+    lead_source?: string;
     room_details?: RoomDetail[];
     profiles?: {
         full_name: string;

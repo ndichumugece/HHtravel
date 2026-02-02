@@ -2,6 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card'
 import { Activity, CreditCard, Users, Building2, TrendingUp, TrendingDown, ArrowUpRight } from 'lucide-react';
 import { useDashboardStats } from '../hooks/useDashboardStats';
 import { BookingAnalytics } from '../components/dashboard/BookingAnalytics';
+import { LeadSourceAnalytics } from '../components/dashboard/LeadSourceAnalytics';
 import { cn } from '../lib/utils';
 
 export default function Dashboard() {
@@ -77,6 +78,9 @@ export default function Dashboard() {
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-7">
                 {/* Analytics Chart */}
                 <BookingAnalytics data={stats.monthlyRevenue || []} />
+
+                {/* Lead Source Analytics */}
+                <LeadSourceAnalytics data={stats.leadSourceData || []} />
 
                 {/* Top Properties */}
                 <Card className="col-span-3 border-none shadow-sm bg-white dark:bg-card">

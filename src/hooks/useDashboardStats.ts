@@ -12,6 +12,7 @@ export interface DashboardStats {
         value: number;
     }[];
     monthlyRevenue: { name: string; total: number }[];
+    leadSourceData: { name: string; value: number }[];
     loading: boolean;
     error: string | null;
 }
@@ -24,6 +25,7 @@ export function useDashboardStats() {
         totalConsultants: 0,
         topProperties: [],
         monthlyRevenue: [],
+        leadSourceData: [],
         loading: true,
         error: null,
     });
@@ -110,6 +112,29 @@ export function useDashboardStats() {
                     console.warn('Failed to process revenue data', e);
                 }
 
+                // Process Lead Source Data
+                const leadSourceCounts: Record<string, number> = {};
+                // We reuse recentBookings for now, or we could fetch all. 
+                // However, topProperties fetch was limited to 100. Let's fetch a larger set or just use what we have if appropriate.
+                // For accurate stats, a dedicated separate aggregation query is better, or fetching more fields in the initial Top Prop query if possible.
+                // To avoid too many requests, let's fetch a separate aggregation for lead sources or use the count query if Supabase supported group by easily via client (it doesn't directly return aggregated data structure).
+
+                // Let's fetch all lead sources for analytics (lightweight query)
+                const { data: leadData, error: leadError } = await supabase
+                    .from('booking_vouchers')
+                    .select('lead_source');
+
+                if (!leadError && leadData) {
+                    leadData.forEach((booking) => {
+                        const source = booking.lead_source || 'Unknown';
+                        leadSourceCounts[source] = (leadSourceCounts[source] || 0) + 1;
+                    });
+                }
+
+                const leadSourceData = Object.entries(leadSourceCounts)
+                    .map(([name, value]) => ({ name, value }))
+                    .sort((a, b) => b.value - a.value);
+
                 setStats({
                     totalBookings: bookingsCount || 0,
                     pendingQuotations: quotationsCount || 0,
@@ -117,6 +142,7 @@ export function useDashboardStats() {
                     totalConsultants: consultantsCount || 0,
                     topProperties,
                     monthlyRevenue,
+                    leadSourceData,
                     loading: false,
                     error: null,
                 });
