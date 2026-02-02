@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { PDFViewer } from '@react-pdf/renderer';
+import { PDFViewer, PDFDownloadLink } from '@react-pdf/renderer';
 import { supabase } from '../../lib/supabase';
 import BookingPDF from '../../components/pdf/BookingPDF';
 import type { BookingVoucher, CompanySettings } from '../../types';
@@ -77,11 +77,26 @@ export default function ViewBooking() {
     }
 
     return (
-        <div className="h-screen w-full bg-gray-100 p-4 sm:p-8">
-            <div className="mx-auto h-full max-w-5xl overflow-hidden rounded-lg shadow-xl bg-white">
-                <PDFViewer width="100%" height="100%" className="border-none">
-                    <BookingPDF voucher={voucher} settings={settings} qrCodeUrl={qrCodeUrl} />
-                </PDFViewer>
+        <div className="h-screen w-full bg-gray-100 flex flex-col">
+            <div className="bg-white shadow-sm p-4 flex justify-between items-center px-4 sm:px-8">
+                <h1 className="text-lg font-bold">Booking Voucher</h1>
+                <div className="flex gap-2">
+                    {/* Mobile Fallback: Direct Download */}
+                    <PDFDownloadLink
+                        document={<BookingPDF voucher={voucher} settings={settings} qrCodeUrl={qrCodeUrl} />}
+                        fileName={`Voucher-${voucher.reference_number || 'Booking'}.pdf`}
+                        className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2"
+                    >
+                        {({ loading: pdfLoading }) => (pdfLoading ? 'Loading...' : 'Download PDF')}
+                    </PDFDownloadLink>
+                </div>
+            </div>
+            <div className="flex-1 w-full p-0 sm:p-4 overflow-hidden">
+                <div className="mx-auto h-full max-w-5xl shadow-xl bg-white rounded-lg overflow-hidden">
+                    <PDFViewer width="100%" height="100%" className="border-none">
+                        <BookingPDF voucher={voucher} settings={settings} qrCodeUrl={qrCodeUrl} />
+                    </PDFViewer>
+                </div>
             </div>
         </div>
     );
