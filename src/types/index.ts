@@ -42,6 +42,7 @@ export interface BookingVoucher {
     flight_departure_date?: string;
     departure_time?: string;
     special_transport_note?: string;
+    driver_contact?: string;
     dietary_requirements?: string;
 
     status: 'issued' | 'cancelled';

@@ -302,7 +302,7 @@ export default function BookingPDF({ voucher, settings }: BookingPDFProps) {
                         </View>
                     </View>
                     {voucher.additional_guest_info && (
-                        <View style={[styles.clientCard, { marginTop: -10, paddingTop: 0 }]}>
+                        <View style={styles.clientCard}>
                             <View style={styles.clientCol}>
                                 <Text style={styles.infoLabel}>Additional Guest Information:</Text>
                                 <Text style={styles.infoValue}>{voucher.additional_guest_info}</Text>

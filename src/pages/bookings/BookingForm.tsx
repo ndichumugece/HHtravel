@@ -105,16 +105,16 @@ export default function BookingForm() {
         }
     }, [formValues.number_of_rooms]);
 
-    // Auto-set flight date to check-in date if not set (Arrival)
+    // Auto-set flight/train date to check-in date if not set (Arrival)
     useEffect(() => {
-        if (formValues.mode_of_transport === 'Flying' && formValues.check_in_date && !formValues.flight_arrival_date) {
+        if ((formValues.mode_of_transport === 'Flying' || formValues.mode_of_transport === 'Train') && formValues.check_in_date && !formValues.flight_arrival_date) {
             setValue('flight_arrival_date', formValues.check_in_date);
         }
     }, [formValues.mode_of_transport, formValues.check_in_date, formValues.flight_arrival_date, setValue]);
 
-    // Auto-set flight date to check-out date if not set (Departure)
+    // Auto-set flight/train date to check-out date if not set (Departure)
     useEffect(() => {
-        if (formValues.departure_mode_of_transport === 'Flying' && formValues.check_out_date && !formValues.flight_departure_date) {
+        if ((formValues.departure_mode_of_transport === 'Flying' || formValues.departure_mode_of_transport === 'Train') && formValues.check_out_date && !formValues.flight_departure_date) {
             setValue('flight_departure_date', formValues.check_out_date);
         }
     }, [formValues.departure_mode_of_transport, formValues.check_out_date, formValues.flight_departure_date, setValue]);
@@ -612,6 +612,19 @@ export default function BookingForm() {
                                             </div>
                                         </div>
                                     )}
+
+                                    {formValues.mode_of_transport === 'Self Drive' && (
+                                        <div className="sm:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                            <div>
+                                                <label className="text-sm font-medium leading-none">Estimate Arrival Time (EAT)</label>
+                                                <Input type="time" {...register('arrival_time')} className="mt-2" />
+                                            </div>
+                                            <div>
+                                                <label className="text-sm font-medium leading-none">Contact Person</label>
+                                                <Input type="text" {...register('driver_contact')} placeholder="Client/Driver Number" className="mt-2" />
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
 
@@ -673,6 +686,19 @@ export default function BookingForm() {
                                             <div>
                                                 <label className="text-sm font-medium leading-none">Estimate Departure Time (EDT)</label>
                                                 <Input type="time" {...register('departure_time')} className="mt-2" />
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {formValues.departure_mode_of_transport === 'Self Drive' && (
+                                        <div className="sm:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                            <div>
+                                                <label className="text-sm font-medium leading-none">Estimate Departure Time (EDT)</label>
+                                                <Input type="time" {...register('departure_time')} className="mt-2" />
+                                            </div>
+                                            <div>
+                                                <label className="text-sm font-medium leading-none">Contact Person</label>
+                                                <Input type="text" {...register('driver_contact')} placeholder="Client/Driver Number" className="mt-2" />
                                             </div>
                                         </div>
                                     )}
