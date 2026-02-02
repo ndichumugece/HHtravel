@@ -613,7 +613,7 @@ export default function BookingForm() {
                                         </div>
                                     )}
 
-                                    {formValues.mode_of_transport === 'Self Drive' && (
+                                    {(formValues.mode_of_transport === 'Self Drive' || formValues.mode_of_transport === 'H&H Road Package') && (
                                         <div className="sm:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
                                             <div>
                                                 <label className="text-sm font-medium leading-none">Estimate Arrival Time (EAT)</label>
@@ -690,7 +690,7 @@ export default function BookingForm() {
                                         </div>
                                     )}
 
-                                    {formValues.departure_mode_of_transport === 'Self Drive' && (
+                                    {(formValues.departure_mode_of_transport === 'Self Drive' || formValues.departure_mode_of_transport === 'H&H Road Package') && (
                                         <div className="sm:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
                                             <div>
                                                 <label className="text-sm font-medium leading-none">Estimate Departure Time (EDT)</label>
