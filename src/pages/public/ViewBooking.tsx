@@ -51,7 +51,7 @@ export default function ViewBooking() {
 
             } catch (err: any) {
                 console.error('Error fetching booking:', err);
-                setError('Failed to load booking details. It may not exist or you may not have permission.');
+                setError(err.message || 'Failed to load booking details. It may not exist or you may not have permission.');
             } finally {
                 setLoading(false);
             }
