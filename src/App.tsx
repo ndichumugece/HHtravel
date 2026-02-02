@@ -15,6 +15,7 @@ import AdminReports from './pages/admin/AdminReports';
 import Settings from './pages/admin/Settings';
 import { isSupabaseConfigured } from './lib/supabase';
 import OptionsList from './pages/settings/OptionsList';
+import ViewBooking from './pages/public/ViewBooking';
 
 function App() {
   if (!isSupabaseConfigured) {
@@ -44,6 +45,7 @@ function App() {
       <AuthProvider>
         <Routes>
           <Route path="/login" element={<Login />} />
+          <Route path="/public/bookings/:id" element={<ViewBooking />} />
 
           <Route element={<ProtectedRoute />}>
             <Route element={<AppLayout />}>

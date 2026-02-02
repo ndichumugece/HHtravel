@@ -81,8 +81,9 @@ export default function BookingForm() {
         if (id) {
             fetchVoucher(id);
             // Generate QR Code for the specific booking URL
-            // Ensure we use the production domain
-            const productionUrl = `https://portal.hhtravel.co${window.location.pathname}`;
+            // Generate QR Code for the specific booking URL
+            // Ensure we use the production domain and point to the public route
+            const productionUrl = `https://portal.hhtravel.co/public/bookings/${id}`;
             QRCode.toDataURL(productionUrl)
                 .then(url => setQrCodeUrl(url))
                 .catch(err => console.error('QR Code error', err));
