@@ -12,6 +12,7 @@ import { AddPropertyModal } from '../../components/properties/AddPropertyModal';
 import { Input } from '../../components/ui/Input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../../components/ui/Card';
 import { format } from 'date-fns';
+import QRCode from 'qrcode';
 
 const AIRLINES = [
     "Jambojet",
@@ -55,6 +56,7 @@ export default function BookingForm() {
     const [mealPlans, setMealPlans] = useState<{ id: string, name: string }[]>([]);
     const [roomTypes, setRoomTypes] = useState<{ id: string, name: string }[]>([]); // For the dynamic rows
     const [bedTypes, setBedTypes] = useState<{ id: string, name: string }[]>([]);
+    const [qrCodeUrl, setQrCodeUrl] = useState<string>('');
 
     // Room Details State
     const [roomDetails, setRoomDetails] = useState<{ id: string, room_type: string, bed_type: string, adults: number, children: number, child_ages?: number[] }[]>([
@@ -78,6 +80,12 @@ export default function BookingForm() {
         fetchDynamicOptions();
         if (id) {
             fetchVoucher(id);
+            // Generate QR Code for the specific booking URL
+            // Ensure we use the production domain
+            const productionUrl = `https://portal.hhtravel.co${window.location.pathname}`;
+            QRCode.toDataURL(productionUrl)
+                .then(url => setQrCodeUrl(url))
+                .catch(err => console.error('QR Code error', err));
         } else if (user) {
             fetchUserProfile(user.id);
             generateReference();
@@ -263,7 +271,7 @@ export default function BookingForm() {
                         onClick={async () => {
                             const { pdf } = await import('@react-pdf/renderer');
                             const blob = await pdf(
-                                <BookingPDF voucher={formValues as BookingVoucher} settings={settings} />
+                                <BookingPDF voucher={formValues as BookingVoucher} settings={settings} qrCodeUrl={qrCodeUrl} />
                             ).toBlob();
                             const url = URL.createObjectURL(blob);
                             window.open(url, '_blank');
@@ -274,7 +282,7 @@ export default function BookingForm() {
                         Preview PDF
                     </Button>
                     <PDFDownloadLink
-                        document={<BookingPDF voucher={formValues as BookingVoucher} settings={settings} />}
+                        document={<BookingPDF voucher={formValues as BookingVoucher} settings={settings} qrCodeUrl={qrCodeUrl} />}
                         fileName={getVoucherFileName()}
                         className="w-full sm:w-auto"
                     >
