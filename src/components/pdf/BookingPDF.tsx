@@ -45,10 +45,10 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     logoWrapper: {
-        width: 300,
-        height: 120,
+        width: 320,
+        height: 140,
         justifyContent: 'center',
-        alignItems: 'flex-start', // Forces image to left
+        alignItems: 'flex-start',
     },
     logo: {
         width: '100%',
@@ -57,10 +57,11 @@ const styles = StyleSheet.create({
         objectPosition: 'left',
     },
     headerRight: {
-        alignItems: 'flex-end',
+        alignItems: 'flex-start',
+        // width: '100%', // Removed to allow it to sit on the right
     },
     title: {
-        fontSize: 24,
+        fontSize: 18,
         fontWeight: 'bold',
         color: '#333333',
         marginBottom: 8,
@@ -87,10 +88,17 @@ const styles = StyleSheet.create({
         marginBottom: 10,
         marginTop: 5,
     },
+    subSectionTitle: {
+        fontSize: 11,
+        color: '#333333',
+        fontWeight: 'bold',
+        marginBottom: 8,
+        marginTop: 5,
+    },
 
     // Client Info Card
     clientCard: {
-        backgroundColor: '#f0f9ff', // Light blueish tint like reference
+        backgroundColor: theme.bgLight,
         padding: 15,
         borderRadius: 8,
         marginBottom: 20,
@@ -172,7 +180,7 @@ const styles = StyleSheet.create({
 
     // Footer / Contact
     contactSection: {
-        backgroundColor: '#f0f9ff',
+        backgroundColor: theme.bgLight,
         padding: 20,
         borderRadius: 8,
         marginTop: 20,
@@ -181,7 +189,7 @@ const styles = StyleSheet.create({
         fontSize: 12,
         fontWeight: 'bold',
         marginBottom: 10,
-        color: theme.textMain,
+        color: theme.textMuted,
     },
     contactRow: {
         flexDirection: 'row',
@@ -193,7 +201,7 @@ const styles = StyleSheet.create({
     },
     contactText: {
         fontSize: 10,
-        color: theme.textMuted,
+        color: theme.textMain,
         marginLeft: 8,
     },
 });
@@ -226,6 +234,16 @@ export default function BookingPDF({ voucher, settings }: BookingPDFProps) {
         }
     };
 
+    const hasContent = (str?: string) => {
+        if (!str || !str.trim()) return false;
+        const lower = str.trim().toLowerCase();
+        const invalid = ['no special request', 'no special requests', 'none', 'n/a', 'nil', '-', 'no', 'null', 'undefined'];
+        return !invalid.includes(lower);
+    };
+
+    const hasSpecialRequests = hasContent(voucher.special_requests);
+    const hasDietaryRequirements = hasContent(voucher.dietary_requirements);
+
     return (
         <Document>
             <Page size="A4" style={styles.page}>
@@ -244,7 +262,7 @@ export default function BookingPDF({ voucher, settings }: BookingPDFProps) {
                     </View>
 
                     <View style={styles.headerRight}>
-                        <Text style={styles.title}>Hotel Voucher</Text>
+                        <Text style={styles.title}>Booking Voucher</Text>
                         <View style={styles.headerInfoRow}>
                             <Text style={styles.headerLabel}>Booking Ref:</Text>
                             <Text style={styles.headerValue}>{voucher.reference_number}</Text>
@@ -259,147 +277,219 @@ export default function BookingPDF({ voucher, settings }: BookingPDFProps) {
                         </View>
                         <View style={styles.headerInfoRow}>
                             <Text style={styles.headerLabel}>Travel Consultant:</Text>
-                            <Text style={styles.headerValue}>{voucher.profiles?.full_name || 'N/A'}</Text>
+                            <Text style={styles.headerValue}>{(Array.isArray(voucher.profiles) ? voucher.profiles[0]?.full_name : voucher.profiles?.full_name) || 'N/A'}</Text>
                         </View>
                     </View>
                 </View>
 
                 {/* Client Information */}
-                <Text style={styles.sectionTitle}>Client Information</Text>
-                <View style={styles.clientCard}>
-                    <View style={styles.clientCol}>
-                        <Text style={styles.infoLabel}>Guest Name</Text>
-                        <Text style={styles.infoValue}>{voucher.guest_name}</Text>
-                    </View>
-                    <View style={styles.clientCol}>
-                        <Text style={styles.infoLabel}>Primary Contact:</Text>
-                        <Text style={styles.infoValue}>{voucher.guest_contact || '-'}</Text>
-                    </View>
-                    <View style={[styles.clientCol, { flex: 1.5 }]}>
-                        {/* Assuming email isn't in BookingVoucher yet, using placeholder or deriving */}
-                        <Text style={styles.infoLabel}>Nationality:</Text>
-                        <Text style={styles.infoValue}>{voucher.guest_nationality || '-'}</Text>
-                    </View>
-                </View>
-                {voucher.additional_guest_info && (
-                    <View style={[styles.clientCard, { marginTop: -10, paddingTop: 0 }]}>
+                {/* Client Information */}
+                <View wrap={false}>
+                    <Text style={styles.sectionTitle}>Client Information</Text>
+                    <View style={styles.clientCard}>
                         <View style={styles.clientCol}>
-                            <Text style={styles.infoLabel}>Additional Guest Information:</Text>
-                            <Text style={styles.infoValue}>{voucher.additional_guest_info}</Text>
+                            <Text style={styles.infoLabel}>Guest Name</Text>
+                            <Text style={styles.infoValue}>{voucher.guest_name}</Text>
+                        </View>
+                        <View style={styles.clientCol}>
+                            <Text style={styles.infoLabel}>Primary Contact:</Text>
+                            <Text style={styles.infoValue}>{voucher.guest_contact || '-'}</Text>
+                        </View>
+                        <View style={[styles.clientCol, { flex: 1.5 }]}>
+                            {/* Assuming email isn't in BookingVoucher yet, using placeholder or deriving */}
+                            <Text style={styles.infoLabel}>Nationality:</Text>
+                            <Text style={styles.infoValue}>{voucher.guest_nationality || '-'}</Text>
                         </View>
                     </View>
-                )}
+                    {voucher.additional_guest_info && (
+                        <View style={[styles.clientCard, { marginTop: -10, paddingTop: 0 }]}>
+                            <View style={styles.clientCol}>
+                                <Text style={styles.infoLabel}>Additional Guest Information:</Text>
+                                <Text style={styles.infoValue}>{voucher.additional_guest_info}</Text>
+                            </View>
+                        </View>
+                    )}
+                </View>
 
                 {/* Reservation Details */}
-                <Text style={styles.sectionTitle}>Reservation Details</Text>
-                <View style={styles.resCard}>
+                {/* Reservation Details */}
+                <View wrap={false}>
+                    <Text style={styles.sectionTitle}>Reservation Details</Text>
+                    <View style={styles.resCard}>
 
 
-                    {/* Grid Info */}
-                    <View style={styles.grid}>
-                        <View style={styles.gridItem}>
-                            <Text style={styles.infoLabel}>Check-in Date:</Text>
-                            <Text style={styles.infoValue}>{formatDate(voucher.check_in_date)}</Text>
-                        </View>
-                        <View style={styles.gridItem}>
-                            <Text style={styles.infoLabel}>Check-out Date:</Text>
-                            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                                <Text style={styles.infoValue}>{formatDate(voucher.check_out_date)}</Text>
-                                <Text style={[styles.infoValue, { marginLeft: 5, color: theme.textMuted, fontSize: 10 }]}>
-                                    ({calculateNights(voucher.check_in_date, voucher.check_out_date)} nights)
-                                </Text>
-                            </View>
-                        </View>
-                        {voucher.room_details && voucher.room_details.length > 0 ? (
-                            <View style={[styles.gridItem, { width: '100%', flexDirection: 'column', alignItems: 'flex-start' }]}>
-                                <Text style={[styles.infoLabel, { marginBottom: 5 }]}>Room Configuration:</Text>
-                                {voucher.room_details.map((room, index) => (
-                                    <View key={index} style={{ flexDirection: 'row', marginBottom: 2, width: '100%', flexWrap: 'wrap' }}>
-                                        <Text style={{ fontSize: 9, marginRight: 5 }}>• Room {index + 1}:</Text>
-                                        <Text style={{ fontSize: 9, fontFamily: 'Helvetica-Bold' }}>{room.room_type}</Text>
-                                        <Text style={{ fontSize: 9, marginHorizontal: 3 }}>|</Text>
-                                        <Text style={{ fontSize: 9 }}>{room.bed_type}</Text>
-                                        <Text style={{ fontSize: 9, marginHorizontal: 3 }}>|</Text>
-                                        <Text style={{ fontSize: 9 }}>{room.adults} Adults, {room.children} Child</Text>
-                                    </View>
-                                ))}
-                            </View>
-                        ) : (
+                        {/* Grid Info */}
+                        <View style={styles.grid}>
                             <View style={styles.gridItem}>
-                                <Text style={styles.infoLabel}>Room Configuration:</Text>
-                                <Text style={styles.infoValue}>
-                                    {voucher.number_of_rooms} Rooms (Details not specified)
-                                </Text>
+                                <Text style={styles.infoLabel}>Check-in Date:</Text>
+                                <Text style={styles.infoValue}>{formatDate(voucher.check_in_date)}</Text>
                             </View>
-                        )}
-                        <View style={styles.gridItem}>
-                            <Text style={styles.infoLabel}>Meal plan</Text>
-                            <Text style={styles.infoValue}>{voucher.meal_plan || 'Not Specified'}</Text>
+                            <View style={styles.gridItem}>
+                                <Text style={styles.infoLabel}>Check-out Date:</Text>
+                                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                                    <Text style={styles.infoValue}>{formatDate(voucher.check_out_date)}</Text>
+                                    <Text style={[styles.infoValue, { marginLeft: 5, color: theme.textMuted, fontSize: 10 }]}>
+                                        ({calculateNights(voucher.check_in_date, voucher.check_out_date)} nights)
+                                    </Text>
+                                </View>
+                            </View>
+                            {voucher.room_details && voucher.room_details.length > 0 ? (
+                                <View style={[styles.gridItem, { width: '100%', flexDirection: 'column', alignItems: 'flex-start' }]}>
+                                    <Text style={[styles.infoLabel, { marginBottom: 5 }]}>Room Configuration:</Text>
+                                    {voucher.room_details.map((room, index) => (
+                                        <View key={index} style={{ flexDirection: 'row', marginBottom: 2, width: '100%', flexWrap: 'wrap' }}>
+                                            <Text style={{ fontSize: 9, marginRight: 5 }}>• Room {index + 1}:</Text>
+                                            <Text style={{ fontSize: 9, fontFamily: 'Helvetica-Bold' }}>{room.room_type}</Text>
+                                            <Text style={{ fontSize: 9, marginHorizontal: 3 }}>|</Text>
+                                            <Text style={{ fontSize: 9 }}>{room.bed_type}</Text>
+                                            <Text style={{ fontSize: 9, marginHorizontal: 3 }}>|</Text>
+                                            <Text style={{ fontSize: 9 }}>{room.adults} Adults, {room.children} Child</Text>
+                                            {room.children > 0 && room.child_ages && room.child_ages.length > 0 && (
+                                                <>
+                                                    <Text style={{ fontSize: 9, marginHorizontal: 3 }}>|</Text>
+                                                    <Text style={{ fontSize: 9 }}>Ages: {room.child_ages.join(', ')}</Text>
+                                                </>
+                                            )}
+                                        </View>
+                                    ))}
+                                </View>
+                            ) : (
+                                <View style={styles.gridItem}>
+                                    <Text style={styles.infoLabel}>Room Configuration:</Text>
+                                    <Text style={styles.infoValue}>
+                                        {voucher.number_of_rooms} Rooms (Details not specified)
+                                    </Text>
+                                </View>
+                            )}
+                            <View style={styles.gridItem}>
+                                <Text style={styles.infoLabel}>Meal plan</Text>
+                                <Text style={styles.infoValue}>{voucher.meal_plan || 'Not Specified'}</Text>
+                            </View>
                         </View>
                     </View>
                 </View>
 
                 {/* Transport Details */}
-                <Text style={styles.sectionTitle}>Transport Details</Text>
-                <View style={styles.clientCard}>
-                    <View style={styles.clientCol}>
-                        <Text style={styles.infoLabel}>Mode of Transport:</Text>
-                        <Text style={styles.infoValue}>{voucher.mode_of_transport || 'Not Specified'}</Text>
+                {/* Arrival Transfer */}
+                {/* Transport Details */}
+                {/* Transport Details */}
+                <View wrap={false}>
+                    <Text style={styles.sectionTitle}>Transport Details</Text>
+
+                    {/* Arrival Transfer */}
+                    <View style={[styles.clientCard, { flexDirection: 'column' }]}>
+                        {/* Arrival Transfer */}
+                        <View style={{ width: '100%', marginBottom: 10 }}>
+                            <Text style={styles.subSectionTitle}>Arrival Transfer</Text>
+                        </View>
+                        <View style={{ flexDirection: 'row', width: '100%' }}>
+                            <View style={styles.clientCol}>
+                                <Text style={styles.infoLabel}>Mode of Transport:</Text>
+                                <Text style={styles.infoValue}>{voucher.mode_of_transport || 'Not Specified'}</Text>
+                            </View>
+
+                            {voucher.mode_of_transport === 'Flying' && (
+                                <View style={styles.clientCol}>
+                                    <Text style={styles.infoLabel}>Airline:</Text>
+                                    <Text style={styles.infoValue}>{voucher.airline || 'Not Specified'}</Text>
+                                </View>
+                            )}
+
+                            {voucher.mode_of_transport === 'Flying' && voucher.flight_arrival_date && (
+                                <View style={styles.clientCol}>
+                                    <Text style={styles.infoLabel}>Date:</Text>
+                                    <Text style={styles.infoValue}>{formatDate(voucher.flight_arrival_date)}</Text>
+                                </View>
+                            )}
+
+                            <View style={styles.clientCol}>
+                                <Text style={styles.infoLabel}>Estimated Arrival Time:</Text>
+                                <Text style={styles.infoValue}>{voucher.arrival_time || 'Not Specified'}</Text>
+                            </View>
+                        </View>
+
+
+                        {/* Departure Transfer */}
+                        {voucher.departure_mode_of_transport && (
+                            <>
+                                <View style={{ width: '100%', borderTopWidth: 1, borderTopColor: '#e2e8f0', marginTop: 10, paddingTop: 10, marginBottom: 10 }}>
+                                    <Text style={styles.subSectionTitle}>Departure Transfer</Text>
+                                </View>
+                                <View style={{ flexDirection: 'row', width: '100%' }}>
+                                    <View style={styles.clientCol}>
+                                        <Text style={styles.infoLabel}>Mode of Transport:</Text>
+                                        <Text style={styles.infoValue}>{voucher.departure_mode_of_transport}</Text>
+                                    </View>
+
+                                    {voucher.departure_mode_of_transport === 'Flying' && (
+                                        <View style={styles.clientCol}>
+                                            <Text style={styles.infoLabel}>Airline:</Text>
+                                            <Text style={styles.infoValue}>{voucher.departure_airline || 'Not Specified'}</Text>
+                                        </View>
+                                    )}
+
+                                    {voucher.departure_mode_of_transport === 'Flying' && voucher.flight_departure_date && (
+                                        <View style={styles.clientCol}>
+                                            <Text style={styles.infoLabel}>Date:</Text>
+                                            <Text style={styles.infoValue}>{formatDate(voucher.flight_departure_date)}</Text>
+                                        </View>
+                                    )}
+
+                                    <View style={styles.clientCol}>
+                                        <Text style={styles.infoLabel}>Estimated Departure Time:</Text>
+                                        <Text style={styles.infoValue}>{voucher.departure_time || 'Not Specified'}</Text>
+                                    </View>
+                                </View>
+                            </>
+                        )}
                     </View>
-                    <View style={styles.clientCol}>
-                        <Text style={styles.infoLabel}>Estimated Arrival Time:</Text>
-                        <Text style={styles.infoValue}>{voucher.arrival_time || 'Not Specified'}</Text>
-                    </View>
+
+                    {voucher.special_transport_note && (
+                        <View style={styles.clientCard}>
+                            <View style={styles.clientCol}>
+                                <Text style={styles.infoLabel}>Special Transport Note:</Text>
+                                <Text style={styles.infoValue}>{voucher.special_transport_note}</Text>
+                            </View>
+                        </View>
+                    )}
                 </View>
 
 
 
+
+                {/* Additional Information */}
                 {/* Additional Information */}
                 {
-                    (voucher.special_requests || voucher.flight_details) && (
-                        <>
+                    (hasSpecialRequests || hasDietaryRequirements) && (
+                        <View wrap={false}>
                             <Text style={styles.sectionTitle}>Additional Information</Text>
-                            <View style={styles.additionalSection}>
+                            <View style={[styles.additionalSection, { flexDirection: 'column' }]}>
 
-
-                                {voucher.flight_details && (
-                                    <View style={styles.bulletPoint}>
-                                        <View style={styles.bullet} />
-                                        <Text style={styles.bulletText}>{voucher.flight_details}</Text>
+                                {hasDietaryRequirements && (
+                                    <View style={{ marginBottom: hasSpecialRequests ? 10 : 0 }}>
+                                        <Text style={styles.infoLabel}>Dietary Requests:</Text>
+                                        <Text style={styles.infoValue}>{voucher.dietary_requirements}</Text>
                                     </View>
                                 )}
 
-                                {voucher.special_requests && (
-                                    <View style={styles.bulletPoint}>
-                                        <View style={styles.bullet} />
-                                        <Text style={styles.bulletText}>{voucher.special_requests}</Text>
+                                {hasSpecialRequests && (
+                                    <View>
+                                        <Text style={styles.infoLabel}>Special Requests:</Text>
+                                        <Text style={styles.infoValue}>{voucher.special_requests}</Text>
                                     </View>
                                 )}
-
-
                             </View>
-                        </>
+                        </View>
                     )
                 }
 
 
                 {/* Contact Information */}
-                <View style={styles.contactSection}>
+                <View wrap={false} style={styles.contactSection}>
                     <Text style={styles.contactTitle}>Contact Information</Text>
-                    <Text style={[styles.infoLabel, { marginBottom: 10 }]}>{settings?.company_name || 'H&H Travel'} Support:</Text>
+
 
                     <View style={styles.contactRow}>
-                        <View style={{ flex: 1 }}>
-                            {settings?.company_email && (
-                                <View style={[styles.contactItem, { marginBottom: 5 }]}>
-                                    <Text style={styles.contactText}>{settings.company_email}</Text>
-                                </View>
-                            )}
-                            {/* Phone placeholder if not in types, or derived */}
-                            <View style={styles.contactItem}>
-                                <Text style={styles.contactText}>+254 700 000 000</Text>
-                            </View>
-                        </View>
                         <View style={{ flex: 1 }}>
                             {settings?.company_address && (
                                 <View style={styles.contactItem}>

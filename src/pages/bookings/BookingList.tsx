@@ -39,7 +39,7 @@ export default function BookingList() {
         try {
             const { data, error } = await supabase
                 .from('booking_vouchers')
-                .select('*, profiles(full_name)')
+                .select('*, profiles:consultant_id(full_name)')
                 .order('created_at', { ascending: false });
 
             if (error) throw error;
@@ -160,7 +160,7 @@ export default function BookingList() {
                                                 {voucher.reference_number}
                                             </TableCell>
                                             <TableCell className="text-sm text-muted-foreground">
-                                                {voucher.profiles?.full_name || 'Unknown'}
+                                                {(Array.isArray(voucher.profiles) ? voucher.profiles[0]?.full_name : voucher.profiles?.full_name) || 'Unknown'}
                                             </TableCell>
                                             <TableCell>
                                                 <div className="flex flex-col">

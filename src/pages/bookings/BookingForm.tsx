@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useForm, useWatch } from 'react-hook-form';
 import { supabase } from '../../lib/supabase';
 import type { Property, BookingVoucher, CompanySettings } from '../../types';
-import { PDFDownloadLink, BlobProvider } from '@react-pdf/renderer';
+import { PDFDownloadLink } from '@react-pdf/renderer';
 import BookingPDF from '../../components/pdf/BookingPDF';
 import { ArrowLeft, Save, FileDown, Loader2, Eye, Plus } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
@@ -13,6 +13,23 @@ import { Input } from '../../components/ui/Input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../../components/ui/Card';
 import { format } from 'date-fns';
 
+const AIRLINES = [
+    "Jambojet",
+    "Safarilink",
+    "Airkenya",
+    "Kenya Airways",
+    "Governor's Aviation",
+    "Fly ALS",
+    "Skyward Airline",
+    "Precision Air",
+    "Auric Air",
+    "Flight Link",
+    "Regional Air",
+    "Air Tanzania",
+    "Mombasa Air",
+    "Scenic Air Safaris"
+];
+
 
 export default function BookingForm() {
     const { id } = useParams();
@@ -21,7 +38,7 @@ export default function BookingForm() {
     const [properties, setProperties] = useState<Property[]>([]);
     const [settings, setSettings] = useState<CompanySettings>();
     const [loading, setLoading] = useState(false);
-    const [isEditMode] = useState(!!id);
+    const isEditMode = !!id;
     const [isPropertyModalOpen, setIsPropertyModalOpen] = useState(false);
 
     // Dynamic Options State
@@ -51,10 +68,11 @@ export default function BookingForm() {
         fetchDynamicOptions();
         if (id) {
             fetchVoucher(id);
-        } else {
+        } else if (user) {
+            fetchUserProfile(user.id);
             generateReference();
         }
-    }, [id]);
+    }, [id, user]);
 
     useEffect(() => {
         const count = parseInt(String(formValues.number_of_rooms || 0), 10);
@@ -76,6 +94,20 @@ export default function BookingForm() {
             });
         }
     }, [formValues.number_of_rooms]);
+
+    // Auto-set flight date to check-in date if not set (Arrival)
+    useEffect(() => {
+        if (formValues.mode_of_transport === 'Flying' && formValues.check_in_date && !formValues.flight_arrival_date) {
+            setValue('flight_arrival_date', formValues.check_in_date);
+        }
+    }, [formValues.mode_of_transport, formValues.check_in_date, formValues.flight_arrival_date, setValue]);
+
+    // Auto-set flight date to check-out date if not set (Departure)
+    useEffect(() => {
+        if (formValues.departure_mode_of_transport === 'Flying' && formValues.check_out_date && !formValues.flight_departure_date) {
+            setValue('flight_departure_date', formValues.check_out_date);
+        }
+    }, [formValues.departure_mode_of_transport, formValues.check_out_date, formValues.flight_departure_date, setValue]);
 
     const fetchDynamicOptions = async () => {
         const { data: meals } = await supabase.from('meal_plans').select('id, name').order('name');
@@ -104,12 +136,22 @@ export default function BookingForm() {
         if (data) setSettings(data);
     };
 
+    const fetchUserProfile = async (userId: string) => {
+        const { data } = await supabase.from('profiles').select('full_name').eq('id', userId).single();
+        if (data && data.full_name) {
+            setValue('profiles', { full_name: data.full_name });
+        }
+    };
+
     const fetchVoucher = async (voucherId: string) => {
-        const { data } = await supabase.from('booking_vouchers').select('*').eq('id', voucherId).single();
+        const { data } = await supabase.from('booking_vouchers').select('*, profiles:consultant_id(full_name)').eq('id', voucherId).single();
         if (data) {
             Object.entries(data).forEach(([key, value]) => {
                 setValue(key as any, value);
             });
+            if (data.room_details && Array.isArray(data.room_details)) {
+                setRoomDetails(data.room_details);
+            }
         }
     };
 
@@ -125,11 +167,16 @@ export default function BookingForm() {
             if (isEditMode && id) {
                 const { error } = await supabase.from('booking_vouchers').update(payload).eq('id', id);
                 if (error) throw error;
+                // Optional: fetchVoucher(id); // The form data is already local, usually no need to re-fetch immediately unless triggers change data
+                alert('Voucher updated successfully');
             } else {
-                const { error } = await supabase.from('booking_vouchers').insert(payload);
+                const { data: newVoucher, error } = await supabase.from('booking_vouchers').insert(payload).select().single();
                 if (error) throw error;
+                if (newVoucher) {
+                    navigate(`/bookings/${newVoucher.id}/edit`, { replace: true });
+                    alert('Voucher created successfully');
+                }
             }
-            navigate('/bookings');
         } catch (error) {
             console.error('Error saving voucher:', error);
             alert('Failed to save voucher');
@@ -198,23 +245,21 @@ export default function BookingForm() {
                 </div>
 
                 <div className="flex flex-col sm:flex-row gap-3 w-full xl:w-auto">
-                    <BlobProvider document={<BookingPDF voucher={formValues as BookingVoucher} settings={settings} />}>
-                        {({ url, loading: pdfLoading }) => (
-                            <Button
-                                variant="outline"
-                                disabled={pdfLoading}
-                                onClick={() => url && window.open(url, '_blank')}
-                                className="w-full sm:w-auto"
-                            >
-                                {pdfLoading ? (
-                                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                                ) : (
-                                    <Eye className="h-4 w-4 mr-2" />
-                                )}
-                                Preview PDF
-                            </Button>
-                        )}
-                    </BlobProvider>
+                    <Button
+                        variant="outline"
+                        onClick={async () => {
+                            const { pdf } = await import('@react-pdf/renderer');
+                            const blob = await pdf(
+                                <BookingPDF voucher={formValues as BookingVoucher} settings={settings} />
+                            ).toBlob();
+                            const url = URL.createObjectURL(blob);
+                            window.open(url, '_blank');
+                        }}
+                        className="w-full sm:w-auto"
+                    >
+                        <Eye className="h-4 w-4 mr-2" />
+                        Preview PDF
+                    </Button>
                     <PDFDownloadLink
                         document={<BookingPDF voucher={formValues as BookingVoucher} settings={settings} />}
                         fileName={getVoucherFileName()}
@@ -294,9 +339,11 @@ export default function BookingForm() {
                                     <select
                                         {...register('property_name', { required: true })}
                                         className="flex h-10 flex-1 items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                                        onChange={(e) => setValue('property_name', e.target.value)}
                                     >
                                         <option value="">Select a property</option>
+                                        {formValues.property_name && !properties.some(p => p.name === formValues.property_name) && (
+                                            <option value={formValues.property_name}>{formValues.property_name}</option>
+                                        )}
                                         {properties.map(p => (
                                             <option key={p.id} value={p.name}>{p.name}</option>
                                         ))}
@@ -337,6 +384,7 @@ export default function BookingForm() {
                                     </select>
                                 </div>
                                 <div>
+                                    <label className="text-sm font-medium leading-none">Meal Plan</label>
                                     <select
                                         {...register('meal_plan')}
                                         className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 mt-2"
@@ -348,7 +396,7 @@ export default function BookingForm() {
                                     </select>
                                 </div>
                             </div>
-                            <div className="grid grid-cols-2 gap-4 col-span-2">
+                            <div className="col-span-2">
                                 <div>
                                     <label className="text-sm font-medium leading-none">Number of Rooms</label>
                                     <Input type="number" {...register('number_of_rooms')} className="mt-2" placeholder="e.g. 1" min={1} />
@@ -489,23 +537,106 @@ export default function BookingForm() {
                         <CardHeader>
                             <CardTitle>Transport Details</CardTitle>
                         </CardHeader>
-                        <CardContent className="grid gap-6 sm:grid-cols-2">
+                        <CardContent className="space-y-8">
+                            {/* Arrival Section */}
                             <div>
-                                <label className="text-sm font-medium leading-none">Mode of Transport</label>
-                                <select
-                                    {...register('mode_of_transport')}
-                                    className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 mt-2"
-                                >
-                                    <option value="">Select Transport</option>
-                                    <option value="Self Drive">Self Drive</option>
-                                    <option value="Train">Train</option>
-                                    <option value="Flying">Flying</option>
-                                    <option value="H&H Road Package">H&H Road Package</option>
-                                </select>
+                                <h3 className="text-sm font-semibold mb-4">Arrival Transfer</h3>
+                                <div className="grid gap-6 sm:grid-cols-2">
+                                    <div className="sm:col-span-2">
+                                        <label className="text-sm font-medium leading-none">Mode of Transport</label>
+                                        <select
+                                            {...register('mode_of_transport')}
+                                            className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 mt-2"
+                                        >
+                                            <option value="">Select Transport</option>
+                                            <option value="Self Drive">Self Drive</option>
+                                            <option value="Train">Train</option>
+                                            <option value="Flying">Flying</option>
+                                            <option value="H&H Road Package">H&H Road Package</option>
+                                        </select>
+                                    </div>
+
+                                    {formValues.mode_of_transport === 'Flying' && (
+                                        <div className="sm:col-span-2 grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                            <div>
+                                                <label className="text-sm font-medium leading-none">Airline</label>
+                                                <select
+                                                    {...register('airline')}
+                                                    className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 mt-2"
+                                                >
+                                                    <option value="">Select Airline</option>
+                                                    {AIRLINES.map(airline => (
+                                                        <option key={airline} value={airline}>{airline}</option>
+                                                    ))}
+                                                </select>
+                                            </div>
+                                            <div>
+                                                <label className="text-sm font-medium leading-none">Date</label>
+                                                <Input type="date" {...register('flight_arrival_date')} className="mt-2" />
+                                            </div>
+                                            <div>
+                                                <label className="text-sm font-medium leading-none">Estimate Arrival Time (EAT)</label>
+                                                <Input type="time" {...register('arrival_time')} className="mt-2" />
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
                             </div>
+
+                            {/* Departure Section */}
                             <div>
-                                <label className="text-sm font-medium leading-none">Estimated Arrival Time</label>
-                                <Input type="time" {...register('arrival_time')} className="mt-2" />
+                                <h3 className="text-sm font-semibold mb-4">Departure Transfer</h3>
+                                <div className="grid gap-6 sm:grid-cols-2">
+                                    <div className="sm:col-span-2">
+                                        <label className="text-sm font-medium leading-none">Mode of Transport</label>
+                                        <select
+                                            {...register('departure_mode_of_transport')}
+                                            className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 mt-2"
+                                        >
+                                            <option value="">Select Transport</option>
+                                            <option value="Self Drive">Self Drive</option>
+                                            <option value="Train">Train</option>
+                                            <option value="Flying">Flying</option>
+                                            <option value="H&H Road Package">H&H Road Package</option>
+                                        </select>
+                                    </div>
+
+                                    {formValues.departure_mode_of_transport === 'Flying' && (
+                                        <div className="sm:col-span-2 grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                            <div>
+                                                <label className="text-sm font-medium leading-none">Airline</label>
+                                                <select
+                                                    {...register('departure_airline')}
+                                                    className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 mt-2"
+                                                >
+                                                    <option value="">Select Airline</option>
+                                                    {AIRLINES.map(airline => (
+                                                        <option key={airline} value={airline}>{airline}</option>
+                                                    ))}
+                                                </select>
+                                            </div>
+                                            <div>
+                                                <label className="text-sm font-medium leading-none">Date</label>
+                                                <Input type="date" {...register('flight_departure_date')} className="mt-2" />
+                                            </div>
+                                            <div>
+                                                <label className="text-sm font-medium leading-none">Estimate Departure Time (EDT)</label>
+                                                <Input type="time" {...register('departure_time')} className="mt-2" />
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Special Transport Note */}
+                            <div className="mt-6">
+                                <label className="text-sm font-medium leading-none">Special Transport Note</label>
+                                <textarea
+                                    {...register('special_transport_note')}
+                                    rows={3}
+                                    className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 mt-2"
+                                    placeholder="Add any special instructions or notes for transport..."
+                                />
                             </div>
                         </CardContent>
                     </Card>
@@ -517,21 +648,21 @@ export default function BookingForm() {
                         </CardHeader>
                         <CardContent className="space-y-4">
                             <div>
-                                <label className="text-sm font-medium leading-none">Special Requests</label>
+                                <label className="text-sm font-medium leading-none">Dietary Requests</label>
                                 <textarea
-                                    {...register('special_requests')}
+                                    {...register('dietary_requirements')}
                                     rows={3}
                                     className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 mt-2"
-                                    placeholder="Dietary requirements, occasion, etc."
+                                    placeholder="Vegetarian, Gluten-free, Allergies, etc."
                                 />
                             </div>
                             <div>
-                                <label className="text-sm font-medium leading-none">Flight Details</label>
+                                <label className="text-sm font-medium leading-none">Special Requests</label>
                                 <textarea
-                                    {...register('flight_details')}
+                                    {...register('special_requests')}
                                     rows={2}
                                     className="flex min-h-[60px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 mt-2"
-                                    placeholder="Arrival/Departure times and flight numbers"
+                                    placeholder="Occasion, Room preference, etc."
                                 />
                             </div>
                         </CardContent>

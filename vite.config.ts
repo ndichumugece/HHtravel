@@ -35,5 +35,9 @@ export default defineConfig({
         enabled: true
       }
     })
+
   ],
+  server: {
+    port: 3000,
+  },
 })

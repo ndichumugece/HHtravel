@@ -3,7 +3,7 @@ import { supabase } from '../../lib/supabase';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui/Card';
-import { Plus, Trash2, Loader2 } from 'lucide-react';
+import { Plus, Trash2, Loader2, Pencil, Check, X } from 'lucide-react';
 
 interface Option {
     id: string;
@@ -21,6 +21,10 @@ export default function OptionsList({ title, tableName }: OptionsListProps) {
     const [loading, setLoading] = useState(true);
     const [newOption, setNewOption] = useState('');
     const [adding, setAdding] = useState(false);
+
+    // Edit State
+    const [editingId, setEditingId] = useState<string | null>(null);
+    const [editingValue, setEditingValue] = useState('');
 
     useEffect(() => {
         fetchOptions();
@@ -75,6 +79,34 @@ export default function OptionsList({ title, tableName }: OptionsListProps) {
         }
     };
 
+    const startEditing = (option: Option) => {
+        setEditingId(option.id);
+        setEditingValue(option.name);
+    };
+
+    const cancelEditing = () => {
+        setEditingId(null);
+        setEditingValue('');
+    };
+
+    const saveEditing = async (id: string) => {
+        if (!editingValue.trim()) return;
+
+        const { error } = await supabase
+            .from(tableName)
+            .update({ name: editingValue.trim() })
+            .eq('id', id);
+
+        if (error) {
+            console.error('Error updating option:', error);
+            alert('Failed to update option. Ensure it is unique.');
+        } else {
+            setEditingId(null);
+            setEditingValue('');
+            fetchOptions();
+        }
+    };
+
     return (
         <div className="max-w-4xl mx-auto space-y-6">
             <div className="flex justify-between items-center">
@@ -106,16 +138,45 @@ export default function OptionsList({ title, tableName }: OptionsListProps) {
                             <div className="p-8 text-center text-muted-foreground">No options found. Add one above.</div>
                         ) : (
                             options.map((option) => (
-                                <div key={option.id} className="p-4 flex justify-between items-center hover:bg-muted/50 transition-colors">
-                                    <span className="font-medium">{option.name}</span>
-                                    <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                                        onClick={() => handleDelete(option.id)}
-                                    >
-                                        <Trash2 className="h-4 w-4" />
-                                    </Button>
+                                <div key={option.id} className="p-4 flex justify-between items-center hover:bg-muted/50 transition-colors h-14">
+                                    {editingId === option.id ? (
+                                        <div className="flex items-center gap-2 flex-1 mr-4">
+                                            <Input
+                                                value={editingValue}
+                                                onChange={(e) => setEditingValue(e.target.value)}
+                                                className="h-8"
+                                            />
+                                            <Button size="icon" variant="ghost" className="h-8 w-8 text-green-600" onClick={() => saveEditing(option.id)}>
+                                                <Check className="h-4 w-4" />
+                                            </Button>
+                                            <Button size="icon" variant="ghost" className="h-8 w-8 text-muted-foreground" onClick={cancelEditing}>
+                                                <X className="h-4 w-4" />
+                                            </Button>
+                                        </div>
+                                    ) : (
+                                        <span className="font-medium">{option.name}</span>
+                                    )}
+
+                                    <div className="flex items-center gap-1">
+                                        {editingId !== option.id && (
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                className="h-8 w-8 text-muted-foreground hover:text-primary"
+                                                onClick={() => startEditing(option)}
+                                            >
+                                                <Pencil className="h-4 w-4" />
+                                            </Button>
+                                        )}
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                                            onClick={() => handleDelete(option.id)}
+                                        >
+                                            <Trash2 className="h-4 w-4" />
+                                        </Button>
+                                    </div>
                                 </div>
                             ))
                         )}

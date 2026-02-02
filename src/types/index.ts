@@ -33,13 +33,25 @@ export interface BookingVoucher {
     special_requests?: string;
     flight_details?: string;
     arrival_time?: string;
+    airline?: string;
+    flight_arrival_date?: string;
     mode_of_transport?: string;
+
+    departure_mode_of_transport?: string;
+    departure_airline?: string;
+    flight_departure_date?: string;
+    departure_time?: string;
+    special_transport_note?: string;
+    dietary_requirements?: string;
+
     status: 'issued' | 'cancelled';
     created_at: string;
     room_details?: RoomDetail[];
     profiles?: {
         full_name: string;
-    };
+    } | {
+        full_name: string;
+    }[] | null;
 }
 
 export interface RoomDetail {
