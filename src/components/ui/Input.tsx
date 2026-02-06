@@ -14,6 +14,17 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
                     className
                 )}
                 ref={ref}
+                onClick={(e) => {
+                    if (['date', 'month', 'week', 'time', 'datetime-local'].includes(type || '')) {
+                        try {
+                            // @ts-ignore - showPicker is not yet in all TS definitions
+                            e.currentTarget.showPicker?.();
+                        } catch (error) {
+                            // Ignore errors if showPicker is not supported or fails
+                        }
+                    }
+                    props.onClick?.(e);
+                }}
                 {...props}
             />
         )

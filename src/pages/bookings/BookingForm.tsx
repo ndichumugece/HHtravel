@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { useForm, useWatch } from 'react-hook-form';
+import { useForm, useWatch, Controller } from 'react-hook-form';
 import { supabase } from '../../lib/supabase';
 import type { Property, BookingVoucher, CompanySettings } from '../../types';
 import { PDFDownloadLink } from '@react-pdf/renderer';
@@ -12,6 +12,9 @@ import { AddPropertyModal } from '../../components/properties/AddPropertyModal';
 import { Input } from '../../components/ui/Input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../../components/ui/Card';
 import { format } from 'date-fns';
+import { Combobox } from '../../components/ui/Combobox';
+import { DatePicker } from '../../components/ui/DatePicker';
+import { TimePicker } from '../../components/ui/TimePicker';
 import QRCode from 'qrcode';
 
 const AIRLINES = [
@@ -38,6 +41,10 @@ const LEAD_SOURCES = [
     'Website',
     'Twitter/X',
     'Referral',
+    'Repeat Client',
+    'Meta Ads',
+    'Google Ads',
+    'Office Walk-in',
     'Other'
 ];
 
@@ -140,9 +147,32 @@ export default function BookingForm() {
         if (beds) setBedTypes(beds);
     };
 
-    const generateReference = () => {
-        const random = Math.floor(1000 + Math.random() * 9000);
-        setValue('reference_number', `BV-${random}`);
+    const generateReference = async () => {
+        try {
+            const { data: lastBooking } = await supabase
+                .from('booking_vouchers')
+                .select('reference_number')
+                .order('created_at', { ascending: false })
+                .limit(1)
+                .single();
+
+            let nextNumber = 4000;
+
+            if (lastBooking && lastBooking.reference_number) {
+                const match = lastBooking.reference_number.match(/BV-(\d+)/);
+                if (match && match[1]) {
+                    const lastNumber = parseInt(match[1], 10);
+                    if (!isNaN(lastNumber)) {
+                        nextNumber = Math.max(4000, lastNumber + 1);
+                    }
+                }
+            }
+
+            setValue('reference_number', `BV-${nextNumber}`);
+        } catch (error) {
+            console.error('Error generating reference:', error);
+            setValue('reference_number', 'BV-4000');
+        }
     };
 
     const fetchProperties = async () => {
@@ -358,18 +388,13 @@ export default function BookingForm() {
                             <div className="col-span-2">
                                 <label className="text-sm font-medium leading-none">Property</label>
                                 <div className="flex gap-2 items-center mt-2">
-                                    <select
-                                        {...register('property_name', { required: true })}
-                                        className="flex h-10 flex-1 items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                                    >
-                                        <option value="">Select a property</option>
-                                        {formValues.property_name && !properties.some(p => p.name === formValues.property_name) && (
-                                            <option value={formValues.property_name}>{formValues.property_name}</option>
-                                        )}
-                                        {properties.map(p => (
-                                            <option key={p.id} value={p.name}>{p.name}</option>
-                                        ))}
-                                    </select>
+                                    <Combobox
+                                        options={properties.map(p => ({ value: p.name, label: p.name }))}
+                                        value={formValues.property_name}
+                                        onChange={(val) => setValue('property_name', val, { shouldDirty: true })}
+                                        placeholder="Select a property"
+                                        className="flex-1"
+                                    />
                                     <Button
                                         type="button"
                                         variant="outline"
@@ -386,11 +411,24 @@ export default function BookingForm() {
                             <div className="grid grid-cols-2 gap-4 col-span-2">
                                 <div>
                                     <label className="text-sm font-medium leading-none">Check In</label>
-                                    <Input type="date" {...register('check_in_date', { required: true })} className="mt-2" />
+                                    <DatePicker
+                                        value={formValues.check_in_date ? new Date(formValues.check_in_date) : undefined}
+                                        onChange={(date) => setValue('check_in_date', format(date, 'yyyy-MM-dd'), { shouldDirty: true })}
+                                        minDate={new Date()}
+                                        placeholder="Select check-in date"
+                                        className="mt-2"
+                                    />
+                                    {/* Hidden input for form validation compatibility if needed, though react-hook-form handles setValue */}
                                 </div>
                                 <div>
                                     <label className="text-sm font-medium leading-none">Check Out</label>
-                                    <Input type="date" {...register('check_out_date', { required: true })} className="mt-2" />
+                                    <DatePicker
+                                        value={formValues.check_out_date ? new Date(formValues.check_out_date) : undefined}
+                                        onChange={(date) => setValue('check_out_date', format(date, 'yyyy-MM-dd'), { shouldDirty: true })}
+                                        minDate={formValues.check_in_date ? new Date(formValues.check_in_date) : new Date()}
+                                        placeholder="Select check-out date"
+                                        className="mt-2"
+                                    />
                                 </div>
                             </div>
                             <div className="grid grid-cols-2 gap-4 col-span-2">
@@ -598,7 +636,17 @@ export default function BookingForm() {
                                             </div>
                                             <div>
                                                 <label className="text-sm font-medium leading-none">Estimate Arrival Time (EAT)</label>
-                                                <Input type="time" {...register('arrival_time')} className="mt-2" />
+                                                <Controller
+                                                    control={control}
+                                                    name="arrival_time"
+                                                    render={({ field }) => (
+                                                        <TimePicker
+                                                            value={field.value}
+                                                            onChange={field.onChange}
+                                                            className="mt-2"
+                                                        />
+                                                    )}
+                                                />
                                             </div>
                                         </div>
                                     )}
@@ -617,7 +665,17 @@ export default function BookingForm() {
                                             </div>
                                             <div>
                                                 <label className="text-sm font-medium leading-none">Estimate Arrival Time (EAT)</label>
-                                                <Input type="time" {...register('arrival_time')} className="mt-2" />
+                                                <Controller
+                                                    control={control}
+                                                    name="arrival_time"
+                                                    render={({ field }) => (
+                                                        <TimePicker
+                                                            value={field.value}
+                                                            onChange={field.onChange}
+                                                            className="mt-2"
+                                                        />
+                                                    )}
+                                                />
                                             </div>
                                         </div>
                                     )}
@@ -626,7 +684,17 @@ export default function BookingForm() {
                                         <div className="sm:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
                                             <div>
                                                 <label className="text-sm font-medium leading-none">Estimate Arrival Time (EAT)</label>
-                                                <Input type="time" {...register('arrival_time')} className="mt-2" />
+                                                <Controller
+                                                    control={control}
+                                                    name="arrival_time"
+                                                    render={({ field }) => (
+                                                        <TimePicker
+                                                            value={field.value}
+                                                            onChange={field.onChange}
+                                                            className="mt-2"
+                                                        />
+                                                    )}
+                                                />
                                             </div>
                                             <div>
                                                 <label className="text-sm font-medium leading-none">Contact Person</label>
