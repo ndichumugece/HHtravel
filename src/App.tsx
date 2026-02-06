@@ -16,6 +16,7 @@ import Settings from './pages/admin/Settings';
 import { isSupabaseConfigured } from './lib/supabase';
 import OptionsList from './pages/settings/OptionsList';
 import ViewBooking from './pages/public/ViewBooking';
+import { ReloadPrompt } from './components/ui/ReloadPrompt';
 
 function App() {
   if (!isSupabaseConfigured) {
@@ -43,6 +44,7 @@ function App() {
   return (
     <Router>
       <AuthProvider>
+        <ReloadPrompt />
         <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/public/bookings/:id" element={<ViewBooking />} />

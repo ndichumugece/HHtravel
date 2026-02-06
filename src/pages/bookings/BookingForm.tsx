@@ -3,7 +3,9 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useForm, useWatch, Controller } from 'react-hook-form';
 import { supabase } from '../../lib/supabase';
 import type { Property, BookingVoucher, CompanySettings } from '../../types';
-import { PDFDownloadLink } from '@react-pdf/renderer';
+// cleaned up imports
+
+
 import BookingPDF from '../../components/pdf/BookingPDF';
 import { ArrowLeft, Save, FileDown, Loader2, Eye, Plus } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
@@ -16,6 +18,7 @@ import { Combobox } from '../../components/ui/Combobox';
 import { DatePicker } from '../../components/ui/DatePicker';
 import { TimePicker } from '../../components/ui/TimePicker';
 import QRCode from 'qrcode';
+// cleaned up imports
 
 const AIRLINES = [
     "Jambojet",
@@ -64,6 +67,8 @@ export default function BookingForm() {
     const [roomTypes, setRoomTypes] = useState<{ id: string, name: string }[]>([]); // For the dynamic rows
     const [bedTypes, setBedTypes] = useState<{ id: string, name: string }[]>([]);
     const [qrCodeUrl, setQrCodeUrl] = useState<string>('');
+    const [isDownloading, setIsDownloading] = useState(false);
+
 
     // Room Details State
     const [roomDetails, setRoomDetails] = useState<{ id: string, room_type: string, bed_type: string, adults: number, children: number, child_ages?: number[] }[]>([
@@ -80,6 +85,9 @@ export default function BookingForm() {
     });
 
     const formValues = useWatch({ control });
+    // const debouncedFormValues = useDebounce(formValues, 1000); // No longer needed
+
+
 
     useEffect(() => {
         fetchProperties();
@@ -216,6 +224,17 @@ export default function BookingForm() {
             // Remove joined fields that are not columns in the booking_vouchers table
             delete (payload as any).profiles;
 
+            // Sanitize numeric fields to prevent "invalid input syntax" errors
+            if (payload.quotation_price === '' as any) {
+                payload.quotation_price = null as any;
+            }
+
+            // Ensure numbers are numbers (handle empty strings which cast to 0 safely, or preserve 0)
+            // number_of_rooms is required, so 0 or 1 fallback is better than string
+            payload.number_of_rooms = Number(payload.number_of_rooms || 0);
+            payload.number_of_adults = Number(payload.number_of_adults || 0);
+            payload.number_of_children = Number(payload.number_of_children || 0);
+
             if (isEditMode && id) {
                 const { error } = await supabase.from('booking_vouchers').update(payload).eq('id', id);
                 if (error) throw error;
@@ -312,22 +331,40 @@ export default function BookingForm() {
                         <Eye className="h-4 w-4 mr-2" />
                         Preview PDF
                     </Button>
-                    <PDFDownloadLink
-                        document={<BookingPDF voucher={formValues as BookingVoucher} settings={settings} qrCodeUrl={qrCodeUrl} />}
-                        fileName={getVoucherFileName()}
-                        className="w-full sm:w-auto"
+                    <Button
+                        variant="outline"
+                        disabled={isDownloading}
+                        className="w-full sm:w-auto min-w-[150px]"
+                        onClick={async () => {
+                            try {
+                                setIsDownloading(true);
+                                const { pdf } = await import('@react-pdf/renderer');
+                                const blob = await pdf(
+                                    <BookingPDF voucher={formValues as BookingVoucher} settings={settings} qrCodeUrl={qrCodeUrl} />
+                                ).toBlob();
+                                const url = URL.createObjectURL(blob);
+                                const link = document.createElement('a');
+                                link.href = url;
+                                link.download = getVoucherFileName();
+                                document.body.appendChild(link);
+                                link.click();
+                                document.body.removeChild(link);
+                                URL.revokeObjectURL(url);
+                            } catch (error) {
+                                console.error('Error downloading PDF:', error);
+                                alert('Failed to download PDF');
+                            } finally {
+                                setIsDownloading(false);
+                            }
+                        }}
                     >
-                        {({ loading: pdfLoading }) => (
-                            <Button variant="outline" disabled={pdfLoading} className="w-full sm:w-auto">
-                                {pdfLoading ? (
-                                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                                ) : (
-                                    <FileDown className="h-4 w-4 mr-2" />
-                                )}
-                                Download PDF
-                            </Button>
+                        {isDownloading ? (
+                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        ) : (
+                            <FileDown className="h-4 w-4 mr-2" />
                         )}
-                    </PDFDownloadLink>
+                        Download PDF
+                    </Button>
                     <Button onClick={handleSubmit(onSubmit)} disabled={loading} className="w-full sm:w-auto">
                         {loading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
                         {!loading && <Save className="h-4 w-4 mr-2" />}
@@ -395,6 +432,18 @@ export default function BookingForm() {
                                         placeholder="Select a property"
                                         className="flex-1"
                                     />
+                                    {/* Assuming 'reference_number' input is here or nearby, adding the debug text */}
+                                    {/* This part of the instruction seems to be misplaced relative to the provided context.
+                                        I'm placing it here as a placeholder, assuming there's a FormField for reference_number
+                                        that was not included in the provided snippet. If this is incorrect, please provide
+                                        the exact location of the reference_number input. */}
+                                    {/* <Input {...field} readOnly /> */}
+                                    {/* </FormControl> */}
+                                    {/* <FormDescription> */}
+                                    {/* Auto-generated unique reference. */}
+                                    {/* {lastRefFound && <span className="block text-xs text-orange-500 font-mono mt-1">Debug: Last Booking: {lastRefFound}</span>} */}
+                                    {/* </FormDescription> */}
+                                    {/* <FormMessage /> */}
                                     <Button
                                         type="button"
                                         variant="outline"
@@ -833,6 +882,8 @@ export default function BookingForm() {
                             <div>
                                 <label className="text-sm font-medium leading-none text-muted-foreground">Reference</label>
                                 <div className="mt-1.5 font-mono text-sm bg-muted/40 p-2 rounded border">{formValues.reference_number || '...'}</div>
+
+
                             </div>
                             <div>
                                 <label className="text-sm font-medium leading-none">Status</label>

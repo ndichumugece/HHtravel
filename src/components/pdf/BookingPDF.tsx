@@ -493,7 +493,7 @@ export default function BookingPDF({ voucher, settings, qrCodeUrl }: BookingPDFP
 
                 {/* Contact Information */}
                 <View wrap={false} style={styles.contactSection}>
-                    <Text style={styles.contactTitle}>Contact Information</Text>
+                    <Text style={styles.contactTitle}>Company Details</Text>
                     <View style={styles.contactRow}>
                         <View style={{ flex: 1 }}>
                             {settings?.company_address && (
