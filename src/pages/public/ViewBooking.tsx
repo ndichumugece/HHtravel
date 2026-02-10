@@ -29,7 +29,7 @@ export default function ViewBooking() {
                     .single();
 
                 if (voucherError) throw voucherError;
-                setVoucher(voucherData);
+                setVoucher(voucherData as BookingVoucher);
 
                 // Fetch Settings
                 const { data: settingsData } = await supabase

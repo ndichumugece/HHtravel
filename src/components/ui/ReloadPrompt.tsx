@@ -8,11 +8,11 @@ export function ReloadPrompt() {
         needRefresh: [needRefresh, setNeedRefresh],
         updateServiceWorker,
     } = useRegisterSW({
-        onRegistered(r) {
+        onRegistered(/* r */) {
             // eslint-disable-next-line no-console
             // console.log('SW Registered: ' + r);
         },
-        onRegisterError(error) {
+        onRegisterError(/* error */) {
             // eslint-disable-next-line no-console
             // console.log('SW registration error', error);
         },

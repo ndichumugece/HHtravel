@@ -5,8 +5,7 @@ import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/Card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../components/ui/Table';
-import { Link } from 'react-router-dom';
-import { Loader2, Save, User, Trash2, Plus, Copy, Check, ChevronRight, List, Bed, Plane, FileText } from 'lucide-react';
+import { Loader2, Save, User, Trash2, Plus, Copy, Check } from 'lucide-react';
 
 export default function Settings() {
     const [activeTab, setActiveTab] = useState<'team' | 'branding' | 'configurations'>('team');

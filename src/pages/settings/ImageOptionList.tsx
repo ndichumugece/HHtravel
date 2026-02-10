@@ -34,7 +34,7 @@ export default function ImageOptionList({ title, tableName, bucketName = 'compan
     const [editName, setEditName] = useState('');
     const [editIcon, setEditIcon] = useState<string | null>(null);
 
-    const [error, setError] = useState<string | null>(null);
+
 
     useEffect(() => {
         fetchOptions();
@@ -42,7 +42,7 @@ export default function ImageOptionList({ title, tableName, bucketName = 'compan
 
     const fetchOptions = async () => {
         setLoading(true);
-        setError(null);
+
         const { data, error: dbError } = await supabase
             .from(tableName)
             .select('*')
@@ -50,7 +50,8 @@ export default function ImageOptionList({ title, tableName, bucketName = 'compan
 
         if (dbError) {
             console.error('Error fetching options:', dbError);
-            setError(`Failed to load data. Error: ${dbError.message}`);
+            console.error('Error fetching options:', dbError);
+            // setError(`Failed to load data. Error: ${dbError.message}`);
         } else {
             const items = data || [];
             setOptions(items);
@@ -84,7 +85,7 @@ export default function ImageOptionList({ title, tableName, bucketName = 'compan
         if (!confirm(`This will add default ${title.toLowerCase()} to the list. Are you sure?`)) return;
 
         setLoading(true);
-        setError(null);
+
         const defaults = tableName === 'inclusions' ? DEFAULT_INCLUSIONS :
             tableName === 'exclusions' ? DEFAULT_EXCLUSIONS : [];
 
@@ -112,7 +113,7 @@ export default function ImageOptionList({ title, tableName, bucketName = 'compan
     const handleAdd = async () => {
         if (!newName.trim()) return;
         setAdding(true);
-        setError(null);
+
 
         const { error } = await supabase
             .from(tableName)
@@ -275,7 +276,7 @@ export default function ImageOptionList({ title, tableName, bucketName = 'compan
                                                 </div>
 
                                                 <div className="flex gap-2 self-end sm:self-center">
-                                                    <Button size="sm" variant="default" onClick={() => saveEditing(option.id)}>
+                                                    <Button size="sm" onClick={() => saveEditing(option.id)}>
                                                         <Save className="h-4 w-4 mr-1" /> Save
                                                     </Button>
                                                     <Button size="sm" variant="ghost" onClick={cancelEditing}>
