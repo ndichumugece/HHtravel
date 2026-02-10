@@ -23,10 +23,9 @@ export default function ViewBooking() {
                 setLoading(true);
 
                 // Fetch Voucher
+                // Fetch Voucher (Secure RPC)
                 const { data: voucherData, error: voucherError } = await supabase
-                    .from('booking_vouchers')
-                    .select('*')
-                    .eq('id', id)
+                    .rpc('get_public_booking', { booking_id: id })
                     .single();
 
                 if (voucherError) throw voucherError;

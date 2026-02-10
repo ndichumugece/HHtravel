@@ -19,7 +19,10 @@ import {
     Sun,
     Utensils,
     BedDouble,
-    LayoutGrid
+    LayoutGrid,
+    Calendar as CalendarIcon,
+    Check,
+    Ban
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 
@@ -72,7 +75,8 @@ export default function AppLayout() {
     const navigation = [
 
         // { name: 'Dashboard', href: '/', icon: LayoutDashboard }, // Moved to admin check
-        { name: 'Bookings', href: '/bookings', icon: FileText },
+        { name: 'Booking Voucher', href: '/bookings', icon: FileText },
+        { name: 'Calendar', href: '/calendar', icon: CalendarIcon },
         { name: 'Quotations', href: '/quotations', icon: FileBadge },
         { name: 'Properties', href: '/properties', icon: Hotel },
         ...(role === 'admin' ? [
@@ -184,6 +188,30 @@ export default function AppLayout() {
                             >
                                 <BedDouble className={cn("h-5 w-5 mr-3 transition-colors", location.pathname === "/settings/bed-types" ? "text-white" : "text-muted-foreground group-hover:text-foreground")} />
                                 Bed Types
+                            </Link>
+                            <Link
+                                to="/settings/inclusions"
+                                className={cn(
+                                    "flex items-center px-3 py-2.5 text-sm font-medium rounded-xl transition-all duration-200 group relative",
+                                    location.pathname === "/settings/inclusions"
+                                        ? "bg-primary text-white shadow-lg shadow-primary/25"
+                                        : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                                )}
+                            >
+                                <Check className={cn("h-5 w-5 mr-3 transition-colors", location.pathname === "/settings/inclusions" ? "text-white" : "text-muted-foreground group-hover:text-foreground")} />
+                                Inclusions
+                            </Link>
+                            <Link
+                                to="/settings/exclusions"
+                                className={cn(
+                                    "flex items-center px-3 py-2.5 text-sm font-medium rounded-xl transition-all duration-200 group relative",
+                                    location.pathname === "/settings/exclusions"
+                                        ? "bg-primary text-white shadow-lg shadow-primary/25"
+                                        : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                                )}
+                            >
+                                <Ban className={cn("h-5 w-5 mr-3 transition-colors", location.pathname === "/settings/exclusions" ? "text-white" : "text-muted-foreground group-hover:text-foreground")} />
+                                Exclusions
                             </Link>
                         </nav>
                     </>

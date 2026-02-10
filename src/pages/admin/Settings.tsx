@@ -5,10 +5,11 @@ import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/Card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../components/ui/Table';
-import { Loader2, Save, User, Trash2, Plus, Copy, Check } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Loader2, Save, User, Trash2, Plus, Copy, Check, ChevronRight, List, Bed, Plane, FileText } from 'lucide-react';
 
 export default function Settings() {
-    const [activeTab, setActiveTab] = useState<'team' | 'branding'>('team');
+    const [activeTab, setActiveTab] = useState<'team' | 'branding' | 'configurations'>('team');
     const [loading, setLoading] = useState(false);
 
     // Team State
@@ -165,6 +166,15 @@ export default function Settings() {
                         }`}
                 >
                     Branding & PDF
+                </button>
+                <button
+                    onClick={() => setActiveTab('configurations')}
+                    className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${activeTab === 'configurations'
+                        ? 'bg-white text-primary shadow-sm'
+                        : 'text-muted-foreground hover:text-foreground'
+                        }`}
+                >
+                    Configurations
                 </button>
             </div>
 

@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
 import type { BookingVoucher } from '../../types';
-import { Plus, Calendar, Search, FileText, Trash2, AlertTriangle } from 'lucide-react';
+import { Plus, Calendar, Search, FileText } from 'lucide-react';
 import { format } from 'date-fns';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
@@ -15,21 +15,14 @@ import {
     TableRow,
 } from '../../components/ui/Table';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/Card';
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogHeader,
-    DialogTitle,
-} from '../../components/ui/Dialog';
+
 
 export default function BookingList() {
     const [vouchers, setVouchers] = useState<BookingVoucher[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [error, setError] = useState<string | null>(null);
-    const [voucherToDelete, setVoucherToDelete] = useState<string | null>(null);
-    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const navigate = useNavigate();
 
     useEffect(() => {
         fetchVouchers();
@@ -49,31 +42,6 @@ export default function BookingList() {
             setError(error.message);
         } finally {
             setLoading(false);
-        }
-    };
-
-    const deleteVoucher = (id: string) => {
-        setVoucherToDelete(id);
-        setIsDeleteModalOpen(true);
-    };
-
-    const confirmDelete = async () => {
-        if (!voucherToDelete) return;
-
-        try {
-            const { error } = await supabase
-                .from('booking_vouchers')
-                .delete()
-                .eq('id', voucherToDelete);
-
-            if (error) throw error;
-
-            setVouchers(vouchers.filter(v => v.id !== voucherToDelete));
-            setIsDeleteModalOpen(false);
-            setVoucherToDelete(null);
-        } catch (error: any) {
-            console.error('Error deleting voucher:', error);
-            alert('Failed to delete voucher: ' + error.message);
         }
     };
 
@@ -138,7 +106,6 @@ export default function BookingList() {
                                     <TableHead>Guest & Property</TableHead>
                                     <TableHead>Dates</TableHead>
                                     <TableHead>Status</TableHead>
-                                    <TableHead className="text-right">Actions</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -150,7 +117,11 @@ export default function BookingList() {
                                     </TableRow>
                                 ) : (
                                     filteredVouchers.map((voucher) => (
-                                        <TableRow key={voucher.id}>
+                                        <TableRow
+                                            key={voucher.id}
+                                            className="cursor-pointer hover:bg-gray-50 transition-colors"
+                                            onClick={() => navigate(`/bookings/${voucher.id}/edit`)}
+                                        >
                                             <TableCell>
                                                 <div className="h-9 w-9 rounded-full bg-blue-50 flex items-center justify-center text-blue-600">
                                                     <FileText className="h-4 w-4" />
@@ -182,21 +153,6 @@ export default function BookingList() {
                                                     {voucher.status}
                                                 </span>
                                             </TableCell>
-                                            <TableCell className="text-right">
-                                                <Link to={`/bookings/${voucher.id}/edit`}>
-                                                    <Button variant="ghost" size="sm">
-                                                        Edit
-                                                    </Button>
-                                                </Link>
-                                                <Button
-                                                    variant="ghost"
-                                                    size="sm"
-                                                    className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                                                    onClick={() => deleteVoucher(voucher.id)}
-                                                >
-                                                    <Trash2 className="h-4 w-4" />
-                                                </Button>
-                                            </TableCell>
                                         </TableRow>
                                     ))
                                 )}
@@ -205,40 +161,6 @@ export default function BookingList() {
                     </div>
                 </CardContent>
             </Card>
-
-            <Dialog open={isDeleteModalOpen} onOpenChange={setIsDeleteModalOpen}>
-                <DialogContent className="sm:max-w-md">
-                    <div className="flex flex-col items-center gap-4 text-center sm:text-left sm:flex-row sm:items-start p-2">
-                        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-red-100 sm:h-10 sm:w-10">
-                            <AlertTriangle className="h-6 w-6 text-red-600" aria-hidden="true" />
-                        </div>
-                        <div className="flex-1 space-y-2">
-                            <DialogHeader className="text-center sm:text-left">
-                                <DialogTitle className="text-lg font-semibold text-foreground">Delete Booking Voucher</DialogTitle>
-                                <DialogDescription className="text-muted-foreground">
-                                    Are you sure you want to delete this booking voucher? This action cannot be undone and will permanently remove the data from our servers.
-                                </DialogDescription>
-                            </DialogHeader>
-                        </div>
-                    </div>
-                    <div className="flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2 gap-2 mt-4 px-2">
-                        <Button
-                            variant="outline"
-                            onClick={() => setIsDeleteModalOpen(false)}
-                            className="w-full sm:w-auto mt-2 sm:mt-0"
-                        >
-                            Cancel
-                        </Button>
-                        <Button
-                            variant="destructive"
-                            onClick={confirmDelete}
-                            className="w-full sm:w-auto bg-red-600 hover:bg-red-700 text-white focus-visible:ring-red-600"
-                        >
-                            Delete Voucher
-                        </Button>
-                    </div>
-                </DialogContent>
-            </Dialog>
-        </div >
+        </div>
     );
 }

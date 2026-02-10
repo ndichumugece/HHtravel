@@ -15,8 +15,10 @@ import AdminReports from './pages/admin/AdminReports';
 import Settings from './pages/admin/Settings';
 import { isSupabaseConfigured } from './lib/supabase';
 import OptionsList from './pages/settings/OptionsList';
+import ImageOptionList from './pages/settings/ImageOptionList';
 import ViewBooking from './pages/public/ViewBooking';
 import { ReloadPrompt } from './components/ui/ReloadPrompt';
+import Calendar from './pages/calendar/Calendar';
 
 function App() {
   if (!isSupabaseConfigured) {
@@ -61,6 +63,10 @@ function App() {
               <Route path="/properties/new" element={<PropertyForm />} />
               <Route path="/properties/:id/edit" element={<PropertyForm />} />
 
+              {/* Calendar */}
+              <Route path="/calendar" element={<Calendar />} />
+
+
               {/* Bookings */}
               <Route path="/bookings" element={<BookingList />} />
               <Route path="/bookings/new" element={<BookingForm />} />
@@ -84,6 +90,8 @@ function App() {
                 <Route path="/settings/meal-plans" element={<OptionsList title="Meal Plans" tableName="meal_plans" />} />
                 <Route path="/settings/room-types" element={<OptionsList title="Room Types" tableName="room_types" />} />
                 <Route path="/settings/bed-types" element={<OptionsList title="Bed Types" tableName="bed_types" />} />
+                <Route path="/settings/inclusions" element={<ImageOptionList title="Inclusions" tableName="inclusions" />} />
+                <Route path="/settings/exclusions" element={<ImageOptionList title="Exclusions" tableName="exclusions" />} />
               </Route>
             </Route>
           </Route>

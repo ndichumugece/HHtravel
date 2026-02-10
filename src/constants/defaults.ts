@@ -1,0 +1,41 @@
+export const DEFAULT_INCLUSIONS = [
+    'Return flights from Nairobi to the Coast',
+    'Return flights from Nairobi to the Park/Conservancy',
+    'Return Airport/Airstrip transfers to the property',
+    'Breakfast, Lunch and Dinner',
+    'Soft Drinks, Local Beers, House Wines and Selected Spirits',
+    'Accommodation',
+    'Soft Drinks only',
+    'Breakfast and Dinner',
+    'Bed and Breakfast',
+    'Sundowners',
+    'E- Bikes',
+    'Shared Morning and Evening Game Drives',
+    'Private Land Cruiser',
+    'Private English-speaking Guide',
+    'Daily Game Drives',
+    'Horse Riding',
+    'Camel rides',
+    'Conservancy Fee',
+    'Park Fee included',
+    'Bush walks',
+    'Picnic Bush Breakfast',
+    'Picnic Bush Dinner',
+    'Boat Transfer',
+    'Laundry Services',
+    'Emergency Medical Evacuation',
+    'Night Game Drive',
+    'Cultural Visit transfers',
+    'Complimentary Back and Neck Massage',
+    'Mountain Biking',
+    'Rhino Tracking',
+    'Tours to Waitabit Farm',
+    'Farm and Factory visits'
+];
+
+export const DEFAULT_EXCLUSIONS = [
+    'Spa treatments',
+    'Conservancy fee',
+    'Travel Insurance',
+    'Park Fee'
+];

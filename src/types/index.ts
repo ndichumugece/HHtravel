@@ -23,6 +23,7 @@ export interface BookingVoucher {
     check_out_date: string;
     number_of_nights: number;
     property_name: string;
+    room_type?: string;
     package_type?: string;
     bed_type?: string;
     meal_plan?: string;

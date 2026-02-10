@@ -7,7 +7,7 @@ import type { Property, BookingVoucher, CompanySettings } from '../../types';
 
 
 import BookingPDF from '../../components/pdf/BookingPDF';
-import { ArrowLeft, Save, FileDown, Loader2, Eye, Plus } from 'lucide-react';
+import { ArrowLeft, Save, FileDown, Loader2, Eye, Plus, Trash2, AlertTriangle } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { Button } from '../../components/ui/Button';
 import { AddPropertyModal } from '../../components/properties/AddPropertyModal';
@@ -18,6 +18,13 @@ import { Combobox } from '../../components/ui/Combobox';
 import { DatePicker } from '../../components/ui/DatePicker';
 import { TimePicker } from '../../components/ui/TimePicker';
 import QRCode from 'qrcode';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+} from '../../components/ui/Dialog';
 // cleaned up imports
 
 const AIRLINES = [
@@ -68,6 +75,25 @@ export default function BookingForm() {
     const [bedTypes, setBedTypes] = useState<{ id: string, name: string }[]>([]);
     const [qrCodeUrl, setQrCodeUrl] = useState<string>('');
     const [isDownloading, setIsDownloading] = useState(false);
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+
+    const handleDelete = async () => {
+        if (!id) return;
+
+        try {
+            const { error } = await supabase
+                .from('booking_vouchers')
+                .delete()
+                .eq('id', id);
+
+            if (error) throw error;
+
+            navigate('/bookings');
+        } catch (error: any) {
+            console.error('Error deleting voucher:', error);
+            alert('Failed to delete voucher: ' + error.message);
+        }
+    };
 
 
     // Room Details State
@@ -365,6 +391,17 @@ export default function BookingForm() {
                         )}
                         Download PDF
                     </Button>
+                    {isEditMode && (
+                        <Button
+                            variant="outline"
+                            size="icon"
+                            onClick={() => setIsDeleteModalOpen(true)}
+                            className="h-10 w-10 rounded-full bg-white hover:bg-gray-100 border-gray-200 shadow-sm text-gray-500 hover:text-red-600 transition-colors"
+                            title="Delete Voucher"
+                        >
+                            <Trash2 className="h-5 w-5" />
+                        </Button>
+                    )}
                     <Button onClick={handleSubmit(onSubmit)} disabled={loading} className="w-full sm:w-auto">
                         {loading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
                         {!loading && <Save className="h-4 w-4 mr-2" />}
@@ -372,6 +409,40 @@ export default function BookingForm() {
                     </Button>
                 </div>
             </div>
+
+            <Dialog open={isDeleteModalOpen} onOpenChange={setIsDeleteModalOpen}>
+                <DialogContent className="sm:max-w-md">
+                    <div className="flex flex-col items-center gap-4 text-center sm:text-left sm:flex-row sm:items-start p-2">
+                        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-red-100 sm:h-10 sm:w-10">
+                            <AlertTriangle className="h-6 w-6 text-red-600" aria-hidden="true" />
+                        </div>
+                        <div className="flex-1 space-y-2">
+                            <DialogHeader className="text-center sm:text-left">
+                                <DialogTitle className="text-lg font-semibold text-foreground">Delete Booking Voucher</DialogTitle>
+                                <DialogDescription className="text-muted-foreground">
+                                    Are you sure you want to delete this booking voucher? This action cannot be undone and will permanently remove the data from our servers.
+                                </DialogDescription>
+                            </DialogHeader>
+                        </div>
+                    </div>
+                    <div className="flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2 gap-2 mt-4 px-2">
+                        <Button
+                            variant="outline"
+                            onClick={() => setIsDeleteModalOpen(false)}
+                            className="w-full sm:w-auto mt-2 sm:mt-0"
+                        >
+                            Cancel
+                        </Button>
+                        <Button
+                            variant="destructive"
+                            onClick={handleDelete}
+                            className="w-full sm:w-auto bg-red-600 hover:bg-red-700 text-white focus-visible:ring-red-600"
+                        >
+                            Delete Voucher
+                        </Button>
+                    </div>
+                </DialogContent>
+            </Dialog>
 
             <form onSubmit={handleSubmit(onSubmit)} className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 {/* Main Column */}

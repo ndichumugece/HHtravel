@@ -10,11 +10,11 @@ export function ReloadPrompt() {
     } = useRegisterSW({
         onRegistered(r) {
             // eslint-disable-next-line no-console
-            console.log('SW Registered: ' + r);
+            // console.log('SW Registered: ' + r);
         },
         onRegisterError(error) {
             // eslint-disable-next-line no-console
-            console.log('SW registration error', error);
+            // console.log('SW registration error', error);
         },
     });
 
