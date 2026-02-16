@@ -107,6 +107,19 @@ export default function Settings() {
         }
     };
 
+    const handleUpdateColor = async (userId: string, color: string) => {
+        try {
+            const { error } = await supabase.from('profiles').update({ color }).eq('id', userId);
+            if (error) throw error;
+
+            // Optimistic update
+            setUsers(users.map(u => u.id === userId ? { ...u, color } : u));
+        } catch (error: any) {
+            console.error('Error updating color:', error);
+            alert('Failed to update color');
+        }
+    };
+
     // --- Branding Functions ---
     const fetchSettings = async () => {
         setLoading(true);
@@ -295,6 +308,7 @@ export default function Settings() {
                                         <TableRow>
                                             <TableHead>User</TableHead>
                                             <TableHead>Role</TableHead>
+                                            <TableHead>Color</TableHead>
                                             <TableHead className="text-right">Actions</TableHead>
                                         </TableRow>
                                     </TableHeader>
@@ -317,6 +331,18 @@ export default function Settings() {
                                                         }`}>
                                                         {user.role}
                                                     </span>
+                                                </TableCell>
+                                                <TableCell>
+                                                    <div className="flex items-center gap-2">
+                                                        <input
+                                                            type="color"
+                                                            value={user.color || '#cccccc'}
+                                                            onChange={(e) => handleUpdateColor(user.id, e.target.value)}
+                                                            className="h-8 w-12 cursor-pointer rounded border p-0.5"
+                                                            title="Change user color"
+                                                        />
+                                                        <span className="text-xs text-muted-foreground">{user.color || 'None'}</span>
+                                                    </div>
                                                 </TableCell>
                                                 <TableCell className="text-right">
                                                     <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-destructive" onClick={() => handleDeleteUser(user.id)}>
@@ -439,6 +465,116 @@ export default function Settings() {
                                     placeholder="Thank you for traveling with us."
                                 />
                             </div>
+                            <div>
+                                <label className="text-sm font-medium mb-2 block">Footer Image</label>
+                                <div className="flex items-center gap-4">
+                                    {settings.pdf_footer_image_url && (
+                                        <div className="relative group">
+                                            <img
+                                                src={settings.pdf_footer_image_url}
+                                                alt="Footer Image"
+                                                className="h-16 object-contain border rounded p-1 bg-white"
+                                            />
+                                            <button
+                                                onClick={() => setSettings({ ...settings, pdf_footer_image_url: undefined })}
+                                                className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                                                title="Remove image"
+                                            >
+                                                <Trash2 className="h-3 w-3" />
+                                            </button>
+                                        </div>
+                                    )}
+                                    <div className="flex-1">
+                                        <Input
+                                            type="file"
+                                            accept="image/*"
+                                            onChange={async (e) => {
+                                                const file = e.target.files?.[0];
+                                                if (!file) return;
+
+                                                try {
+                                                    setLoading(true);
+                                                    const fileExt = file.name.split('.').pop();
+                                                    const fileName = `footer-${Date.now()}.${fileExt}`;
+                                                    const { error: uploadError } = await supabase.storage
+                                                        .from('company_assets')
+                                                        .upload(fileName, file);
+
+                                                    if (uploadError) throw uploadError;
+
+                                                    const { data: { publicUrl } } = supabase.storage
+                                                        .from('company_assets')
+                                                        .getPublicUrl(fileName);
+
+                                                    setSettings({ ...settings, pdf_footer_image_url: publicUrl });
+                                                } catch (error) {
+                                                    console.error('Error uploading footer image:', error);
+                                                    alert('Failed to upload image. Ensure "company_assets" bucket exists.');
+                                                } finally {
+                                                    setLoading(false);
+                                                }
+                                            }}
+                                        />
+                                        <p className="text-xs text-muted-foreground mt-1">Upload an image to appear at the bottom of every page (e.g. Safari Animals).</p>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className="text-sm font-medium mb-2 block">Footer Image (Right Side)</label>
+                                    <div className="flex items-center gap-4">
+                                        {settings.pdf_footer_image_right_url && (
+                                            <div className="relative group">
+                                                <img
+                                                    src={settings.pdf_footer_image_right_url}
+                                                    alt="Footer Image Right"
+                                                    className="h-16 object-contain border rounded p-1 bg-white"
+                                                />
+                                                <button
+                                                    onClick={() => setSettings({ ...settings, pdf_footer_image_right_url: undefined })}
+                                                    className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                                                    title="Remove image"
+                                                >
+                                                    <Trash2 className="h-3 w-3" />
+                                                </button>
+                                            </div>
+                                        )}
+                                        <div className="flex-1">
+                                            <Input
+                                                type="file"
+                                                accept="image/*"
+                                                onChange={async (e) => {
+                                                    const file = e.target.files?.[0];
+                                                    if (!file) return;
+
+                                                    try {
+                                                        setLoading(true);
+                                                        const fileExt = file.name.split('.').pop();
+                                                        const fileName = `footer-right-${Date.now()}.${fileExt}`;
+                                                        const { error: uploadError } = await supabase.storage
+                                                            .from('company_assets')
+                                                            .upload(fileName, file);
+
+                                                        if (uploadError) throw uploadError;
+
+                                                        const { data: { publicUrl } } = supabase.storage
+                                                            .from('company_assets')
+                                                            .getPublicUrl(fileName);
+
+                                                        setSettings({ ...settings, pdf_footer_image_right_url: publicUrl });
+                                                    } catch (error) {
+                                                        console.error('Error uploading right footer image:', error);
+                                                        alert('Failed to upload image. Ensure "company_assets" bucket exists.');
+                                                    } finally {
+                                                        setLoading(false);
+                                                    }
+                                                }}
+                                            />
+                                            <p className="text-xs text-muted-foreground mt-1">Upload an image to appear at the bottom right of every page.</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+
                         </CardContent>
                     </Card>
 

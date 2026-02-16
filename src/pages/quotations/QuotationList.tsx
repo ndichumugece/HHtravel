@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
 import type { QuotationVoucher } from '../../types';
-import { Plus, Calendar, Search, FileBadge } from 'lucide-react';
+import { Plus, Calendar, Search, FileBadge, ChevronLeft, ChevronRight } from 'lucide-react';
 import { format } from 'date-fns';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
@@ -20,6 +20,8 @@ export default function QuotationList() {
     const [quotations, setQuotations] = useState<QuotationVoucher[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 15;
 
     useEffect(() => {
         fetchQuotations();
@@ -45,6 +47,16 @@ export default function QuotationList() {
         quote.client_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         quote.reference_number.toLowerCase().includes(searchTerm.toLowerCase())
     );
+
+    const totalPages = Math.ceil(filteredQuotations.length / itemsPerPage);
+    const currentQuotations = filteredQuotations.slice(
+        (currentPage - 1) * itemsPerPage,
+        currentPage * itemsPerPage
+    );
+
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchTerm]);
 
     if (loading) return (
         <div className="flex items-center justify-center p-8">
@@ -103,7 +115,7 @@ export default function QuotationList() {
                                         </TableCell>
                                     </TableRow>
                                 ) : (
-                                    filteredQuotations.map((quote) => (
+                                    currentQuotations.map((quote) => (
                                         <TableRow key={quote.id}>
                                             <TableCell>
                                                 <div className="h-9 w-9 rounded-full bg-purple-50 flex items-center justify-center text-purple-600">
@@ -148,6 +160,34 @@ export default function QuotationList() {
                             </TableBody>
                         </Table>
                     </div>
+                    {totalPages > 1 && (
+                        <div className="flex items-center justify-between px-2 py-4">
+                            <div className="text-sm text-muted-foreground">
+                                Showing {((currentPage - 1) * itemsPerPage) + 1} to {Math.min(currentPage * itemsPerPage, filteredQuotations.length)} of {filteredQuotations.length} entries
+                            </div>
+                            <div className="flex items-center space-x-2">
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                                    disabled={currentPage === 1}
+                                >
+                                    <ChevronLeft className="h-4 w-4" />
+                                </Button>
+                                <div className="text-sm font-medium">
+                                    Page {currentPage} of {totalPages}
+                                </div>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                                    disabled={currentPage === totalPages}
+                                >
+                                    <ChevronRight className="h-4 w-4" />
+                                </Button>
+                            </div>
+                        </div>
+                    )}
                 </CardContent>
             </Card>
         </div>

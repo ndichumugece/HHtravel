@@ -76,8 +76,8 @@ export default function AppLayout() {
 
         // { name: 'Dashboard', href: '/', icon: LayoutDashboard }, // Moved to admin check
         { name: 'Booking Voucher', href: '/bookings', icon: FileText },
+        { name: 'Quotation Voucher', href: '/quotations', icon: FileBadge },
         { name: 'Calendar', href: '/calendar', icon: CalendarIcon },
-        { name: 'Quotations', href: '/quotations', icon: FileBadge },
         { name: 'Properties', href: '/properties', icon: Hotel },
         ...(role === 'admin' ? [
             { name: 'Dashboard', href: '/', icon: LayoutDashboard },

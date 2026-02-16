@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
 import type { BookingVoucher } from '../../types';
-import { Plus, Calendar, Search, FileText } from 'lucide-react';
+import { Plus, Calendar, Search, FileText, ChevronLeft, ChevronRight } from 'lucide-react';
 import { format } from 'date-fns';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
@@ -21,6 +21,8 @@ export default function BookingList() {
     const [vouchers, setVouchers] = useState<BookingVoucher[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 15;
     const [error, setError] = useState<string | null>(null);
     const navigate = useNavigate();
 
@@ -50,6 +52,16 @@ export default function BookingList() {
         voucher.reference_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
         voucher.property_name.toLowerCase().includes(searchTerm.toLowerCase())
     );
+
+    const totalPages = Math.ceil(filteredVouchers.length / itemsPerPage);
+    const currentVouchers = filteredVouchers.slice(
+        (currentPage - 1) * itemsPerPage,
+        currentPage * itemsPerPage
+    );
+
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchTerm]);
 
     if (loading) return (
         <div className="flex items-center justify-center p-8">
@@ -116,7 +128,7 @@ export default function BookingList() {
                                         </TableCell>
                                     </TableRow>
                                 ) : (
-                                    filteredVouchers.map((voucher) => (
+                                    currentVouchers.map((voucher) => (
                                         <TableRow
                                             key={voucher.id}
                                             className="cursor-pointer hover:bg-gray-50 transition-colors"
@@ -159,6 +171,34 @@ export default function BookingList() {
                             </TableBody>
                         </Table>
                     </div>
+                    {totalPages > 1 && (
+                        <div className="flex items-center justify-between px-2 py-4">
+                            <div className="text-sm text-muted-foreground">
+                                Showing {((currentPage - 1) * itemsPerPage) + 1} to {Math.min(currentPage * itemsPerPage, filteredVouchers.length)} of {filteredVouchers.length} entries
+                            </div>
+                            <div className="flex items-center space-x-2">
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                                    disabled={currentPage === 1}
+                                >
+                                    <ChevronLeft className="h-4 w-4" />
+                                </Button>
+                                <div className="text-sm font-medium">
+                                    Page {currentPage} of {totalPages}
+                                </div>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                                    disabled={currentPage === totalPages}
+                                >
+                                    <ChevronRight className="h-4 w-4" />
+                                </Button>
+                            </div>
+                        </div>
+                    )}
                 </CardContent>
             </Card>
         </div>

@@ -52,9 +52,8 @@ export interface BookingVoucher {
     room_details?: RoomDetail[];
     profiles?: {
         full_name: string;
-    } | {
-        full_name: string;
-    }[] | null;
+        color?: string;
+    } | null;
 }
 
 export interface RoomDetail {
@@ -100,6 +99,8 @@ export interface CompanySettings {
     company_website?: string;
     logo_url?: string;
     pdf_footer_text?: string;
+    pdf_footer_image_url?: string;
+    pdf_footer_image_right_url?: string;
 }
 
 export interface Profile {
@@ -107,6 +108,7 @@ export interface Profile {
     email: string;
     full_name: string;
     role: 'admin' | 'consultant';
+    color?: string;
     created_at: string;
 }
 
