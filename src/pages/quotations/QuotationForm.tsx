@@ -23,6 +23,7 @@ export default function QuotationForm() {
     const [loading, setLoading] = useState(false);
     const [isEditMode] = useState(!!id);
     const [consultantName, setConsultantName] = useState<string>('');
+    const [optionsMap, setOptionsMap] = useState<Record<string, string>>({});
 
     const { register, handleSubmit, control, setValue } = useForm<Partial<QuotationVoucher>>({
         defaultValues: {
@@ -50,6 +51,7 @@ export default function QuotationForm() {
     useEffect(() => {
         fetchProperties();
         fetchSettings();
+        fetchOptions();
         if (id) {
             fetchQuotation(id);
         } else {
@@ -61,6 +63,30 @@ export default function QuotationForm() {
     }, [id, user]);
 
     // ... (existing functions: generateBookingId, fetchProperties, fetchSettings, fetchQuotation, onSubmit)
+
+    const fetchOptions = async () => {
+        const [incRes, excRes] = await Promise.all([
+            supabase.from('inclusions').select('name, icon_url'),
+            supabase.from('exclusions').select('name, icon_url')
+        ]);
+
+        const map: Record<string, string> = {};
+
+        incRes.data?.forEach((item: any) => {
+            if (item.name && item.icon_url) {
+                map[item.name] = item.icon_url;
+            }
+        });
+
+        excRes.data?.forEach((item: any) => {
+            if (item.name && item.icon_url) {
+                map[item.name] = item.icon_url;
+            }
+        });
+
+        console.log('Fetched Options Map:', map);
+        setOptionsMap(map);
+    };
 
     const generateBookingId = () => {
         // Generate random 10-digit Booking ID
@@ -164,7 +190,7 @@ export default function QuotationForm() {
                 </div>
 
                 <div className="flex flex-col sm:flex-row gap-3 w-full xl:w-auto">
-                    <BlobProvider document={<QuotationPDF voucher={debouncedFormValues as QuotationVoucher} settings={settings} consultantName={consultantName} />}>
+                    <BlobProvider document={<QuotationPDF voucher={debouncedFormValues as QuotationVoucher} settings={settings} consultantName={consultantName} optionsMap={optionsMap} />}>
                         {({ url, loading: pdfLoading }) => {
                             const isLoading = pdfLoading; // || !url; // URL might be null initially?
                             return (

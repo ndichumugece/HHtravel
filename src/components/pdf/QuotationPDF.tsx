@@ -197,7 +197,7 @@ const styles = StyleSheet.create({
     },
 });
 
-export default function QuotationPDF({ voucher, settings, consultantName }: { voucher: QuotationVoucher, settings?: CompanySettings, consultantName?: string }) {
+export default function QuotationPDF({ voucher, settings, consultantName, optionsMap }: { voucher: QuotationVoucher, settings?: CompanySettings, consultantName?: string, optionsMap?: Record<string, string> }) {
     if (!voucher) return null;
 
     const formatDate = (dateStr?: string) => {
@@ -303,12 +303,20 @@ export default function QuotationPDF({ voucher, settings, consultantName }: { vo
                                 <View style={{ marginBottom: 15 }}>
                                     <Text style={[styles.termTitle, { color: theme.primary }]}>Inclusions:</Text>
                                     <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
-                                        {voucher.inclusions.map((item, index) => (
-                                            <View key={index} style={{ flexDirection: 'row', alignItems: 'center', width: '50%', marginBottom: 4 }}>
-                                                <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: theme.primary, marginRight: 6 }} />
-                                                <Text style={styles.termText}>{item}</Text>
-                                            </View>
-                                        ))}
+                                        {voucher.inclusions.map((item, index) => {
+                                            const iconUrl = optionsMap?.[item];
+                                            console.log(`Rendering inclusion: ${item}, IconURL: ${iconUrl}`);
+                                            return (
+                                                <View key={index} style={{ flexDirection: 'row', alignItems: 'center', width: '50%', marginBottom: 6 }}>
+                                                    {iconUrl ? (
+                                                        <Image src={iconUrl} style={{ width: 12, height: 12, marginRight: 6, objectFit: 'contain' }} />
+                                                    ) : (
+                                                        <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: theme.primary, marginRight: 6 }} />
+                                                    )}
+                                                    <Text style={styles.termText}>{item}</Text>
+                                                </View>
+                                            );
+                                        })}
                                     </View>
                                 </View>
                             )}
@@ -317,12 +325,19 @@ export default function QuotationPDF({ voucher, settings, consultantName }: { vo
                                 <View>
                                     <Text style={[styles.termTitle, { color: '#ef4444' }]}>Exclusions:</Text>
                                     <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
-                                        {voucher.exclusions.map((item, index) => (
-                                            <View key={index} style={{ flexDirection: 'row', alignItems: 'center', width: '50%', marginBottom: 4 }}>
-                                                <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: '#ef4444', marginRight: 6 }} />
-                                                <Text style={styles.termText}>{item}</Text>
-                                            </View>
-                                        ))}
+                                        {voucher.exclusions.map((item, index) => {
+                                            const iconUrl = optionsMap?.[item];
+                                            return (
+                                                <View key={index} style={{ flexDirection: 'row', alignItems: 'center', width: '50%', marginBottom: 6 }}>
+                                                    {iconUrl ? (
+                                                        <Image src={iconUrl} style={{ width: 12, height: 12, marginRight: 6, objectFit: 'contain' }} />
+                                                    ) : (
+                                                        <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: '#ef4444', marginRight: 6 }} />
+                                                    )}
+                                                    <Text style={styles.termText}>{item}</Text>
+                                                </View>
+                                            );
+                                        })}
                                     </View>
                                 </View>
                             )}

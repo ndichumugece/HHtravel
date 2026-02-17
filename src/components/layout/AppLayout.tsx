@@ -15,8 +15,7 @@ import {
     X,
     ChevronLeft,
     ChevronRight,
-    Moon,
-    Sun,
+
     Utensils,
     BedDouble,
     LayoutGrid,
@@ -33,22 +32,6 @@ export default function AppLayout() {
     const location = useLocation();
     const [isMobileOpen, setIsMobileOpen] = useState(false);
     const [isCollapsed, setIsCollapsed] = useState(false);
-    const [isDark, setIsDark] = useState(false);
-
-    useEffect(() => {
-        // Init theme from system or local storage could be added here
-        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-            // setIsDark(true); // Optional: default to dark if system is dark
-        }
-    }, []);
-
-    useEffect(() => {
-        if (isDark) {
-            document.documentElement.classList.add('dark');
-        } else {
-            document.documentElement.classList.remove('dark');
-        }
-    }, [isDark]);
 
     // Access Control: Force logout if profile is deleted
     useEffect(() => {
@@ -83,7 +66,7 @@ export default function AppLayout() {
         { name: 'Properties', href: '/properties', icon: Hotel },
         ...(role === 'admin' ? [
             { name: 'Dashboard', href: '/', icon: LayoutDashboard },
-            { name: 'Consultants', href: '/users', icon: Users },
+            { name: 'Users', href: '/users', icon: Users },
             { name: 'Reports', href: '/reports', icon: Settings }
         ] : []),
     ];
@@ -221,18 +204,7 @@ export default function AppLayout() {
             </div>
 
             <div className="mt-auto p-4 border-t border-border/40 space-y-2">
-                {/* Dark Mode Toggle */}
-                <button
-                    onClick={() => setIsDark(!isDark)}
-                    className={cn(
-                        "flex items-center w-full px-3 py-2 rounded-lg transition-colors text-sm font-medium",
-                        "text-muted-foreground hover:bg-muted hover:text-foreground",
-                        collapsed && "justify-center"
-                    )}
-                >
-                    {isDark ? <Sun className={cn("h-5 w-5", !collapsed && "mr-3")} /> : <Moon className={cn("h-5 w-5", !collapsed && "mr-3")} />}
-                    {!collapsed && "Dark Mode"}
-                </button>
+
 
                 {role === 'admin' && (
                     <Link to="/settings" className={cn("flex items-center px-2 hover:bg-muted/50 p-2 rounded-md transition-colors cursor-pointer group", collapsed && "justify-center")}>

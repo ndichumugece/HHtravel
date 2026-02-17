@@ -46,6 +46,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             setUser(session?.user ?? null);
             if (session?.user) {
                 fetchUserRole(session.user.id);
+                updateLastActive(session.user.id);
             } else {
                 setRole(null);
                 setLoading(false);
@@ -54,6 +55,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         return () => subscription.unsubscribe();
     }, []);
+
+    const updateLastActive = async (userId: string) => {
+        try {
+            await supabase
+                .from('profiles')
+                .update({ last_active: new Date().toISOString() })
+                .eq('id', userId);
+        } catch (error) {
+            console.error('Error updating last_active:', error);
+        }
+    };
 
     const fetchUserRole = async (userId: string) => {
         try {

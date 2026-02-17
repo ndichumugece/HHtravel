@@ -115,6 +115,26 @@ export interface Profile {
     full_name: string;
     role: 'admin' | 'consultant';
     color?: string;
+    avatar_url?: string;
+    last_active?: string;
     created_at: string;
+}
+
+export interface Inclusion {
+    id: string;
+    name: string;
+    slug: string;
+    icon_url?: string;
+    is_published: boolean;
+    created_at?: string;
+}
+
+export interface Exclusion {
+    id: string;
+    name: string;
+    slug: string;
+    icon_url?: string;
+    is_published: boolean;
+    created_at?: string;
 }
 

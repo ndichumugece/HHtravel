@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import Login from './pages/Login';
+import SignUp from './pages/auth/SignUp';
 import AppLayout from './components/layout/AppLayout';
 import Dashboard from './pages/Dashboard';
 import PropertiesList from './pages/properties/PropertiesList';
@@ -11,14 +12,16 @@ import BookingForm from './pages/bookings/BookingForm';
 import QuotationList from './pages/quotations/QuotationList';
 import QuotationForm from './pages/quotations/QuotationForm';
 import UsersList from './pages/admin/UsersList';
+import UserEdit from './pages/admin/UserEdit';
 import AdminReports from './pages/admin/AdminReports';
 import Settings from './pages/admin/Settings';
 import { isSupabaseConfigured } from './lib/supabase';
 import OptionsList from './pages/settings/OptionsList';
-import ImageOptionList from './pages/settings/ImageOptionList';
 import ViewBooking from './pages/public/ViewBooking';
 import { ReloadPrompt } from './components/ui/ReloadPrompt';
 import Calendar from './pages/calendar/Calendar';
+import InclusionsExclusionsManager from './components/admin/InclusionsExclusionsManager';
+import DebugIcons from './pages/admin/DebugIcons';
 
 function App() {
   if (!isSupabaseConfigured) {
@@ -49,6 +52,7 @@ function App() {
         <ReloadPrompt />
         <Routes>
           <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<SignUp />} />
           <Route path="/public/bookings/:id" element={<ViewBooking />} />
 
           <Route element={<ProtectedRoute />}>
@@ -86,13 +90,17 @@ function App() {
               {/* Admin Routes */}
               <Route element={<ProtectedRoute allowedRoles={['admin']} />}>
                 <Route path="/users" element={<UsersList />} />
+                <Route path="/users/new" element={<UserEdit />} />
+                <Route path="/users/:id" element={<UserEdit />} />
                 <Route path="/reports" element={<AdminReports />} />
                 <Route path="/settings" element={<Settings />} />
                 <Route path="/settings/meal-plans" element={<OptionsList title="Meal Plans" tableName="meal_plans" />} />
                 <Route path="/settings/room-types" element={<OptionsList title="Room Types" tableName="room_types" />} />
                 <Route path="/settings/bed-types" element={<OptionsList title="Bed Types" tableName="bed_types" />} />
-                <Route path="/settings/inclusions" element={<ImageOptionList title="Inclusions" tableName="inclusions" />} />
-                <Route path="/settings/exclusions" element={<ImageOptionList title="Exclusions" tableName="exclusions" />} />
+                <Route path="/settings/bed-types" element={<OptionsList title="Bed Types" tableName="bed_types" />} />
+                <Route path="/settings/inclusions" element={<div className="h-[calc(100vh-6rem)]"><InclusionsExclusionsManager type="inclusions" /></div>} />
+                <Route path="/settings/exclusions" element={<div className="h-[calc(100vh-6rem)]"><InclusionsExclusionsManager type="exclusions" /></div>} />
+                <Route path="/debug-icons" element={<DebugIcons />} />
               </Route>
             </Route>
           </Route>
