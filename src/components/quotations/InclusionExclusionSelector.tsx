@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
 import { Check, Loader2 } from 'lucide-react';
 import { cn } from '../../lib/utils'; // Assuming cn utility exists, otherwise use template literals
-import { Button } from '../ui/Button';
+
 
 interface InclusionExclusionSelectorProps {
     type: 'inclusions' | 'exclusions';
