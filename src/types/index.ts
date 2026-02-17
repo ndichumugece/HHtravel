@@ -67,6 +67,7 @@ export interface RoomDetail {
 
 export interface QuotationVoucher {
     id: string;
+    booking_id?: string;
     reference_number: string;
     consultant_id: string;
     client_name: string;
@@ -81,7 +82,12 @@ export interface QuotationVoucher {
     includes_list?: string[];
     meal_plan_explanation?: string;
     terms_and_conditions?: string;
-    created_at: string;
+    inclusions?: string[];
+    exclusions?: string[];
+    created_at?: string;
+    profiles?: {
+        full_name: string;
+    } | null;
 }
 
 export interface HotelComparison {

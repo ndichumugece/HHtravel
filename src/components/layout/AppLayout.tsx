@@ -22,7 +22,8 @@ import {
     LayoutGrid,
     Calendar as CalendarIcon,
     Check,
-    Ban
+    Ban,
+    FileCheck
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 
@@ -77,6 +78,7 @@ export default function AppLayout() {
         // { name: 'Dashboard', href: '/', icon: LayoutDashboard }, // Moved to admin check
         { name: 'Booking Voucher', href: '/bookings', icon: FileText },
         { name: 'Quotation Voucher', href: '/quotations', icon: FileBadge },
+        { name: 'Confirmation Voucher', href: '/confirmations', icon: FileCheck },
         { name: 'Calendar', href: '/calendar', icon: CalendarIcon },
         { name: 'Properties', href: '/properties', icon: Hotel },
         ...(role === 'admin' ? [

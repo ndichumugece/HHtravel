@@ -3,13 +3,16 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useForm, useFieldArray, useWatch } from 'react-hook-form';
 import { supabase } from '../../lib/supabase';
 import type { Property, QuotationVoucher, CompanySettings } from '../../types';
-import { PDFDownloadLink, BlobProvider } from '@react-pdf/renderer';
+import { BlobProvider } from '@react-pdf/renderer';
 import QuotationPDF from '../../components/pdf/QuotationPDF';
 import { ArrowLeft, Save, FileDown, Plus, Trash2, Loader2, Eye } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../../components/ui/Card';
+import InclusionExclusionSelector from '../../components/quotations/InclusionExclusionSelector';
+
+import { useDebounce } from '../../hooks/useDebounce';
 
 export default function QuotationForm() {
     const { id } = useParams();
@@ -19,23 +22,30 @@ export default function QuotationForm() {
     const [settings, setSettings] = useState<CompanySettings>();
     const [loading, setLoading] = useState(false);
     const [isEditMode] = useState(!!id);
+    const [consultantName, setConsultantName] = useState<string>('');
 
     const { register, handleSubmit, control, setValue } = useForm<Partial<QuotationVoucher>>({
         defaultValues: {
             booking_status: 'Tentative',
             hotel_comparison: [{ property_name: '', meal_plan: '', single_price: '', double_price: '' }],
-            // Pre-fill terms if needed
+            inclusions: [],
+            exclusions: [],
             terms_and_conditions: "1. Rates are subject to availability.\n2. Standard cancellation policy applies.\n3. Payment due 14 days before travel."
         }
     });
+
+    // ... (existing code)
+
+    // Watch for PDF
+    const formValues = useWatch({ control });
+    const debouncedFormValues = useDebounce(formValues, 1000);
+
+    // ...
 
     const { fields, append, remove } = useFieldArray({
         control,
         name: "hotel_comparison",
     });
-
-    // Watch for PDF
-    const formValues = useWatch({ control });
 
     useEffect(() => {
         fetchProperties();
@@ -43,13 +53,20 @@ export default function QuotationForm() {
         if (id) {
             fetchQuotation(id);
         } else {
-            generateReference();
+            generateBookingId();
+            if (user?.user_metadata?.full_name) {
+                setConsultantName(user.user_metadata.full_name);
+            }
         }
-    }, [id]);
+    }, [id, user]);
 
-    const generateReference = () => {
-        const random = Math.floor(1000 + Math.random() * 9000);
-        setValue('reference_number', `QV-${random}`);
+    // ... (existing functions: generateBookingId, fetchProperties, fetchSettings, fetchQuotation, onSubmit)
+
+    const generateBookingId = () => {
+        // Generate random 10-digit Booking ID
+        const bookingId = Math.floor(1000000000 + Math.random() * 9000000000).toString();
+        setValue('booking_id', bookingId);
+        // We don't generate reference_number here to avoid gaps/skips in the sequence if the user doesn't save.
     };
 
     const fetchProperties = async () => {
@@ -63,10 +80,28 @@ export default function QuotationForm() {
     };
 
     const fetchQuotation = async (quoteId: string) => {
-        const { data } = await supabase.from('quotation_vouchers').select('*').eq('id', quoteId).single();
+        const { data, error } = await supabase
+            .from('quotation_vouchers')
+            .select('*, profiles(full_name)')
+            .eq('id', quoteId)
+            .single();
+
+        if (error) {
+            console.error('Error fetching quotation:', error);
+            return;
+        }
+
         if (data) {
+            // Flatten profiles data if needed or keep it as is. 
+            // For now, react-hook-form handles flat values best, but we can pass the whole object if we typed it correctly.
+            // Let's just set the form values.
+            if (data.profiles && (data.profiles as any).full_name) {
+                setConsultantName((data.profiles as any).full_name);
+            }
             Object.entries(data).forEach(([key, value]) => {
-                setValue(key as any, value);
+                if (key !== 'profiles') {
+                    setValue(key as any, value);
+                }
             });
         }
     };
@@ -74,8 +109,23 @@ export default function QuotationForm() {
     const onSubmit = async (data: Partial<QuotationVoucher>) => {
         setLoading(true);
         try {
+            let finalData = { ...data };
+
+            // If creating new and no reference number, fetch it now
+            if (!isEditMode && !id && !finalData.reference_number) {
+                const { data: refNum, error: refError } = await supabase.rpc('get_next_quotation_ref');
+                if (refNum && !refError) {
+                    finalData.reference_number = refNum;
+                } else {
+                    // Fallback
+                    const random = Math.floor(1000 + Math.random() * 9000);
+                    finalData.reference_number = `QV-${random}`;
+                }
+            }
+
             const payload = {
-                ...data,
+                ...finalData,
+                number_of_nights: finalData.number_of_nights ? Number(finalData.number_of_nights) : null,
                 consultant_id: user?.id
             };
 
@@ -114,39 +164,50 @@ export default function QuotationForm() {
                 </div>
 
                 <div className="flex flex-col sm:flex-row gap-3 w-full xl:w-auto">
-                    <BlobProvider document={<QuotationPDF voucher={formValues as QuotationVoucher} settings={settings} />}>
-                        {({ url, loading: pdfLoading }) => (
-                            <Button
-                                variant="outline"
-                                disabled={pdfLoading}
-                                onClick={() => url && window.open(url, '_blank')}
-                                className="w-full sm:w-auto"
-                            >
-                                {pdfLoading ? (
-                                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                                ) : (
-                                    <Eye className="h-4 w-4 mr-2" />
-                                )}
-                                Preview PDF
-                            </Button>
-                        )}
+                    <BlobProvider document={<QuotationPDF voucher={debouncedFormValues as QuotationVoucher} settings={settings} consultantName={consultantName} />}>
+                        {({ url, loading: pdfLoading }) => {
+                            const isLoading = pdfLoading; // || !url; // URL might be null initially?
+                            return (
+                                <>
+                                    <Button
+                                        variant="outline"
+                                        disabled={isLoading || !url}
+                                        onClick={() => url && window.open(url, '_blank')}
+                                        className="w-full sm:w-auto"
+                                    >
+                                        {isLoading ? (
+                                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                        ) : (
+                                            <Eye className="h-4 w-4 mr-2" />
+                                        )}
+                                        Preview PDF
+                                    </Button>
+                                    <Button
+                                        variant="outline"
+                                        disabled={isLoading || !url}
+                                        className="w-full sm:w-auto"
+                                        onClick={() => {
+                                            if (url) {
+                                                const link = document.createElement('a');
+                                                link.href = url;
+                                                link.download = `${formValues.reference_number || 'quotation'}.pdf`;
+                                                document.body.appendChild(link);
+                                                link.click();
+                                                document.body.removeChild(link);
+                                            }
+                                        }}
+                                    >
+                                        {isLoading ? (
+                                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                        ) : (
+                                            <FileDown className="h-4 w-4 mr-2" />
+                                        )}
+                                        Download PDF
+                                    </Button>
+                                </>
+                            );
+                        }}
                     </BlobProvider>
-                    <PDFDownloadLink
-                        document={<QuotationPDF voucher={formValues as QuotationVoucher} settings={settings} />}
-                        fileName={`${formValues.reference_number || 'quotation'}.pdf`}
-                        className="w-full sm:w-auto"
-                    >
-                        {({ loading: pdfLoading }) => (
-                            <Button variant="outline" disabled={pdfLoading} className="w-full sm:w-auto">
-                                {pdfLoading ? (
-                                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                                ) : (
-                                    <FileDown className="h-4 w-4 mr-2" />
-                                )}
-                                Download PDF
-                            </Button>
-                        )}
-                    </PDFDownloadLink>
                     <Button onClick={handleSubmit(onSubmit)} disabled={loading} className="w-full sm:w-auto">
                         {loading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
                         {!loading && <Save className="h-4 w-4 mr-2" />}
@@ -262,6 +323,32 @@ export default function QuotationForm() {
                         </CardContent>
                     </Card>
 
+                    {/* Inclusions & Exclusions */}
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Inclusions & Exclusions</CardTitle>
+                            <CardDescription>Select what is included and excluded in this quotation.</CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-6">
+                            <div>
+                                <label className="text-sm font-medium leading-none mb-2 block">Inclusions</label>
+                                <InclusionExclusionSelector
+                                    type="inclusions"
+                                    selectedItems={formValues.inclusions || []}
+                                    onChange={(items) => setValue('inclusions', items)}
+                                />
+                            </div>
+                            <div className="pt-4 border-t">
+                                <label className="text-sm font-medium leading-none mb-2 block">Exclusions</label>
+                                <InclusionExclusionSelector
+                                    type="exclusions"
+                                    selectedItems={formValues.exclusions || []}
+                                    onChange={(items) => setValue('exclusions', items)}
+                                />
+                            </div>
+                        </CardContent>
+                    </Card>
+
                     {/* Terms */}
                     <Card>
                         <CardHeader>
@@ -296,8 +383,12 @@ export default function QuotationForm() {
                         </CardHeader>
                         <CardContent className="space-y-4">
                             <div>
+                                <label className="text-sm font-medium leading-none text-muted-foreground">Booking ID</label>
+                                <div className="mt-1.5 font-mono text-sm bg-muted/40 p-2 rounded border">{formValues.booking_id || '...'}</div>
+                            </div>
+                            <div>
                                 <label className="text-sm font-medium leading-none text-muted-foreground">Reference</label>
-                                <div className="mt-1.5 font-mono text-sm bg-muted/40 p-2 rounded border">{formValues.reference_number || '...'}</div>
+                                <div className="mt-1.5 font-mono text-sm bg-muted/40 p-2 rounded border">{formValues.reference_number || (isEditMode ? '...' : 'Generated on Save')}</div>
                             </div>
                             <div>
                                 <label className="text-sm font-medium leading-none">Status</label>

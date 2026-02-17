@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
 import type { QuotationVoucher } from '../../types';
-import { Plus, Calendar, Search, FileBadge, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Plus, Calendar, Search, ChevronLeft, ChevronRight } from 'lucide-react';
 import { format } from 'date-fns';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
@@ -17,6 +17,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/Card';
 
 export default function QuotationList() {
+    const navigate = useNavigate();
     const [quotations, setQuotations] = useState<QuotationVoucher[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
@@ -31,10 +32,11 @@ export default function QuotationList() {
         try {
             const { data, error } = await supabase
                 .from('quotation_vouchers')
-                .select('*')
+                .select('*, profiles(full_name)')
                 .order('created_at', { ascending: false });
 
             if (error) throw error;
+            // @ts-ignore - Supabase types might not automatically view the joined data without casting, but it works at runtime
             setQuotations(data || []);
         } catch (error) {
             console.error('Error fetching quotations:', error);
@@ -99,44 +101,49 @@ export default function QuotationList() {
                         <Table>
                             <TableHeader>
                                 <TableRow>
-                                    <TableHead className="w-[50px]"></TableHead>
                                     <TableHead>Reference</TableHead>
                                     <TableHead>Client</TableHead>
                                     <TableHead>Package Info</TableHead>
                                     <TableHead>Status</TableHead>
-                                    <TableHead className="text-right">Actions</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {filteredQuotations.length === 0 ? (
+                                {loading ? (
                                     <TableRow>
-                                        <TableCell colSpan={6} className="h-24 text-center">
-                                            No quotations found.
+                                        <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                                            Loading quotations...
+                                        </TableCell>
+                                    </TableRow>
+                                ) : filteredQuotations.length === 0 ? (
+                                    <TableRow>
+                                        <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                                            No quotations found. Create your first one!
                                         </TableCell>
                                     </TableRow>
                                 ) : (
                                     currentQuotations.map((quote) => (
-                                        <TableRow key={quote.id}>
-                                            <TableCell>
-                                                <div className="h-9 w-9 rounded-full bg-purple-50 flex items-center justify-center text-purple-600">
-                                                    <FileBadge className="h-4 w-4" />
+                                        <TableRow
+                                            key={quote.id}
+                                            className="group cursor-pointer hover:bg-muted/50 transition-colors"
+                                            onClick={() => navigate(`/quotations/${quote.id}`)}
+                                        >
+                                            <TableCell className="font-medium">
+                                                <div className="flex flex-col">
+                                                    <span className="font-mono text-sm">{quote.reference_number || 'DRAFT'}</span>
+                                                    <span className="text-xs text-muted-foreground">
+                                                        Created by {Array.isArray(quote.profiles) ? quote.profiles[0]?.full_name : quote.profiles?.full_name || 'Unknown'}
+                                                    </span>
                                                 </div>
                                             </TableCell>
-                                            <TableCell className="font-medium font-mono text-xs">
-                                                {quote.reference_number}
-                                            </TableCell>
-                                            <TableCell className="font-medium">
-                                                {quote.client_name}
+                                            <TableCell>
+                                                <div className="font-medium">{quote.client_name}</div>
+                                                <div className="text-xs text-muted-foreground">{quote.number_of_guests || '-'} Guests</div>
                                             </TableCell>
                                             <TableCell>
-                                                <div className="flex flex-col">
-                                                    <span className="text-sm">{quote.package_type}</span>
-                                                    {quote.check_in_date && (
-                                                        <div className="flex items-center text-xs text-muted-foreground mt-0.5">
-                                                            <Calendar className="h-3 w-3 mr-1" />
-                                                            {format(new Date(quote.check_in_date), 'MMM d, yyyy')}
-                                                        </div>
-                                                    )}
+                                                <div className="text-sm">{quote.package_type || 'Custom Package'}</div>
+                                                <div className="text-xs text-muted-foreground flex items-center mt-0.5">
+                                                    <Calendar className="h-3 w-3 mr-1" />
+                                                    {quote.check_in_date ? format(new Date(quote.check_in_date), 'MMM d, yyyy') : 'Date TBD'}
                                                 </div>
                                             </TableCell>
                                             <TableCell>
@@ -146,13 +153,6 @@ export default function QuotationList() {
                                                     }`}>
                                                     {quote.booking_status}
                                                 </span>
-                                            </TableCell>
-                                            <TableCell className="text-right">
-                                                <Link to={`/quotations/${quote.id}/edit`}>
-                                                    <Button variant="ghost" size="sm">
-                                                        Edit
-                                                    </Button>
-                                                </Link>
                                             </TableCell>
                                         </TableRow>
                                     ))

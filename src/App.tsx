@@ -75,6 +75,7 @@ function App() {
               {/* Quotations */}
               <Route path="/quotations" element={<QuotationList />} />
               <Route path="/quotations/new" element={<QuotationForm />} />
+              <Route path="/quotations/:id" element={<QuotationForm />} />
               <Route path="/quotations/:id/edit" element={<QuotationForm />} />
 
               {/* Admin Routes */}
