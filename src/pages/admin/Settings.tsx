@@ -49,6 +49,46 @@ export default function Settings() {
         }
     };
 
+    // --- Configurations Functions ---
+    const [mealPlans, setMealPlans] = useState<{ id: string; name: string }[]>([]);
+    const [newMealPlan, setNewMealPlan] = useState('');
+
+    const fetchMealPlans = async () => {
+        const { data } = await supabase.from('meal_plans').select('*').order('name');
+        setMealPlans(data || []);
+    };
+
+    const handleAddMealPlan = async () => {
+        if (!newMealPlan.trim()) return;
+        try {
+            const { error } = await supabase.from('meal_plans').insert({ name: newMealPlan.trim() });
+            if (error) throw error;
+            setNewMealPlan('');
+            fetchMealPlans();
+        } catch (error) {
+            console.error('Error adding meal plan:', error);
+            alert('Failed to add meal plan');
+        }
+    };
+
+    const handleDeleteMealPlan = async (id: string) => {
+        if (!confirm('Are you sure you want to delete this meal plan?')) return;
+        try {
+            const { error } = await supabase.from('meal_plans').delete().eq('id', id);
+            if (error) throw error;
+            fetchMealPlans();
+        } catch (error) {
+            console.error('Error deleting meal plan:', error);
+            alert('Failed to delete meal plan');
+        }
+    };
+
+    useEffect(() => {
+        if (activeTab === 'configurations') {
+            fetchMealPlans();
+        }
+    }, [activeTab]);
+
     return (
         <div className="max-w-4xl mx-auto space-y-8 pb-20">
             <div>
@@ -303,6 +343,42 @@ export default function Settings() {
                             Save Changes
                         </Button>
                     </div>
+                </div>
+            )}
+
+            {activeTab === 'configurations' && (
+                <div className="space-y-6 animate-fade-in">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Meal Plans</CardTitle>
+                            <CardDescription>Manage available meal plans for quotations.</CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            <div className="flex gap-2">
+                                <Input
+                                    placeholder="Add new meal plan..."
+                                    value={newMealPlan}
+                                    onChange={(e) => setNewMealPlan(e.target.value)}
+                                    onKeyDown={(e) => e.key === 'Enter' && handleAddMealPlan()}
+                                />
+                                <Button onClick={handleAddMealPlan}>Add</Button>
+                            </div>
+
+                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                                {mealPlans.map((plan) => (
+                                    <div key={plan.id} className="flex items-center justify-between p-3 rounded-md border bg-muted/20">
+                                        <span className="font-medium">{plan.name}</span>
+                                        <button
+                                            onClick={() => handleDeleteMealPlan(plan.id)}
+                                            className="text-muted-foreground hover:text-destructive transition-colors"
+                                        >
+                                            <Trash2 className="h-4 w-4" />
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        </CardContent>
+                    </Card>
                 </div>
             )}
         </div>

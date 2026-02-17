@@ -60,17 +60,17 @@ export function Combobox({
                 )}
                 onClick={() => !disabled && setOpen(!open)}
             >
-                <span className={cn("truncate", !value && "text-muted-foreground")}>
+                <div className={cn("truncate", !value && "text-muted-foreground")}>
                     {selectedLabel || placeholder}
-                </span>
+                </div>
                 <ChevronsUpDown className="h-4 w-4 shrink-0 opacity-50" />
             </div>
 
             {open && (
-                <div className="absolute z-50 mt-1 max-h-60 w-full overflow-auto rounded-md border bg-popover text-popover-foreground shadow-md animate-in fade-in-0 zoom-in-95 bg-white dark:bg-slate-950">
-                    <div className="sticky top-0 z-10 bg-white dark:bg-slate-950 p-1">
+                <div className="absolute z-50 mt-1 max-h-60 w-full overflow-auto rounded-md border bg-white text-popover-foreground shadow-md animate-in fade-in-0 zoom-in-95">
+                    <div className="sticky top-0 z-10 bg-white p-1">
                         <input
-                            className="flex h-8 w-full rounded-md border border-slate-200 bg-transparent px-3 py-1 text-sm outline-none placeholder:text-slate-400 focus:border-slate-900 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-800 dark:text-slate-50 dark:focus:border-slate-300"
+                            className="flex h-8 w-full rounded-md border border-slate-200 bg-transparent px-3 py-1 text-sm outline-none placeholder:text-slate-400 focus:border-slate-900 disabled:cursor-not-allowed disabled:opacity-50"
                             placeholder="Search..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
@@ -88,8 +88,8 @@ export function Combobox({
                                 <div
                                     key={option.value}
                                     className={cn(
-                                        "relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-slate-100 hover:text-slate-900 dark:hover:bg-slate-800 dark:hover:text-slate-50",
-                                        value === option.value && "bg-slate-100 dark:bg-slate-800"
+                                        "relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-slate-100 hover:text-slate-900",
+                                        value === option.value && "bg-slate-100"
                                     )}
                                     onClick={() => {
                                         onChange(option.value)

@@ -24,6 +24,7 @@ export default function QuotationForm() {
     const [isEditMode] = useState(!!id);
     const [consultantName, setConsultantName] = useState<string>('');
     const [optionsMap, setOptionsMap] = useState<Record<string, string>>({});
+    const [mealPlans, setMealPlans] = useState<{ id: string; name: string }[]>([]);
 
     const { register, handleSubmit, control, setValue } = useForm<Partial<QuotationVoucher>>({
         defaultValues: {
@@ -52,6 +53,7 @@ export default function QuotationForm() {
         fetchProperties();
         fetchSettings();
         fetchOptions();
+        fetchMealPlans();
         if (id) {
             fetchQuotation(id);
         } else {
@@ -103,6 +105,11 @@ export default function QuotationForm() {
     const fetchSettings = async () => {
         const { data } = await supabase.from('company_settings').select('*').single();
         if (data) setSettings(data);
+    };
+
+    const fetchMealPlans = async () => {
+        const { data } = await supabase.from('meal_plans').select('*').order('name');
+        setMealPlans(data || []);
     };
 
     const fetchQuotation = async (quoteId: string) => {
@@ -333,7 +340,15 @@ export default function QuotationForm() {
                                     </div>
                                     <div>
                                         <label className="text-sm font-medium leading-none">Meal Plan</label>
-                                        <Input {...register(`hotel_comparison.${index}.meal_plan` as const)} className="mt-2" placeholder="e.g. All Inclusive" />
+                                        <select
+                                            {...register(`hotel_comparison.${index}.meal_plan` as const)}
+                                            className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 mt-2"
+                                        >
+                                            <option value="">Select Meal Plan</option>
+                                            {mealPlans.map(plan => (
+                                                <option key={plan.id} value={plan.name}>{plan.name}</option>
+                                            ))}
+                                        </select>
                                     </div>
                                     <div>
                                         <label className="text-sm font-medium leading-none">Price (Double)</label>
