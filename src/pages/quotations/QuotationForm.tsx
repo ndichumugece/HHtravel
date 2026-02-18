@@ -1,18 +1,20 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { useForm, useFieldArray, useWatch } from 'react-hook-form';
+import { useForm, useFieldArray, useWatch, Controller } from 'react-hook-form';
 import { supabase } from '../../lib/supabase';
 import type { Property, QuotationVoucher, CompanySettings } from '../../types';
-import { BlobProvider } from '@react-pdf/renderer';
+import { pdf } from '@react-pdf/renderer';
 import QuotationPDF from '../../components/pdf/QuotationPDF';
 import { ArrowLeft, Save, FileDown, Plus, Trash2, Loader2, Eye } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
+import { Combobox } from '../../components/ui/Combobox';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../../components/ui/Card';
 import InclusionExclusionSelector from '../../components/quotations/InclusionExclusionSelector';
 
 import { useDebounce } from '../../hooks/useDebounce';
+import { differenceInCalendarDays, parseISO } from 'date-fns';
 
 export default function QuotationForm() {
     const { id } = useParams();
@@ -38,8 +40,24 @@ export default function QuotationForm() {
 
     // ... (existing code)
 
-    // Watch for PDF
+    // Watch for PDF and Date Calculation
     const formValues = useWatch({ control });
+    const { check_in_date, check_out_date } = formValues;
+
+    useEffect(() => {
+        if (check_in_date && check_out_date) {
+            const start = parseISO(check_in_date);
+            const end = parseISO(check_out_date);
+            const nights = differenceInCalendarDays(end, start);
+
+            if (nights > 0) {
+                setValue('number_of_nights', nights);
+            } else {
+                setValue('number_of_nights', 0);
+            }
+        }
+    }, [check_in_date, check_out_date, setValue]);
+
     const debouncedFormValues = useDebounce(formValues, 1000);
 
     // ...
@@ -104,7 +122,13 @@ export default function QuotationForm() {
 
     const fetchSettings = async () => {
         const { data } = await supabase.from('company_settings').select('*').single();
-        if (data) setSettings(data);
+        if (data) {
+            setSettings(data);
+            // Set default terms if creating new quotation
+            if (!id && data.terms_and_conditions) {
+                setValue('terms_and_conditions', data.terms_and_conditions);
+            }
+        }
     };
 
     const fetchMealPlans = async () => {
@@ -197,50 +221,35 @@ export default function QuotationForm() {
                 </div>
 
                 <div className="flex flex-col sm:flex-row gap-3 w-full xl:w-auto">
-                    <BlobProvider document={<QuotationPDF voucher={debouncedFormValues as QuotationVoucher} settings={settings} consultantName={consultantName} optionsMap={optionsMap} />}>
-                        {({ url, loading: pdfLoading }) => {
-                            const isLoading = pdfLoading; // || !url; // URL might be null initially?
-                            return (
-                                <>
-                                    <Button
-                                        variant="outline"
-                                        disabled={isLoading || !url}
-                                        onClick={() => url && window.open(url, '_blank')}
-                                        className="w-full sm:w-auto"
-                                    >
-                                        {isLoading ? (
-                                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                                        ) : (
-                                            <Eye className="h-4 w-4 mr-2" />
-                                        )}
-                                        Preview PDF
-                                    </Button>
-                                    <Button
-                                        variant="outline"
-                                        disabled={isLoading || !url}
-                                        className="w-full sm:w-auto"
-                                        onClick={() => {
-                                            if (url) {
-                                                const link = document.createElement('a');
-                                                link.href = url;
-                                                link.download = `${formValues.reference_number || 'quotation'}.pdf`;
-                                                document.body.appendChild(link);
-                                                link.click();
-                                                document.body.removeChild(link);
-                                            }
-                                        }}
-                                    >
-                                        {isLoading ? (
-                                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                                        ) : (
-                                            <FileDown className="h-4 w-4 mr-2" />
-                                        )}
-                                        Download PDF
-                                    </Button>
-                                </>
-                            );
+                    <Button
+                        variant="outline"
+                        onClick={async () => {
+                            const blob = await pdf(<QuotationPDF voucher={formValues as QuotationVoucher} settings={settings} consultantName={consultantName} optionsMap={optionsMap} />).toBlob();
+                            const url = URL.createObjectURL(blob);
+                            window.open(url, '_blank');
                         }}
-                    </BlobProvider>
+                        className="w-full sm:w-auto"
+                    >
+                        <Eye className="h-4 w-4 mr-2" />
+                        Preview PDF
+                    </Button>
+                    <Button
+                        variant="outline"
+                        className="w-full sm:w-auto"
+                        onClick={async () => {
+                            const blob = await pdf(<QuotationPDF voucher={formValues as QuotationVoucher} settings={settings} consultantName={consultantName} optionsMap={optionsMap} />).toBlob();
+                            const url = URL.createObjectURL(blob);
+                            const link = document.createElement('a');
+                            link.href = url;
+                            link.download = `${formValues.reference_number || 'quotation'}.pdf`;
+                            document.body.appendChild(link);
+                            link.click();
+                            document.body.removeChild(link);
+                        }}
+                    >
+                        <FileDown className="h-4 w-4 mr-2" />
+                        Download PDF
+                    </Button>
                     <Button onClick={handleSubmit(onSubmit)} disabled={loading} className="w-full sm:w-auto">
                         {loading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
                         {!loading && <Save className="h-4 w-4 mr-2" />}
@@ -328,15 +337,21 @@ export default function QuotationForm() {
 
                                     <div className="md:col-span-2">
                                         <label className="text-sm font-medium leading-none">Property</label>
-                                        <select
-                                            {...register(`hotel_comparison.${index}.property_name` as const)}
-                                            className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 mt-2"
-                                        >
-                                            <option value="">Select Property</option>
-                                            {properties.map(p => (
-                                                <option key={p.id} value={p.name}>{p.name}</option>
-                                            ))}
-                                        </select>
+                                        <div className="mt-2">
+                                            <Controller
+                                                control={control}
+                                                name={`hotel_comparison.${index}.property_name` as const}
+                                                render={({ field }) => (
+                                                    <Combobox
+                                                        options={properties.map(p => ({ label: p.name, value: p.name }))}
+                                                        value={field.value}
+                                                        onChange={field.onChange}
+                                                        placeholder="Select Property"
+                                                        className="w-full"
+                                                    />
+                                                )}
+                                            />
+                                        </div>
                                     </div>
                                     <div>
                                         <label className="text-sm font-medium leading-none">Meal Plan</label>
@@ -351,8 +366,16 @@ export default function QuotationForm() {
                                         </select>
                                     </div>
                                     <div>
-                                        <label className="text-sm font-medium leading-none">Price (Double)</label>
                                         <Input {...register(`hotel_comparison.${index}.double_price` as const)} className="mt-2" placeholder="$" />
+                                    </div>
+                                    <div className="md:col-span-2">
+                                        <label className="text-sm font-medium leading-none">More Info / Description</label>
+                                        <textarea
+                                            {...register(`hotel_comparison.${index}.description` as const)}
+                                            rows={2}
+                                            className="flex min-h-[60px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 mt-2"
+                                            placeholder="Add details about this option..."
+                                        />
                                     </div>
                                 </div>
                             ))}
@@ -404,14 +427,6 @@ export default function QuotationForm() {
                                     className="flex min-h-[60px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 mt-2"
                                 />
                             </div>
-                            <div>
-                                <label className="text-sm font-medium leading-none">Terms & Conditions</label>
-                                <textarea
-                                    {...register('terms_and_conditions')}
-                                    rows={6}
-                                    className="flex min-h-[120px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 mt-2 font-mono"
-                                />
-                            </div>
                         </CardContent>
                     </Card>
                 </div>
@@ -444,7 +459,7 @@ export default function QuotationForm() {
                         </CardContent>
                     </Card>
                 </div>
-            </form>
-        </div>
+            </form >
+        </div >
     );
 }

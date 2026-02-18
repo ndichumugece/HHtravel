@@ -491,18 +491,44 @@ export default function BookingPDF({ voucher, settings, qrCodeUrl }: BookingPDFP
                 }
 
 
-                {/* Contact Information */}
-                <View wrap={false} style={styles.contactSection}>
-                    <Text style={styles.contactTitle}>Company Details</Text>
-                    <View style={styles.contactRow}>
-                        <View style={{ flex: 1 }}>
-                            {settings?.company_address && (
-                                <View style={styles.contactItem}>
-                                    <Text style={styles.contactText}>{settings.company_address}</Text>
-                                </View>
-                            )}
-                        </View>
+                {/* Footer / Contact Information */}
+                <View wrap={false} style={{ marginTop: 20, paddingTop: 20, borderTopWidth: 1, borderTopColor: theme.divider, flexDirection: 'row', justifyContent: 'space-between' }}>
+
+                    {/* Left Side: Company Details */}
+                    <View style={{ flex: 1 }}>
+                        {settings?.company_address && settings.company_address.split('\n').map((line, index) => (
+                            <Text key={index} style={{
+                                fontSize: index === 0 ? 10 : 9,
+                                fontWeight: index === 0 ? 'bold' : 'normal',
+                                color: index === 0 ? theme.textMain : '#64748B',
+                                marginBottom: 2
+                            }}>
+                                {line}
+                            </Text>
+                        ))}
+
+                        {settings?.company_email && (
+                            <Text style={{ fontSize: 9, color: '#64748B', marginBottom: 2 }}>
+                                {settings.company_email}
+                            </Text>
+                        )}
+
+                        {settings?.company_website && (
+                            <Text style={{ fontSize: 9, color: '#64748B', marginBottom: 2 }}>
+                                {settings.company_website}
+                            </Text>
+                        )}
                     </View>
+
+                    {/* Right Side: Logo */}
+                    {settings?.logo_url && (
+                        <View style={{ alignItems: 'flex-end', justifyContent: 'flex-start' }}>
+                            <Image
+                                src={settings.logo_url}
+                                style={{ width: 250, height: 120, objectFit: 'contain' }}
+                            />
+                        </View>
+                    )}
                 </View>
 
                 {/* Footer with QR Code */}

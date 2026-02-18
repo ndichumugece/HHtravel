@@ -156,13 +156,13 @@ const styles = StyleSheet.create({
         marginBottom: 20,
     },
     termTitle: {
-        fontSize: 10,
+        fontSize: 12,
         fontWeight: 'bold',
         marginBottom: 5,
         color: theme.textMain,
     },
     termText: {
-        fontSize: 9,
+        fontSize: 10,
         lineHeight: 1.4,
         color: theme.textMuted,
         marginBottom: 10,
@@ -249,15 +249,15 @@ export default function QuotationPDF({ voucher, settings, consultantName, option
                 <View wrap={false}>
                     <Text style={styles.sectionTitle}>Guest Information</Text>
                     <View style={styles.clientCard}>
-                        <View style={styles.clientCol}>
+                        <View style={[styles.clientCol, { flex: 2 }]}>
                             <Text style={styles.infoLabel}>Guest Name</Text>
                             <Text style={styles.infoValue}>{voucher.client_name}</Text>
                         </View>
-                        <View style={styles.clientCol}>
+                        <View style={[styles.clientCol, { flex: 0.7 }]}>
                             <Text style={styles.infoLabel}>Guests:</Text>
                             <Text style={styles.infoValue}>{voucher.number_of_guests}</Text>
                         </View>
-                        <View style={styles.clientCol}>
+                        <View style={[styles.clientCol, { flex: 2 }]}>
                             <Text style={styles.infoLabel}>Travel Dates:</Text>
                             <Text style={styles.infoValue}>
                                 {voucher.check_in_date ? formatDate(voucher.check_in_date) : 'TBD'} - {voucher.check_out_date ? formatDate(voucher.check_out_date) : 'TBD'}
@@ -266,7 +266,7 @@ export default function QuotationPDF({ voucher, settings, consultantName, option
                                 <Text style={{ fontSize: 9, color: theme.textMuted }}>({voucher.number_of_nights} Nights)</Text>
                             )}
                         </View>
-                        <View style={styles.clientCol}>
+                        <View style={[styles.clientCol, { flex: 1 }]}>
                             <Text style={styles.infoLabel}>Status:</Text>
                             <Text style={styles.infoValue}>{voucher.booking_status}</Text>
                         </View>
@@ -284,10 +284,24 @@ export default function QuotationPDF({ voucher, settings, consultantName, option
                                 <Text style={styles.tableHeaderCell}>Price (Double)</Text>
                             </View>
                             {voucher.hotel_comparison.map((hotel, index) => (
-                                <View key={index} style={styles.tableRow}>
-                                    <Text style={[styles.tableCell, { flex: 2, fontWeight: 'bold' }]}>{hotel.property_name}</Text>
-                                    <Text style={styles.tableCell}>{hotel.meal_plan}</Text>
-                                    <Text style={styles.tableCell}>{hotel.double_price}</Text>
+                                <View key={index} style={{
+                                    borderBottomWidth: 1,
+                                    borderBottomColor: theme.divider,
+                                    backgroundColor: theme.bgLight
+                                }}>
+                                    <View style={{ flexDirection: 'row', padding: 10, paddingBottom: hotel.description ? 4 : 10 }}>
+                                        <Text style={[styles.tableCell, { flex: 2, fontWeight: 'medium' }]}>{hotel.property_name}</Text>
+                                        <Text style={styles.tableCell}>{hotel.meal_plan}</Text>
+                                        <Text style={styles.tableCell}>{hotel.double_price}</Text>
+                                    </View>
+                                    {hotel.description && (
+                                        <View style={{ padding: 8, marginHorizontal: 10, marginBottom: 10, backgroundColor: '#f1f5f9', borderRadius: 4 }}>
+                                            <Text style={{ fontSize: 9, color: theme.textMuted, lineHeight: 1.4 }}>
+                                                <Text style={{ fontWeight: 'bold', color: theme.textMain }}>Note: </Text>
+                                                {hotel.description}
+                                            </Text>
+                                        </View>
+                                    )}
                                 </View>
                             ))}
                         </View>
@@ -298,94 +312,110 @@ export default function QuotationPDF({ voucher, settings, consultantName, option
                 {((voucher.inclusions?.length || 0) > 0 || (voucher.exclusions?.length || 0) > 0) && (
                     <View wrap={false}>
                         <Text style={styles.sectionTitle}>Inclusions & Exclusions</Text>
-                        <View style={styles.additionalSection}>
-                            {voucher.inclusions && voucher.inclusions.length > 0 && (
-                                <View style={{ marginBottom: 15 }}>
-                                    <Text style={[styles.termTitle, { color: theme.primary }]}>Inclusions:</Text>
-                                    <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
-                                        {voucher.inclusions.map((item, index) => {
-                                            const iconUrl = optionsMap?.[item];
-                                            console.log(`Rendering inclusion: ${item}, IconURL: ${iconUrl}`);
-                                            return (
-                                                <View key={index} style={{ flexDirection: 'row', alignItems: 'center', width: '50%', marginBottom: 6 }}>
-                                                    {iconUrl ? (
-                                                        <Image src={iconUrl} style={{ width: 12, height: 12, marginRight: 6, objectFit: 'contain' }} />
-                                                    ) : (
-                                                        <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: theme.primary, marginRight: 6 }} />
-                                                    )}
-                                                    <Text style={styles.termText}>{item}</Text>
-                                                </View>
-                                            );
-                                        })}
-                                    </View>
-                                </View>
-                            )}
+                        <View style={[styles.additionalSection, { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }]}>
 
-                            {voucher.exclusions && voucher.exclusions.length > 0 && (
-                                <View>
-                                    <Text style={[styles.termTitle, { color: '#ef4444' }]}>Exclusions:</Text>
-                                    <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
-                                        {voucher.exclusions.map((item, index) => {
-                                            const iconUrl = optionsMap?.[item];
-                                            return (
-                                                <View key={index} style={{ flexDirection: 'row', alignItems: 'center', width: '50%', marginBottom: 6 }}>
-                                                    {iconUrl ? (
-                                                        <Image src={iconUrl} style={{ width: 12, height: 12, marginRight: 6, objectFit: 'contain' }} />
-                                                    ) : (
-                                                        <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: '#ef4444', marginRight: 6 }} />
-                                                    )}
-                                                    <Text style={styles.termText}>{item}</Text>
-                                                </View>
-                                            );
-                                        })}
+                            {/* Inclusions - Left Side */}
+                            <View style={{ flex: 1, marginRight: 10 }}>
+                                {voucher.inclusions && voucher.inclusions.length > 0 && (
+                                    <View>
+                                        <Text style={[styles.termTitle, { color: theme.textMain, marginBottom: 8 }]}>Inclusions:</Text>
+                                        <View style={{ flexDirection: 'column' }}>
+                                            {voucher.inclusions.map((item, index) => {
+                                                const iconUrl = optionsMap?.[item];
+                                                return (
+                                                    <View key={index} style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
+                                                        {iconUrl && (
+                                                            <Image src={iconUrl} style={{ width: 12, height: 12, marginRight: 6, objectFit: 'contain' }} />
+                                                        )}
+                                                        <Text style={styles.termText}>{item}</Text>
+                                                    </View>
+                                                );
+                                            })}
+                                        </View>
                                     </View>
-                                </View>
-                            )}
+                                )}
+                            </View>
+
+                            {/* Exclusions - Right Side */}
+                            <View style={{ flex: 1, marginLeft: 10 }}>
+                                {voucher.exclusions && voucher.exclusions.length > 0 && (
+                                    <View>
+                                        <Text style={[styles.termTitle, { color: theme.textMain, marginBottom: 8 }]}>Exclusions:</Text>
+                                        <View style={{ flexDirection: 'column' }}>
+                                            {voucher.exclusions.map((item, index) => {
+                                                const iconUrl = optionsMap?.[item];
+                                                return (
+                                                    <View key={index} style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
+                                                        {iconUrl && (
+                                                            <Image src={iconUrl} style={{ width: 12, height: 12, marginRight: 6, objectFit: 'contain' }} />
+                                                        )}
+                                                        <Text style={styles.termText}>{item}</Text>
+                                                    </View>
+                                                );
+                                            })}
+                                        </View>
+                                    </View>
+                                )}
+                            </View>
+
                         </View>
                     </View>
                 )}
 
                 {/* Inclusions & Terms */}
                 <View wrap={false}>
-                    <Text style={styles.sectionTitle}>Details & Terms</Text>
+                    <Text style={styles.sectionTitle}>Details</Text>
                     <View style={styles.additionalSection}>
-                        <View style={{ marginBottom: 15 }}>
+                        <View style={{ marginBottom: 0 }}>
                             <Text style={styles.termTitle}>What's Included (Meal Plan):</Text>
                             <Text style={styles.termText}>{voucher.meal_plan_explanation || 'Standard inclusions apply.'}</Text>
-                        </View>
-
-                        <View>
-                            <Text style={styles.termTitle}>Terms & Conditions:</Text>
-                            <Text style={styles.termText}>{voucher.terms_and_conditions || 'Standard terms and conditions apply.'}</Text>
                         </View>
                     </View>
                 </View>
 
-                {/* Contact Information */}
-                <View wrap={false} style={styles.contactSection}>
-                    <Text style={styles.contactTitle}>Company Details</Text>
-                    <View style={styles.contactRow}>
-                        <View style={{ flex: 1 }}>
-                            <Text style={{ fontSize: 14, fontWeight: 'bold', color: theme.primary, marginBottom: 5 }}>
-                                {settings?.company_name || 'H&H TRAVEL'}
+                <View>
+                    <Text style={[styles.sectionTitle, { marginTop: 10 }]}>Terms & Conditions</Text>
+                    <Text style={styles.termText}>{settings?.terms_and_conditions || voucher.terms_and_conditions || 'Standard terms and conditions apply.'}</Text>
+                </View>
+
+                {/* Footer / Contact Information */}
+                <View wrap={false} style={{ marginTop: 20, paddingTop: 20, borderTopWidth: 1, borderTopColor: theme.divider, flexDirection: 'row', justifyContent: 'space-between' }}>
+
+                    {/* Left Side: Company Details */}
+                    <View style={{ flex: 1 }}>
+                        {settings?.company_address && settings.company_address.split('\n').map((line, index) => (
+                            <Text key={index} style={{
+                                fontSize: index === 0 ? 10 : 9,
+                                fontWeight: index === 0 ? 'bold' : 'normal',
+                                color: index === 0 ? theme.textMain : '#64748B',
+                                marginBottom: 2
+                            }}>
+                                {line}
                             </Text>
-                            {settings?.company_address && (
-                                <View style={styles.contactItem}>
-                                    <Text style={[styles.contactText, { marginLeft: 0 }]}>{settings.company_address}</Text>
-                                </View>
-                            )}
-                            <View style={{ marginTop: 5 }}>
-                                <Text style={[styles.contactText, { marginLeft: 0 }]}>
-                                    {settings?.company_email ? `Email: ${settings.company_email}` : 'bookings@hhtravel.com'}
-                                </Text>
-                                {settings?.company_website && (
-                                    <Text style={[styles.contactText, { marginLeft: 0 }]}>
-                                        Web: {settings.company_website}
-                                    </Text>
-                                )}
-                            </View>
-                        </View>
+                        ))}
+
+                        {settings?.company_email && (
+                            <Text style={{ fontSize: 9, color: '#64748B', marginBottom: 2 }}>
+                                {settings.company_email}
+                            </Text>
+                        )}
+
+                        {settings?.company_website && (
+                            <Text style={{ fontSize: 9, color: '#64748B', marginBottom: 2 }}>
+                                {settings.company_website}
+                            </Text>
+                        )}
                     </View>
+
+                    {/* Right Side: Logo */}
+                    {settings?.logo_url && (
+                        <View style={{ alignItems: 'flex-end', justifyContent: 'flex-start' }}>
+                            <Image
+                                src={settings.logo_url}
+                                style={{ width: 250, height: 120, objectFit: 'contain' }}
+                            />
+                        </View>
+                    )}
                 </View>
 
                 {/* Footer with Images */}

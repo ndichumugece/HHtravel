@@ -95,6 +95,7 @@ export interface HotelComparison {
     meal_plan: string;
     single_price: string;
     double_price: string;
+    description?: string;
 }
 
 export interface CompanySettings {
@@ -107,6 +108,7 @@ export interface CompanySettings {
     pdf_footer_text?: string;
     pdf_footer_image_url?: string;
     pdf_footer_image_right_url?: string;
+    terms_and_conditions?: string;
 }
 
 export interface Profile {

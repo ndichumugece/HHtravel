@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../..
 import { Loader2, Save, Trash2 } from 'lucide-react';
 
 export default function Settings() {
-    const [activeTab, setActiveTab] = useState<'branding' | 'configurations'>('branding');
+    const [activeTab, setActiveTab] = useState<'branding' | 'pdf_appearance'>('branding');
     const [loading, setLoading] = useState(false);
 
     // Branding State
@@ -49,46 +49,6 @@ export default function Settings() {
         }
     };
 
-    // --- Configurations Functions ---
-    const [mealPlans, setMealPlans] = useState<{ id: string; name: string }[]>([]);
-    const [newMealPlan, setNewMealPlan] = useState('');
-
-    const fetchMealPlans = async () => {
-        const { data } = await supabase.from('meal_plans').select('*').order('name');
-        setMealPlans(data || []);
-    };
-
-    const handleAddMealPlan = async () => {
-        if (!newMealPlan.trim()) return;
-        try {
-            const { error } = await supabase.from('meal_plans').insert({ name: newMealPlan.trim() });
-            if (error) throw error;
-            setNewMealPlan('');
-            fetchMealPlans();
-        } catch (error) {
-            console.error('Error adding meal plan:', error);
-            alert('Failed to add meal plan');
-        }
-    };
-
-    const handleDeleteMealPlan = async (id: string) => {
-        if (!confirm('Are you sure you want to delete this meal plan?')) return;
-        try {
-            const { error } = await supabase.from('meal_plans').delete().eq('id', id);
-            if (error) throw error;
-            fetchMealPlans();
-        } catch (error) {
-            console.error('Error deleting meal plan:', error);
-            alert('Failed to delete meal plan');
-        }
-    };
-
-    useEffect(() => {
-        if (activeTab === 'configurations') {
-            fetchMealPlans();
-        }
-    }, [activeTab]);
-
     return (
         <div className="max-w-4xl mx-auto space-y-8 pb-20">
             <div>
@@ -105,16 +65,16 @@ export default function Settings() {
                         : 'text-muted-foreground hover:text-foreground'
                         }`}
                 >
-                    Branding & PDF
+                    Branding
                 </button>
                 <button
-                    onClick={() => setActiveTab('configurations')}
-                    className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${activeTab === 'configurations'
+                    onClick={() => setActiveTab('pdf_appearance')}
+                    className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${activeTab === 'pdf_appearance'
                         ? 'bg-white text-primary shadow-sm'
                         : 'text-muted-foreground hover:text-foreground'
                         }`}
                 >
-                    Configurations
+                    PDF Appearance
                 </button>
             </div>
 
@@ -200,7 +160,7 @@ export default function Settings() {
                             <div>
                                 <label className="text-sm font-medium mb-2 block">Company Address</label>
                                 <textarea
-                                    className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                                    className="flex min-h-[200px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                                     value={settings.company_address || ''}
                                     onChange={(e) => setSettings({ ...settings, company_address: e.target.value })}
                                     placeholder="123 Safari Way..."
@@ -209,6 +169,17 @@ export default function Settings() {
                         </CardContent>
                     </Card>
 
+                    <div className="flex justify-end">
+                        <Button onClick={handleSaveSettings} disabled={loading}>
+                            {loading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
+                            Save Changes
+                        </Button>
+                    </div>
+                </div>
+            )}
+
+            {activeTab === 'pdf_appearance' && (
+                <div className="space-y-6 animate-fade-in">
                     <Card>
                         <CardHeader>
                             <CardTitle>PDF Appearance</CardTitle>
@@ -224,7 +195,7 @@ export default function Settings() {
                                     placeholder="Thank you for traveling with us."
                                 />
                             </div>
-                            <div>
+                            <div className="mt-4">
                                 <label className="text-sm font-medium mb-2 block">Footer Image</label>
                                 <div className="flex items-center gap-4">
                                     {settings.pdf_footer_image_url && (
@@ -277,61 +248,69 @@ export default function Settings() {
                                         <p className="text-xs text-muted-foreground mt-1">Upload an image to appear at the bottom of every page (e.g. Safari Animals).</p>
                                     </div>
                                 </div>
-                                <div>
-                                    <label className="text-sm font-medium mb-2 block">Footer Image (Right Side)</label>
-                                    <div className="flex items-center gap-4">
-                                        {settings.pdf_footer_image_right_url && (
-                                            <div className="relative group">
-                                                <img
-                                                    src={settings.pdf_footer_image_right_url}
-                                                    alt="Footer Image Right"
-                                                    className="h-16 object-contain border rounded p-1 bg-white"
-                                                />
-                                                <button
-                                                    onClick={() => setSettings({ ...settings, pdf_footer_image_right_url: undefined })}
-                                                    className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                                                    title="Remove image"
-                                                >
-                                                    <Trash2 className="h-3 w-3" />
-                                                </button>
-                                            </div>
-                                        )}
-                                        <div className="flex-1">
-                                            <Input
-                                                type="file"
-                                                accept="image/*"
-                                                onChange={async (e) => {
-                                                    const file = e.target.files?.[0];
-                                                    if (!file) return;
-
-                                                    try {
-                                                        setLoading(true);
-                                                        const fileExt = file.name.split('.').pop();
-                                                        const fileName = `footer-right-${Date.now()}.${fileExt}`;
-                                                        const { error: uploadError } = await supabase.storage
-                                                            .from('company_assets')
-                                                            .upload(fileName, file);
-
-                                                        if (uploadError) throw uploadError;
-
-                                                        const { data: { publicUrl } } = supabase.storage
-                                                            .from('company_assets')
-                                                            .getPublicUrl(fileName);
-
-                                                        setSettings({ ...settings, pdf_footer_image_right_url: publicUrl });
-                                                    } catch (error) {
-                                                        console.error('Error uploading right footer image:', error);
-                                                        alert('Failed to upload image. Ensure "company_assets" bucket exists.');
-                                                    } finally {
-                                                        setLoading(false);
-                                                    }
-                                                }}
+                            </div>
+                            <div className="mt-4">
+                                <label className="text-sm font-medium mb-2 block">Footer Image (Right Side)</label>
+                                <div className="flex items-center gap-4">
+                                    {settings.pdf_footer_image_right_url && (
+                                        <div className="relative group">
+                                            <img
+                                                src={settings.pdf_footer_image_right_url}
+                                                alt="Footer Image Right"
+                                                className="h-16 object-contain border rounded p-1 bg-white"
                                             />
-                                            <p className="text-xs text-muted-foreground mt-1">Upload an image to appear at the bottom right of every page.</p>
+                                            <button
+                                                onClick={() => setSettings({ ...settings, pdf_footer_image_right_url: undefined })}
+                                                className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                                                title="Remove image"
+                                            >
+                                                <Trash2 className="h-3 w-3" />
+                                            </button>
                                         </div>
+                                    )}
+                                    <div className="flex-1">
+                                        <Input
+                                            type="file"
+                                            accept="image/*"
+                                            onChange={async (e) => {
+                                                const file = e.target.files?.[0];
+                                                if (!file) return;
+
+                                                try {
+                                                    setLoading(true);
+                                                    const fileExt = file.name.split('.').pop();
+                                                    const fileName = `footer-right-${Date.now()}.${fileExt}`;
+                                                    const { error: uploadError } = await supabase.storage
+                                                        .from('company_assets')
+                                                        .upload(fileName, file);
+
+                                                    if (uploadError) throw uploadError;
+
+                                                    const { data: { publicUrl } } = supabase.storage
+                                                        .from('company_assets')
+                                                        .getPublicUrl(fileName);
+
+                                                    setSettings({ ...settings, pdf_footer_image_right_url: publicUrl });
+                                                } catch (error) {
+                                                    console.error('Error uploading right footer image:', error);
+                                                    alert('Failed to upload image. Ensure "company_assets" bucket exists.');
+                                                } finally {
+                                                    setLoading(false);
+                                                }
+                                            }}
+                                        />
+                                        <p className="text-xs text-muted-foreground mt-1">Upload an image to appear at the bottom right of every page.</p>
                                     </div>
                                 </div>
-
+                            </div>
+                            <div className="mt-4">
+                                <label className="text-sm font-medium mb-2 block">Default Terms & Conditions</label>
+                                <textarea
+                                    className="flex min-h-[600px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 font-mono"
+                                    value={settings.terms_and_conditions || ''}
+                                    onChange={(e) => setSettings({ ...settings, terms_and_conditions: e.target.value })}
+                                    placeholder="Enter your standard terms and conditions here..."
+                                />
                             </div>
 
                         </CardContent>
@@ -343,42 +322,6 @@ export default function Settings() {
                             Save Changes
                         </Button>
                     </div>
-                </div>
-            )}
-
-            {activeTab === 'configurations' && (
-                <div className="space-y-6 animate-fade-in">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Meal Plans</CardTitle>
-                            <CardDescription>Manage available meal plans for quotations.</CardDescription>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                            <div className="flex gap-2">
-                                <Input
-                                    placeholder="Add new meal plan..."
-                                    value={newMealPlan}
-                                    onChange={(e) => setNewMealPlan(e.target.value)}
-                                    onKeyDown={(e) => e.key === 'Enter' && handleAddMealPlan()}
-                                />
-                                <Button onClick={handleAddMealPlan}>Add</Button>
-                            </div>
-
-                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-                                {mealPlans.map((plan) => (
-                                    <div key={plan.id} className="flex items-center justify-between p-3 rounded-md border bg-muted/20">
-                                        <span className="font-medium">{plan.name}</span>
-                                        <button
-                                            onClick={() => handleDeleteMealPlan(plan.id)}
-                                            className="text-muted-foreground hover:text-destructive transition-colors"
-                                        >
-                                            <Trash2 className="h-4 w-4" />
-                                        </button>
-                                    </div>
-                                ))}
-                            </div>
-                        </CardContent>
-                    </Card>
                 </div>
             )}
         </div>
