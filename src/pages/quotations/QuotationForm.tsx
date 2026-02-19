@@ -12,11 +12,13 @@ import { Input } from '../../components/ui/Input';
 import { Combobox } from '../../components/ui/Combobox';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../../components/ui/Card';
 import InclusionExclusionSelector from '../../components/quotations/InclusionExclusionSelector';
-
+import RichTextEditor from '../../components/ui/RichTextEditor';
 
 import { differenceInCalendarDays, parseISO } from 'date-fns';
 
 export default function QuotationForm() {
+
+
     const { id } = useParams();
     const navigate = useNavigate();
     const { user } = useAuth();
@@ -411,6 +413,28 @@ export default function QuotationForm() {
                                     onChange={(items) => setValue('exclusions', items)}
                                 />
                             </div>
+                        </CardContent>
+                    </Card>
+
+                    {/* Additional Notes (Rich Text) */}
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Additional Notes</CardTitle>
+                            <CardDescription>Add distinct notes, tables, or formatted text (e.g. from Word).</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <Controller
+                                control={control}
+                                name="rich_text_notes"
+                                render={({ field }) => (
+                                    <RichTextEditor
+                                        value={field.value || ''}
+                                        onChange={field.onChange}
+                                        className="h-64 mb-12" // Add margin-bottom for spacing
+                                        placeholder="Paste your content here..."
+                                    />
+                                )}
+                            />
                         </CardContent>
                     </Card>
 

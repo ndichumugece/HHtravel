@@ -88,6 +88,7 @@ export interface QuotationVoucher {
     profiles?: {
         full_name: string;
     } | null;
+    rich_text_notes?: string;
 }
 
 export interface HotelComparison {
