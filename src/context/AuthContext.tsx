@@ -7,6 +7,7 @@ interface AuthContextType {
     user: User | null;
     loading: boolean;
     role: 'admin' | 'consultant' | null;
+    profile: { full_name: string } | null;
     signOut: () => Promise<void>;
 }
 
@@ -15,6 +16,7 @@ const AuthContext = createContext<AuthContextType>({
     user: null,
     loading: true,
     role: null,
+    profile: null,
     signOut: async () => { },
 });
 
@@ -24,6 +26,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const [session, setSession] = useState<Session | null>(null);
     const [user, setUser] = useState<User | null>(null);
     const [role, setRole] = useState<'admin' | 'consultant' | null>(null);
+    const [profile, setProfile] = useState<{ full_name: string } | null>(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -71,12 +74,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         try {
             const { data, error } = await supabase
                 .from('profiles')
-                .select('role')
+                .select('role, full_name')
                 .eq('id', userId)
                 .single();
 
             if (error) throw error;
             setRole(data?.role as 'admin' | 'consultant' | null);
+            setProfile(data);
         } catch (error) {
             console.error('Error fetching user role:', error);
         } finally {
@@ -89,7 +93,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
 
     return (
-        <AuthContext.Provider value={{ session, user, loading, role, signOut }}>
+        <AuthContext.Provider value={{ session, user, loading, role, profile, signOut }}>
             {children}
         </AuthContext.Provider>
     );

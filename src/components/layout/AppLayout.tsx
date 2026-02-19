@@ -22,7 +22,9 @@ import {
     Calendar as CalendarIcon,
     Check,
     Ban,
-    FileCheck
+    FileCheck,
+    ChevronDown,
+    BarChart3
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 
@@ -32,6 +34,7 @@ export default function AppLayout() {
     const location = useLocation();
     const [isMobileOpen, setIsMobileOpen] = useState(false);
     const [isCollapsed, setIsCollapsed] = useState(false);
+    const [expandedMenus, setExpandedMenus] = useState<Record<string, boolean>>({});
 
     // Access Control: Force logout if profile is deleted
     useEffect(() => {
@@ -56,8 +59,14 @@ export default function AppLayout() {
         navigate('/login');
     };
 
-    const navigation = [
+    const toggleMenu = (name: string) => {
+        setExpandedMenus(prev => ({
+            ...prev,
+            [name]: !prev[name]
+        }));
+    };
 
+    const navigation = [
         // { name: 'Dashboard', href: '/', icon: LayoutDashboard }, // Moved to admin check
         { name: 'Booking Voucher', href: '/bookings', icon: FileText },
         { name: 'Quotation Voucher', href: '/quotations', icon: FileBadge },
@@ -67,7 +76,18 @@ export default function AppLayout() {
         ...(role === 'admin' ? [
             { name: 'Dashboard', href: '/', icon: LayoutDashboard },
             { name: 'Users', href: '/users', icon: Users },
-            { name: 'Reports', href: '/reports', icon: Settings }
+            { name: 'Reports', href: '/reports', icon: BarChart3 },
+            {
+                name: 'Configurations',
+                icon: Settings,
+                children: [
+                    { name: 'Meal Plans', href: '/settings/meal-plans', icon: Utensils },
+                    { name: 'Room Types', href: '/settings/room-types', icon: LayoutGrid },
+                    { name: 'Bed Types', href: '/settings/bed-types', icon: BedDouble },
+                    { name: 'Inclusions', href: '/settings/inclusions', icon: Check },
+                    { name: 'Exclusions', href: '/settings/exclusions', icon: Ban },
+                ]
+            }
         ] : []),
     ];
 
@@ -110,11 +130,81 @@ export default function AppLayout() {
                 {!collapsed && <p className="px-3 text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">Platform</p>}
                 <nav className="space-y-1">
                     {navigation.map((item) => {
-                        const isActive = location.pathname === item.href;
+                        // Check active state for children too
+                        const isChildActive = item.children?.some(child => location.pathname.startsWith(child.href));
+                        const isActive = item.href
+                            ? (item.href === '/' ? location.pathname === '/' : location.pathname.startsWith(item.href))
+                            : isChildActive;
+
+                        // Auto-expand if child is active (on mount or navigation)
+                        useEffect(() => {
+                            if (isChildActive && !expandedMenus[item.name]) {
+                                setExpandedMenus(prev => ({ ...prev, [item.name]: true }));
+                            }
+                        }, [location.pathname]);
+
+                        if (item.children) {
+                            return (
+                                <div key={item.name} className="space-y-1">
+                                    <button
+                                        onClick={() => !collapsed && toggleMenu(item.name)}
+                                        className={cn(
+                                            "flex items-center w-full px-3 py-2.5 text-sm font-medium rounded-xl transition-all duration-200 group relative select-none",
+                                            isActive || expandedMenus[item.name]
+                                                ? "text-primary bg-primary/5"
+                                                : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                                            collapsed && "justify-center px-0"
+                                        )}
+                                        title={collapsed ? item.name : undefined}
+                                    >
+                                        <item.icon className={cn(
+                                            "h-5 w-5 transition-colors flex-shrink-0",
+                                            isActive || expandedMenus[item.name] ? "text-primary" : "text-muted-foreground group-hover:text-foreground",
+                                            !collapsed && "mr-3"
+                                        )} />
+                                        {!collapsed && (
+                                            <>
+                                                <span className="flex-1 text-left">{item.name}</span>
+                                                <ChevronDown className={cn(
+                                                    "h-4 w-4 transition-transform duration-200",
+                                                    expandedMenus[item.name] ? "transform rotate-180" : ""
+                                                )} />
+                                            </>
+                                        )}
+                                    </button>
+
+                                    {/* Submenu */}
+                                    {!collapsed && expandedMenus[item.name] && (
+                                        <div className="pl-4 space-y-1 animate-accordion-down overflow-hidden">
+                                            {item.children.map((child) => {
+                                                const isChildActive = location.pathname.startsWith(child.href);
+                                                return (
+                                                    <Link
+                                                        key={child.name}
+                                                        to={child.href}
+                                                        className={cn(
+                                                            "flex items-center pl-3 pr-3 py-2 text-sm font-medium rounded-lg transition-colors relative before:absolute before:left-[-10px] before:top-1/2 before:-translate-y-1/2 before:w-[2px] before:h-4 before:bg-border/50 hover:before:bg-primary/50",
+                                                            isChildActive
+                                                                ? "text-primary bg-primary/5 before:bg-primary"
+                                                                : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                                                        )}
+                                                    >
+                                                        {/* Optional: Add icon or dot for sublevel */}
+                                                        {/* <div className={cn("w-1.5 h-1.5 rounded-full mr-3", isChildActive ? "bg-primary" : "bg-muted-foreground/30 group-hover:bg-muted-foreground/50")} /> */}
+                                                        {child.name}
+                                                    </Link>
+                                                );
+                                            })}
+                                        </div>
+                                    )}
+                                </div>
+                            );
+                        }
+
                         return (
                             <Link
                                 key={item.name}
-                                to={item.href}
+                                to={item.href!}
                                 className={cn(
                                     "flex items-center px-3 py-2.5 text-sm font-medium rounded-xl transition-all duration-200 group relative",
                                     isActive
@@ -134,73 +224,6 @@ export default function AppLayout() {
                         );
                     })}
                 </nav>
-                {!collapsed && (
-                    <>
-                        <p className="px-3 text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2 mt-6">Configurations</p>
-                        <nav className="space-y-1">
-                            <Link
-                                to="/settings/meal-plans"
-                                className={cn(
-                                    "flex items-center px-3 py-2.5 text-sm font-medium rounded-xl transition-all duration-200 group relative",
-                                    location.pathname === "/settings/meal-plans"
-                                        ? "bg-primary text-white shadow-lg shadow-primary/25"
-                                        : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                                )}
-                            >
-                                <Utensils className={cn("h-5 w-5 mr-3 transition-colors", location.pathname === "/settings/meal-plans" ? "text-white" : "text-muted-foreground group-hover:text-foreground")} />
-                                Meal Plans
-                            </Link>
-                            <Link
-                                to="/settings/room-types"
-                                className={cn(
-                                    "flex items-center px-3 py-2.5 text-sm font-medium rounded-xl transition-all duration-200 group relative",
-                                    location.pathname === "/settings/room-types"
-                                        ? "bg-primary text-white shadow-lg shadow-primary/25"
-                                        : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                                )}
-                            >
-                                <LayoutGrid className={cn("h-5 w-5 mr-3 transition-colors", location.pathname === "/settings/room-types" ? "text-white" : "text-muted-foreground group-hover:text-foreground")} />
-                                Room Types
-                            </Link>
-                            <Link
-                                to="/settings/bed-types"
-                                className={cn(
-                                    "flex items-center px-3 py-2.5 text-sm font-medium rounded-xl transition-all duration-200 group relative",
-                                    location.pathname === "/settings/bed-types"
-                                        ? "bg-primary text-white shadow-lg shadow-primary/25"
-                                        : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                                )}
-                            >
-                                <BedDouble className={cn("h-5 w-5 mr-3 transition-colors", location.pathname === "/settings/bed-types" ? "text-white" : "text-muted-foreground group-hover:text-foreground")} />
-                                Bed Types
-                            </Link>
-                            <Link
-                                to="/settings/inclusions"
-                                className={cn(
-                                    "flex items-center px-3 py-2.5 text-sm font-medium rounded-xl transition-all duration-200 group relative",
-                                    location.pathname === "/settings/inclusions"
-                                        ? "bg-primary text-white shadow-lg shadow-primary/25"
-                                        : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                                )}
-                            >
-                                <Check className={cn("h-5 w-5 mr-3 transition-colors", location.pathname === "/settings/inclusions" ? "text-white" : "text-muted-foreground group-hover:text-foreground")} />
-                                Inclusions
-                            </Link>
-                            <Link
-                                to="/settings/exclusions"
-                                className={cn(
-                                    "flex items-center px-3 py-2.5 text-sm font-medium rounded-xl transition-all duration-200 group relative",
-                                    location.pathname === "/settings/exclusions"
-                                        ? "bg-primary text-white shadow-lg shadow-primary/25"
-                                        : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                                )}
-                            >
-                                <Ban className={cn("h-5 w-5 mr-3 transition-colors", location.pathname === "/settings/exclusions" ? "text-white" : "text-muted-foreground group-hover:text-foreground")} />
-                                Exclusions
-                            </Link>
-                        </nav>
-                    </>
-                )}
             </div>
 
             <div className="mt-auto p-4 border-t border-border/40 space-y-2">

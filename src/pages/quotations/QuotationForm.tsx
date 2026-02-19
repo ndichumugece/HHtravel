@@ -366,6 +366,7 @@ export default function QuotationForm() {
                                         </select>
                                     </div>
                                     <div>
+                                        <label className="text-sm font-medium leading-none">Price</label>
                                         <Input {...register(`hotel_comparison.${index}.double_price` as const)} className="mt-2" placeholder="$" />
                                     </div>
                                     <div className="md:col-span-2">
