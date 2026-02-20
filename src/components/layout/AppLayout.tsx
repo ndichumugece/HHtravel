@@ -270,8 +270,10 @@ export default function AppLayout() {
         </div>
     );
 
+    const isEditPage = location.pathname.startsWith('/bookings/') || location.pathname.startsWith('/quotations/');
+
     return (
-        <div className="min-h-screen bg-gray-50 flex font-sans text-foreground overflow-x-hidden">
+        <div className={cn("min-h-screen flex font-sans text-foreground overflow-x-hidden", isEditPage ? "bg-[#F0F4F9]" : "bg-gray-50")}>
             {/* Desktop Sidebar */}
             <div className={cn("hidden md:block fixed h-full z-30 transition-all duration-300", isCollapsed ? "w-20" : "w-64")}>
                 <SidebarContent collapsed={isCollapsed} />

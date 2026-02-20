@@ -3,6 +3,9 @@ import { supabase } from '../lib/supabase';
 
 export interface DashboardStats {
     totalBookings: number;
+    lastYearBookings: number;
+    totalRevenue: number;
+    lastYearRevenue: number;
     pendingQuotations: number;
     activeProperties: number;
     totalConsultants: number;
@@ -12,6 +15,7 @@ export interface DashboardStats {
         value: number;
     }[];
     monthlyRevenue: { name: string; total: number }[];
+    monthlyBookings: { name: string; count: number }[];
     leadSourceData: { name: string; value: number }[];
     loading: boolean;
     error: string | null;
@@ -20,11 +24,15 @@ export interface DashboardStats {
 export function useDashboardStats() {
     const [stats, setStats] = useState<DashboardStats>({
         totalBookings: 0,
+        lastYearBookings: 0,
+        totalRevenue: 0,
+        lastYearRevenue: 0,
         pendingQuotations: 0,
         activeProperties: 0,
         totalConsultants: 0,
         topProperties: [],
         monthlyRevenue: [],
+        monthlyBookings: [],
         leadSourceData: [],
         loading: true,
         error: null,
@@ -76,29 +84,36 @@ export function useDashboardStats() {
                         value: 0,
                     }));
 
-                // Fetch data for Monthly Revenue (issued bookings only)
-                // We wrap this in a try-catch so that missing columns (migrations) don't break the whole dashboard
+                // Fetch data for Monthly Analytics (Revenue & Bookings)
                 let monthlyRevenue: { name: string; total: number }[] = [];
-                try {
-                    const { data: revenueData, error: revenueError } = await supabase
-                        .from('booking_vouchers')
-                        .select('created_at, quotation_price')
-                        .eq('status', 'issued')
-                        .not('quotation_price', 'is', null);
+                let monthlyBookings: { name: string; count: number }[] = [];
 
-                    if (revenueError) {
-                        console.warn('Revenue fetch error (possible missing column?):', revenueError);
+                try {
+                    const { data: allBookingsData, error: analyticsError } = await supabase
+                        .from('booking_vouchers')
+                        .select('created_at, quotation_price, status');
+
+                    if (analyticsError) {
+                        console.warn('Analytics fetch error:', analyticsError);
                     } else {
-                        // Process Monthly Revenue
                         const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
                         const revenueByMonth = new Array(12).fill(0);
+                        const bookingsByMonth = new Array(12).fill(0);
 
-                        revenueData?.forEach((booking) => {
-                            if (booking.created_at && booking.quotation_price) {
+                        allBookingsData?.forEach((booking) => {
+                            if (booking.created_at) {
                                 const date = new Date(booking.created_at);
                                 const monthIndex = date.getMonth(); // 0-11
                                 if (date.getFullYear() === new Date().getFullYear()) {
-                                    revenueByMonth[monthIndex] += Number(booking.quotation_price);
+                                    // Count bookings
+                                    bookingsByMonth[monthIndex]++;
+
+                                    // Calc Revenue (only issued)
+                                    if (booking.status === 'issued' && booking.quotation_price) {
+                                        const priceStr = String(booking.quotation_price).replace(/[^0-9.]/g, '');
+                                        const price = parseFloat(priceStr) || 0;
+                                        revenueByMonth[monthIndex] += price;
+                                    }
                                 }
                             }
                         });
@@ -107,9 +122,14 @@ export function useDashboardStats() {
                             name,
                             total: revenueByMonth[index]
                         }));
+
+                        monthlyBookings = monthNames.map((name, index) => ({
+                            name,
+                            count: bookingsByMonth[index]
+                        }));
                     }
                 } catch (e) {
-                    console.warn('Failed to process revenue data', e);
+                    console.warn('Failed to process analytics data', e);
                 }
 
                 // Process Lead Source Data
@@ -137,14 +157,55 @@ export function useDashboardStats() {
                     .map(([name, value]) => ({ name, value }))
                     .sort((a, b) => b.value - a.value);
 
+                // Fetch last year's bookings for comparison & revenue
+                const lastYearStart = new Date(new Date().getFullYear() - 1, 0, 1).toISOString();
+                const lastYearEnd = new Date(new Date().getFullYear() - 1, 11, 31).toISOString();
+
+                // Get count for last year
+                const { count: lastYearCount, error: lastYearError } = await supabase
+                    .from('booking_vouchers')
+                    .select('*', { count: 'exact', head: true })
+                    .gte('created_at', lastYearStart)
+                    .lte('created_at', lastYearEnd);
+
+                // Get revenue for last year (separate query for simplicity, or could combine)
+                const { data: lastYearRevenueData, error: lastYearRevenueError } = await supabase
+                    .from('booking_vouchers')
+                    .select('quotation_price, status')
+                    .gte('created_at', lastYearStart)
+                    .lte('created_at', lastYearEnd)
+                    .eq('status', 'issued');
+
+                let totalRevenue = 0;
+                let lastYearRevenue = 0;
+
+                // Calculate current year revenue from monthly data
+                totalRevenue = monthlyRevenue.reduce((sum, item) => sum + item.total, 0);
+
+                // Calculate last year revenue
+                if (lastYearRevenueData) {
+                    lastYearRevenue = lastYearRevenueData.reduce((sum, booking) => {
+                        const priceStr = String(booking.quotation_price).replace(/[^0-9.]/g, '');
+                        const price = parseFloat(priceStr) || 0;
+                        return sum + price;
+                    }, 0);
+                }
+
+                if (lastYearError) console.warn('Error fetching last year bookings:', lastYearError);
+                if (lastYearRevenueError) console.warn('Error fetching last year revenue:', lastYearRevenueError);
+
                 setStats({
                     totalBookings: bookingsCount || 0,
+                    lastYearBookings: lastYearCount || 0,
+                    totalRevenue,
+                    lastYearRevenue,
                     pendingQuotations: quotationsCount || 0,
                     activeProperties: propertiesCount || 0,
                     totalConsultants: consultantsCount || 0,
                     topProperties,
                     monthlyRevenue,
                     leadSourceData,
+                    monthlyBookings,
                     loading: false,
                     error: null,
                 });

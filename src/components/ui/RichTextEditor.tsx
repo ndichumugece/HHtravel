@@ -18,16 +18,23 @@ export default function RichTextEditor({ value, onChange, placeholder, className
         toolbar: [
             [{ 'header': [1, 2, 3, false] }],
             ['bold', 'italic', 'underline', 'strike', 'blockquote'],
-            [{ 'list': 'ordered' }, { 'list': 'bullet' }],
+            [{ 'list': 'ordered' }, { 'list': 'bullet' }, { 'indent': '-1' }, { 'indent': '+1' }],
             ['link', 'clean'],
+            [{ 'align': [] }],
+            [{ 'color': [] }, { 'background': [] }],
         ],
+        clipboard: {
+            matchVisual: false,
+        },
     };
 
     const formats = [
         'header',
         'bold', 'italic', 'underline', 'strike', 'blockquote',
-        'list', 'bullet',
+        'list', 'bullet', 'indent',
         'link',
+        'align',
+        'color', 'background',
     ];
 
     return (

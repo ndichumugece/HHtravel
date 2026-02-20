@@ -1,4 +1,5 @@
 import { Document, Page, Text, View, StyleSheet, Image, Font } from '@react-pdf/renderer';
+import Html from 'react-pdf-html';
 import type { QuotationVoucher, CompanySettings } from '../../types';
 import { format } from 'date-fns';
 
@@ -359,6 +360,36 @@ export default function QuotationPDF({ voucher, settings, consultantName, option
                             </View>
 
                         </View>
+                    </View>
+                )}
+
+                {/* Additional Notes (Rich Text) */}
+                {voucher.rich_text_notes && (
+                    <View wrap={false}>
+                        <Text style={styles.sectionTitle}>Additional Notes</Text>
+                        <Html
+                            stylesheet={{
+                                p: { fontSize: 10, lineHeight: 1.4, color: theme.textMain, marginBottom: 5 },
+                                span: { fontSize: 10 },
+                                li: { fontSize: 10, lineHeight: 1.4, color: theme.textMain },
+                                ul: { marginBottom: 5 },
+                                ol: { marginBottom: 5 },
+                                h1: { fontSize: 12, fontWeight: 'bold', marginBottom: 5 },
+                                h2: { fontSize: 11, fontWeight: 'bold', marginBottom: 5 },
+                                h3: { fontSize: 10, fontWeight: 'bold', marginBottom: 5 },
+                                strong: { fontWeight: 'bold' },
+                                b: { fontWeight: 'bold' },
+                                em: { fontStyle: 'italic' },
+                                i: { fontStyle: 'italic' },
+                                u: { textDecoration: 'underline' },
+                                a: { color: theme.primary, textDecoration: 'none' },
+                                table: { fontSize: 10, borderBottomWidth: 1, borderBottomColor: theme.divider, borderRightWidth: 1, borderRightColor: theme.divider },
+                                th: { fontSize: 10, fontWeight: 'bold', backgroundColor: '#f3f4f6', padding: 4, borderTopWidth: 1, borderTopColor: theme.divider, borderLeftWidth: 1, borderLeftColor: theme.divider },
+                                td: { fontSize: 10, padding: 4, borderTopWidth: 1, borderTopColor: theme.divider, borderLeftWidth: 1, borderLeftColor: theme.divider },
+                            }}
+                        >
+                            {voucher.rich_text_notes}
+                        </Html>
                     </View>
                 )}
 

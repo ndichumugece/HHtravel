@@ -116,7 +116,7 @@ export default function AdminReports() {
                                 <ResponsiveContainer width="100%" height="100%">
                                     <BarChart data={stats.topProperties}>
                                         <Bar dataKey="count" radius={[4, 4, 0, 0]}>
-                                            {stats.topProperties.map((_, index) => (
+                                            {stats.topProperties.map((entry, index) => (
                                                 <Cell key={`cell-${index}`} fill={index % 2 === 0 ? '#4ade80' : '#818cf8'} />
                                             ))}
                                         </Bar>
@@ -224,7 +224,7 @@ export default function AdminReports() {
                     </div>
 
                     {/* Forecast / List Card */}
-                    <div className="bg-slate-50 dark:bg-slate-900/50 rounded-[2rem] p-6 border border-slate-200 dark:border-slate-800 flex flex-col h-full min-h-[300px]">
+                    <div className="bg-slate-50 dark:bg-slate-900/50 rounded-[2rem] p-6 border border-slate-200 dark:border-slate-800 flex flex-col h-fit">
                         <div className="flex items-center justify-between mb-6">
                             <div>
                                 <h3 className="font-semibold text-foreground">Top Properties</h3>
@@ -235,8 +235,8 @@ export default function AdminReports() {
                             </div>
                         </div>
 
-                        <div className="space-y-6 relative pl-4 border-l-2 border-slate-200 dark:border-slate-800 ml-2">
-                            {stats.topProperties.slice(0, 4).map((prop, i) => (
+                        <div className="space-y-6 relative border-l-2 border-slate-200 dark:border-slate-800 ml-6">
+                            {stats.topProperties.slice(0, 5).map((prop, i) => (
                                 <div key={i} className="relative pl-6">
                                     <div className={`absolute -left-[9px] top-1 w-4 h-4 rounded-full border-2 border-white dark:border-slate-900 ${i === 0 ? 'bg-primary' : 'bg-slate-300 dark:bg-slate-700'}`}></div>
                                     <div className="flex justify-between items-start">
@@ -255,22 +255,6 @@ export default function AdminReports() {
                                     </div>
                                 </div>
                             ))}
-                        </div>
-
-                        <div className="mt-auto pt-6">
-                            <div className="bg-white dark:bg-card p-4 rounded-2xl shadow-sm border flex items-center justify-between">
-                                <div>
-                                    <p className="text-xs text-muted-foreground">Market Forecast</p>
-                                    <p className="text-lg font-bold text-foreground mt-1">Positive</p>
-                                </div>
-                                <div className="h-8 w-20">
-                                    <ResponsiveContainer width="100%" height="100%">
-                                        <AreaChart data={[{ v: 10 }, { v: 15 }, { v: 30 }, { v: 25 }, { v: 40 }, { v: 50 }, { v: 60 }]}>
-                                            <Area type="monotone" dataKey="v" stroke="#8b5cf6" fill="#8b5cf6" fillOpacity={0.2} strokeWidth={2} />
-                                        </AreaChart>
-                                    </ResponsiveContainer>
-                                </div>
-                            </div>
                         </div>
                     </div>
                 </div>
