@@ -1,6 +1,6 @@
-import { BarChart, Bar, ResponsiveContainer, Tooltip, Cell, AreaChart, Area, ComposedChart, Line, XAxis } from 'recharts';
+import { Bar, ResponsiveContainer, Tooltip, AreaChart, Area, ComposedChart, Line, XAxis } from 'recharts';
 import { useDashboardStats } from '../hooks/useDashboardStats';
-import { ArrowUpRight, Users, MoreVertical, CreditCard, Activity, Calendar } from 'lucide-react';
+import { ArrowUpRight, Users, MoreVertical, Activity, Calendar } from 'lucide-react';
 import { format } from 'date-fns';
 import { useAuth } from '../context/AuthContext';
 
@@ -127,7 +127,7 @@ export default function Dashboard() {
                                             dataKey="count"
                                             stroke="none"
                                             dot={(props) => {
-                                                const { cx, cy, payload, index } = props;
+                                                const { cx, cy, index } = props;
                                                 const isCurrentMonth = index === new Date().getMonth();
                                                 return (
                                                     <circle

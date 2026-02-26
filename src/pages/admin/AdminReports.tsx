@@ -116,7 +116,7 @@ export default function AdminReports() {
                                 <ResponsiveContainer width="100%" height="100%">
                                     <BarChart data={stats.topProperties}>
                                         <Bar dataKey="count" radius={[4, 4, 0, 0]}>
-                                            {stats.topProperties.map((entry, index) => (
+                                            {stats.topProperties.map((_, index) => (
                                                 <Cell key={`cell-${index}`} fill={index % 2 === 0 ? '#4ade80' : '#818cf8'} />
                                             ))}
                                         </Bar>
