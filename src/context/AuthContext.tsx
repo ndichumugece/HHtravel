@@ -61,10 +61,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const updateLastActive = async (userId: string) => {
         try {
-            await supabase
+            const { error } = await supabase
                 .from('profiles')
                 .update({ last_active: new Date().toISOString() })
                 .eq('id', userId);
+
+            if (error) {
+                // Check if it's a 400 error which likely means missing column
+                if (error.code === '42703' || (error as any).status === 400) {
+                    console.warn(`Profile update failed for user ${userId}: Column last_active might be missing. Please run fix_profiles_schema_consolidated.sql`);
+                } else {
+                    throw error;
+                }
+            }
         } catch (error) {
             console.error('Error updating last_active:', error);
         }

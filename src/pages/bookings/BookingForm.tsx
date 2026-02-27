@@ -247,8 +247,8 @@ export default function BookingForm() {
                 room_details: roomDetails,
             };
 
-            // Remove joined fields that are not columns in the booking_vouchers table
-            delete (payload as any).profiles;
+            // Remove joined fields and read-only fields that are not columns in the booking_vouchers table
+            const { profiles, ...sanitizedData } = payload as any;
 
             // Sanitize numeric fields to prevent "invalid input syntax" errors
             if (payload.quotation_price === '' as any) {
@@ -257,17 +257,17 @@ export default function BookingForm() {
 
             // Ensure numbers are numbers (handle empty strings which cast to 0 safely, or preserve 0)
             // number_of_rooms is required, so 0 or 1 fallback is better than string
-            payload.number_of_rooms = Number(payload.number_of_rooms || 0);
-            payload.number_of_adults = Number(payload.number_of_adults || 0);
-            payload.number_of_children = Number(payload.number_of_children || 0);
+            sanitizedData.number_of_rooms = Number(sanitizedData.number_of_rooms || 0);
+            sanitizedData.number_of_adults = Number(sanitizedData.number_of_adults || 0);
+            sanitizedData.number_of_children = Number(sanitizedData.number_of_children || 0);
 
             if (isEditMode && id) {
-                const { error } = await supabase.from('booking_vouchers').update(payload).eq('id', id);
+                const { error } = await supabase.from('booking_vouchers').update(sanitizedData).eq('id', id);
                 if (error) throw error;
                 // Optional: fetchVoucher(id); // The form data is already local, usually no need to re-fetch immediately unless triggers change data
                 alert('Voucher updated successfully');
             } else {
-                const { data: newVoucher, error } = await supabase.from('booking_vouchers').insert(payload).select().single();
+                const { data: newVoucher, error } = await supabase.from('booking_vouchers').insert(sanitizedData).select().single();
                 if (error) throw error;
                 if (newVoucher) {
                     navigate(`/bookings/${newVoucher.id}/edit`, { replace: true });
