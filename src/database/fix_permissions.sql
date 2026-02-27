@@ -63,6 +63,7 @@ DROP POLICY IF EXISTS "Properties are viewable by authenticated users" ON public
 DROP POLICY IF EXISTS "Admins can manage properties" ON public.properties;
 
 CREATE POLICY "Properties are viewable by authenticated users" ON public.properties FOR SELECT TO authenticated USING (true);
+CREATE POLICY "Authenticated users can insert properties" ON public.properties FOR INSERT TO authenticated WITH CHECK (true);
 CREATE POLICY "Admins can manage properties" ON public.properties FOR ALL USING (public.is_admin());
 
 -- 5. FINAL GRANTS
