@@ -47,6 +47,7 @@ export interface BookingVoucher {
     dietary_requirements?: string;
 
     status: 'issued' | 'cancelled';
+    payment_status?: 'pending' | 'discounted' | 'completed';
     created_at: string;
     lead_source?: string;
     room_details?: RoomDetail[];

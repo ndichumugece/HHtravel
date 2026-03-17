@@ -241,14 +241,18 @@ export default function BookingForm() {
     const onSubmit = async (data: Partial<BookingVoucher>) => {
         setLoading(true);
         try {
-            const payload = {
+            const payload: any = {
                 ...data,
-                consultant_id: user?.id,
                 room_details: roomDetails,
             };
 
+            // Only set consultant_id on creation
+            if (!isEditMode) {
+                payload.consultant_id = user?.id;
+            }
+
             // Remove joined fields and read-only fields that are not columns in the booking_vouchers table
-            const { profiles, ...sanitizedData } = payload as any;
+            const { profiles, ...sanitizedData } = payload;
 
             // Sanitize numeric fields to prevent "invalid input syntax" errors
             if (payload.quotation_price === '' as any) {
@@ -996,6 +1000,17 @@ export default function BookingForm() {
                                     {LEAD_SOURCES.map(source => (
                                         <option key={source} value={source}>{source}</option>
                                     ))}
+                                </select>
+                            </div>
+                            <div className="mt-4">
+                                <label className="text-sm font-medium leading-none">Payment Status</label>
+                                <select
+                                    {...register('payment_status')}
+                                    className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 mt-2"
+                                >
+                                    <option value="pending">Pending</option>
+                                    <option value="discounted">Discounted</option>
+                                    <option value="completed">Completed</option>
                                 </select>
                             </div>
                         </CardContent>

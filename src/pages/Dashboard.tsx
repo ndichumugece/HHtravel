@@ -1,20 +1,22 @@
-import { Bar, ResponsiveContainer, Tooltip, AreaChart, Area, ComposedChart, Line, XAxis } from 'recharts';
-import { useDashboardStats } from '../hooks/useDashboardStats';
+import { useState } from 'react';
+import { Bar, ResponsiveContainer, Tooltip, ComposedChart, Line, XAxis } from 'recharts';
+import { useDashboardStats, type TimePeriod } from '../hooks/useDashboardStats';
 import { ArrowUpRight, Users, MoreVertical, Activity, Calendar } from 'lucide-react';
 import { format } from 'date-fns';
 import { useAuth } from '../context/AuthContext';
 
 export default function Dashboard() {
-    const stats = useDashboardStats();
+    const [period, setPeriod] = useState<TimePeriod>('year');
+    const stats = useDashboardStats(period);
     const { profile } = useAuth();
-
-
 
     if (stats.loading) return (
         <div className="flex items-center justify-center h-[calc(100vh-100px)]">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
         </div>
     );
+
+    const periodLabel = period === 'week' ? 'week' : period === 'month' ? 'month' : 'year';
 
     return (
         <div className="p-4 md:p-6 space-y-6 max-w-[1600px] mx-auto animate-fade-in">
@@ -40,47 +42,65 @@ export default function Dashboard() {
                 <div className="lg:col-span-2 space-y-6">
                     {/* Redesigned Total Bookings Card (Income Tracker Style) */}
                     <div className="bg-white dark:bg-card rounded-[2.5rem] p-8 shadow-sm border min-h-[380px] flex flex-col justify-between">
-                        <div className="flex justify-between items-start mb-6">
+                        <div className="flex flex-col sm:flex-row justify-between items-start gap-4 mb-6">
                             <div className="flex items-center gap-4">
                                 <div className="p-3 bg-slate-100 dark:bg-slate-800 rounded-2xl">
                                     <Activity className="w-6 h-6 text-slate-600 dark:text-slate-300" />
                                 </div>
                                 <div>
                                     <h3 className="text-2xl font-medium text-foreground">Total Bookings</h3>
-                                    <p className="text-sm text-muted-foreground">Track booking volume over time</p>
+                                    <p className="text-sm text-muted-foreground">Track volume over this {periodLabel}</p>
                                 </div>
                             </div>
-                            <div className="px-4 py-2 rounded-full border border-slate-200 dark:border-slate-700 text-sm font-medium text-foreground flex items-center gap-2 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
-                                <span>{new Date().getFullYear()}</span>
-                                <ArrowUpRight className="w-3 h-3" />
+                            
+                            <div className="flex bg-slate-100/80 dark:bg-slate-800/80 p-1 rounded-xl border border-slate-200 dark:border-slate-700/50">
+                                {(['week', 'month', 'year'] as TimePeriod[]).map((p) => (
+                                    <button
+                                        key={p}
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setPeriod(p);
+                                        }}
+                                        className={`px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all duration-200 ${
+                                            period === p 
+                                            ? 'bg-white dark:bg-slate-700 shadow-sm text-primary' 
+                                            : 'text-muted-foreground hover:text-foreground'
+                                        }`}
+                                    >
+                                        {p.toUpperCase()}
+                                    </button>
+                                ))}
                             </div>
                         </div>
 
                         <div className="flex flex-col md:flex-row gap-8 items-end h-full">
                             <div className="md:w-1/3 space-y-2 mb-4 md:mb-0 pb-4">
                                 <h2 className="text-5xl font-medium tracking-tighter text-foreground">
-                                    {stats.lastYearBookings > 0
-                                        ? `${((stats.totalBookings - stats.lastYearBookings) / stats.lastYearBookings * 100) > 0 ? '+' : ''}${Math.round(((stats.totalBookings - stats.lastYearBookings) / stats.lastYearBookings) * 100)}%`
+                                    {stats.comparisonBookings > 0
+                                        ? `${((stats.totalBookings - stats.comparisonBookings) / stats.comparisonBookings * 100) > 0 ? '+' : ''}${Math.round(((stats.totalBookings - stats.comparisonBookings) / stats.comparisonBookings) * 100)}%`
                                         : `+${stats.totalBookings > 0 ? '100' : '0'}%`
                                     }
                                 </h2>
                                 <p className="text-sm text-muted-foreground leading-tight">
-                                    This year's bookings are {stats.totalBookings >= stats.lastYearBookings ? 'higher' : 'lower'} than last year's.
+                                    This {periodLabel}'s bookings are {stats.totalBookings >= stats.comparisonBookings ? 'higher' : 'lower'} than last {periodLabel}'s.
                                 </p>
                             </div>
 
                             <div className="flex-1 h-64 w-full">
                                 <ResponsiveContainer width="100%" height="100%">
-                                    <ComposedChart data={stats.monthlyBookings} margin={{ top: 20, right: 10, bottom: 20, left: 10 }}>
+                                    <ComposedChart data={stats.chartData} margin={{ top: 20, right: 10, bottom: 20, left: 10 }}>
                                         <XAxis
                                             dataKey="name"
                                             axisLine={false}
                                             tickLine={false}
-                                            tick={({ x, y, payload, index }) => {
-                                                const isCurrentMonth = index === new Date().getMonth();
+                                            tick={({ x, y, payload }) => {
+                                                const currentLabel = period === 'year' ? format(new Date(), 'MMM') : 
+                                                                    period === 'month' ? format(new Date(), 'd') :
+                                                                    format(new Date(), 'EEE');
+                                                const isCurrent = payload.value === currentLabel;
                                                 return (
                                                     <g transform={`translate(${x},${y})`}>
-                                                        {isCurrentMonth && (
+                                                        {isCurrent && (
                                                             <rect
                                                                 x={-14}
                                                                 y={8}
@@ -95,17 +115,17 @@ export default function Dashboard() {
                                                             x={0}
                                                             y={27}
                                                             textAnchor="middle"
-                                                            fill={isCurrentMonth ? "#ffffff" : "#94a3b8"}
-                                                            fontSize={12}
-                                                            fontWeight={isCurrentMonth ? "600" : "400"}
-                                                            className={isCurrentMonth ? "dark:fill-slate-900" : ""}
+                                                            fill={isCurrent ? "#ffffff" : "#94a3b8"}
+                                                            fontSize={10}
+                                                            fontWeight={isCurrent ? "600" : "400"}
+                                                            className={isCurrent ? "dark:fill-slate-900" : ""}
                                                         >
-                                                            {payload.value.charAt(0)}
+                                                            {payload.value}
                                                         </text>
                                                     </g>
                                                 );
                                             }}
-                                            interval={0}
+                                            interval={period === 'month' ? 4 : 0}
                                         />
                                         <Tooltip
                                             cursor={{ fill: 'transparent', stroke: 'transparent' }}
@@ -125,22 +145,25 @@ export default function Dashboard() {
                                         <Line
                                             type="monotone"
                                             dataKey="count"
-                                            stroke="none"
+                                            stroke="#10b981"
+                                            strokeWidth={2}
                                             dot={(props) => {
-                                                const { cx, cy, index } = props;
-                                                const isCurrentMonth = index === new Date().getMonth();
+                                                const { cx, cy, payload } = props;
+                                                const currentLabel = period === 'year' ? format(new Date(), 'MMM') : 
+                                                                    period === 'month' ? format(new Date(), 'd') :
+                                                                    format(new Date(), 'EEE');
+                                                const isCurrent = payload.name === currentLabel;
                                                 return (
                                                     <circle
                                                         cx={cx}
                                                         cy={cy}
-                                                        r={isCurrentMonth ? 6 : 4}
-                                                        fill={isCurrentMonth ? "#1e293b" : "#64748b"}
-                                                        className={isCurrentMonth ? "dark:fill-slate-100" : "dark:fill-slate-400"}
+                                                        r={isCurrent ? 5 : 3}
+                                                        fill={isCurrent ? "#10b981" : "#64748b"}
                                                         strokeWidth={0}
                                                     />
                                                 );
                                             }}
-                                            activeDot={{ r: 6, fill: '#0f172a' }}
+                                            activeDot={{ r: 6, fill: '#10b981' }}
                                         />
                                     </ComposedChart>
                                 </ResponsiveContainer>
@@ -152,7 +175,7 @@ export default function Dashboard() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         {/* Revenue Card (Redesigned) */}
                         <div className="bg-white dark:bg-card rounded-[2.5rem] p-8 shadow-sm border min-h-[280px] flex flex-col justify-between relative overflow-hidden">
-                            <div className="flex justify-between items-start z-10">
+                            <div className="relative z-10 flex flex-col h-full justify-between">
                                 <div>
                                     <div className="flex items-center gap-2 mb-1">
                                         <h3 className="text-lg font-bold text-foreground">Total Revenue</h3>
@@ -163,44 +186,22 @@ export default function Dashboard() {
                                             </div>
                                         </div>
                                     </div>
-                                    <h2 className="text-4xl font-bold tracking-tighter text-foreground mt-2">
-                                        KES {(stats.totalRevenue / 1000).toLocaleString(undefined, { maximumFractionDigits: 1 })}k
+                                    <h2 className="text-2xl font-bold tracking-tighter text-foreground mt-2">
+                                        KES {stats.totalRevenue.toLocaleString()}
                                     </h2>
                                 </div>
-                                <div className="h-24 w-1/2 absolute right-0 top-8">
-                                    <ResponsiveContainer width="100%" height="100%">
-                                        <AreaChart data={stats.monthlyRevenue}>
-                                            <defs>
-                                                <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                                                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.1} />
-                                                    <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
-                                                </linearGradient>
-                                            </defs>
-                                            <Tooltip cursor={false} content={() => null} />
-                                            <Area
-                                                type="monotone"
-                                                dataKey="total"
-                                                stroke="#10b981"
-                                                strokeWidth={3}
-                                                fillOpacity={1}
-                                                fill="url(#colorRevenue)"
-                                                activeDot={false}
-                                            />
-                                        </AreaChart>
-                                    </ResponsiveContainer>
-                                </div>
-                            </div>
 
-                            <div className="flex items-center mt-4 z-10">
-                                <div className="flex items-center gap-1 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 px-3 py-1.5 rounded-xl text-sm font-semibold">
-                                    <ArrowUpRight className="w-4 h-4" />
-                                    <span>
-                                        {stats.lastYearRevenue > 0
-                                            ? `${Math.round(((stats.totalRevenue - stats.lastYearRevenue) / stats.lastYearRevenue) * 100)}%`
-                                            : '100%'}
-                                    </span>
+                                <div className="flex items-center mt-4">
+                                    <div className="flex items-center gap-1 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 px-3 py-1.5 rounded-xl text-sm font-semibold">
+                                        <ArrowUpRight className="w-4 h-4" />
+                                        <span>
+                                            {stats.comparisonRevenue > 0
+                                                ? `${Math.round(((stats.totalRevenue - stats.comparisonRevenue) / stats.comparisonRevenue) * 100)}%`
+                                                : '100%'}
+                                        </span>
+                                    </div>
+                                    <span className="text-muted-foreground ml-3 text-sm font-medium">vs last {periodLabel}</span>
                                 </div>
-                                <span className="text-muted-foreground ml-3 text-sm font-medium">vs last year</span>
                             </div>
                         </div>
 
@@ -228,6 +229,61 @@ export default function Dashboard() {
                                     style={{ width: `${Math.min((stats.pendingQuotations / (stats.totalBookings || 1)) * 100, 100)}%` }}
                                 ></div>
                             </div>
+                        </div>
+                    </div>
+
+                    {/* Consultant Sales Performance Section */}
+                    <div className="bg-white dark:bg-card rounded-[2.5rem] p-8 border shadow-sm">
+                        <div className="flex items-center justify-between mb-8">
+                            <div>
+                                <h3 className="text-xl font-bold text-foreground">Consultant Sales Performance</h3>
+                                <p className="text-sm text-muted-foreground mt-1">Total revenue generated by each team member this {periodLabel}.</p>
+                            </div>
+                            <div className="flex items-center gap-2 px-4 py-2 bg-slate-50 dark:bg-slate-800 rounded-xl">
+                                <Users className="w-4 h-4 text-primary" />
+                                <span className="text-sm font-bold text-primary">{stats.userSalesData.length} Agents</span>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 gap-6">
+                            {stats.userSalesData.length === 0 ? (
+                                <div className="text-center py-12 text-muted-foreground border-2 border-dashed rounded-3xl">
+                                    No sales data found for this period.
+                                </div>
+                            ) : (
+                                stats.userSalesData.map((user, index) => (
+                                    <div key={user.name} className="group relative">
+                                        <div className="flex items-center justify-between mb-3">
+                                            <div className="flex items-center gap-4">
+                                                <div className={`flex items-center justify-center w-8 h-8 rounded-full text-xs font-bold ${
+                                                    index === 0 ? 'bg-amber-100 text-amber-700' : 
+                                                    index === 1 ? 'bg-slate-100 text-slate-700' :
+                                                    index === 2 ? 'bg-orange-50 text-orange-700' :
+                                                    'bg-slate-50 text-slate-500'
+                                                }`}>
+                                                    #{index + 1}
+                                                </div>
+                                                <div>
+                                                    <p className="font-semibold text-foreground group-hover:text-primary transition-colors">{user.name}</p>
+                                                    <p className="text-xs text-muted-foreground">{user.count} total bookings</p>
+                                                </div>
+                                            </div>
+                                            <div className="text-right">
+                                                <p className="text-lg font-bold text-foreground">KES {user.total.toLocaleString()}</p>
+                                                <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold">Total Sales</p>
+                                            </div>
+                                        </div>
+                                        <div className="w-full bg-slate-100 dark:bg-slate-800 h-2 rounded-full overflow-hidden">
+                                            <div 
+                                                className={`h-full rounded-full transition-all duration-1000 ease-out ${
+                                                    index === 0 ? 'bg-primary' : 'bg-primary/60'
+                                                }`}
+                                                style={{ width: `${(user.total / (stats.userSalesData[0]?.total || 1)) * 100}%` }}
+                                            />
+                                        </div>
+                                    </div>
+                                ))
+                            )}
                         </div>
                     </div>
                 </div>

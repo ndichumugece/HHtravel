@@ -127,40 +127,51 @@ export default function Calendar() {
         return null;
     };
 
-    // Helper to generate consistent colors based on profile color OR property name string fallback
+    // Payment status based colors
     const getEventStyle = (booking: BookingVoucher) => {
-        // Check for profile color first
-        const profile = Array.isArray(booking.profiles) ? booking.profiles[0] : booking.profiles;
-        const customColor = profile?.color;
+        const status = booking.payment_status || 'pending';
 
-        if (customColor) {
-            return {
+        const statusColors = {
+            pending: {
+                bg: 'bg-red-50',
+                text: 'text-red-700',
+                border: 'border-red-200',
+                hover: 'hover:bg-red-100',
                 style: {
-                    backgroundColor: `${customColor}15`, // ~8% opacity
-                    color: customColor,
-                    borderColor: `${customColor}30`, // ~20% opacity
-                },
-                className: ''
-            };
-        }
+                    backgroundColor: '#fef2f2',
+                    color: '#b91c1c',
+                    borderColor: '#fecaca'
+                }
+            },
+            discounted: {
+                bg: 'bg-amber-50',
+                text: 'text-amber-700',
+                border: 'border-amber-200',
+                hover: 'hover:bg-amber-100',
+                style: {
+                    backgroundColor: '#fffbeb',
+                    color: '#b45309',
+                    borderColor: '#fde68a'
+                }
+            },
+            completed: {
+                bg: 'bg-emerald-50',
+                text: 'text-emerald-700',
+                border: 'border-emerald-200',
+                hover: 'hover:bg-emerald-100',
+                style: {
+                    backgroundColor: '#ecfdf5',
+                    color: '#047857',
+                    borderColor: '#a7f3d0'
+                }
+            }
+        };
 
-        // Fallback to property hash
-        const str = booking.property_name || 'default';
-        const colors = [
-            'bg-blue-50 text-blue-700 border-blue-100 hover:bg-blue-100',
-            'bg-green-50 text-green-700 border-green-100 hover:bg-green-100',
-            'bg-purple-50 text-purple-700 border-purple-100 hover:bg-purple-100',
-            'bg-amber-50 text-amber-700 border-amber-100 hover:bg-amber-100',
-            'bg-rose-50 text-rose-700 border-rose-100 hover:bg-rose-100',
-            'bg-indigo-50 text-indigo-700 border-indigo-100 hover:bg-indigo-100',
-        ];
-        let hash = 0;
-        for (let i = 0; i < str.length; i++) {
-            hash = str.charCodeAt(i) + ((hash << 5) - hash);
-        }
+        const colors = statusColors[status as keyof typeof statusColors] || statusColors.pending;
+
         return {
-            className: colors[Math.abs(hash) % colors.length],
-            style: {}
+            className: `${colors.bg} ${colors.text} ${colors.border} ${colors.hover}`,
+            style: colors.style
         };
     };
 

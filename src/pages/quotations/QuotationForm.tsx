@@ -182,11 +182,15 @@ export default function QuotationForm() {
                 }
             }
 
-            const payload = {
+            const payload: any = {
                 ...finalData,
                 number_of_nights: finalData.number_of_nights ? Number(finalData.number_of_nights) : null,
-                consultant_id: user?.id
             };
+
+            // Only set consultant_id on creation
+            if (!isEditMode) {
+                payload.consultant_id = user?.id;
+            }
 
             if (isEditMode && id) {
                 const { error } = await supabase.from('quotation_vouchers').update(payload).eq('id', id);

@@ -1,11 +1,28 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { supabase } from '../lib/supabase';
+import { 
+    subDays, 
+    subMonths, 
+    subYears, 
+    startOfDay, 
+    endOfDay, 
+    isWithinInterval, 
+    eachDayOfInterval, 
+    format, 
+    startOfMonth, 
+    endOfMonth,
+    startOfYear,
+    endOfYear,
+    eachMonthOfInterval
+} from 'date-fns';
+
+export type TimePeriod = 'week' | 'month' | 'year';
 
 export interface DashboardStats {
     totalBookings: number;
-    lastYearBookings: number;
+    comparisonBookings: number;
     totalRevenue: number;
-    lastYearRevenue: number;
+    comparisonRevenue: number;
     pendingQuotations: number;
     activeProperties: number;
     totalConsultants: number;
@@ -14,32 +31,28 @@ export interface DashboardStats {
         bookings: number;
         value: number;
     }[];
-    monthlyRevenue: { name: string; total: number }[];
-    monthlyBookings: { name: string; count: number }[];
+    chartData: { name: string; count: number; total: number }[];
     leadSourceData: { name: string; value: number }[];
+    userSalesData: { name: string; total: number; count: number }[];
     loading: boolean;
     error: string | null;
 }
 
-export function useDashboardStats() {
-    const [stats, setStats] = useState<DashboardStats>({
-        totalBookings: 0,
-        lastYearBookings: 0,
-        totalRevenue: 0,
-        lastYearRevenue: 0,
-        pendingQuotations: 0,
-        activeProperties: 0,
-        totalConsultants: 0,
-        topProperties: [],
-        monthlyRevenue: [],
-        monthlyBookings: [],
-        leadSourceData: [],
-        loading: true,
-        error: null,
+export function useDashboardStats(period: TimePeriod = 'year') {
+    const [rawData, setRawData] = useState<any[]>([]);
+    const [counts, setCounts] = useState({
+        bookingsCount: 0,
+        quotationsCount: 0,
+        propertiesCount: 0,
+        consultantsCount: 0
     });
+    const [profilesMap, setProfilesMap] = useState<Record<string, string>>({});
+    const [topProperties, setTopProperties] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
-        async function fetchStats() {
+        async function fetchBaseData() {
             try {
                 // Parallel fetching for counts
                 const [
@@ -59,6 +72,25 @@ export function useDashboardStats() {
                 if (propertiesError) throw propertiesError;
                 if (consultantsError) throw consultantsError;
 
+                setCounts({
+                    bookingsCount: bookingsCount || 0,
+                    quotationsCount: quotationsCount || 0,
+                    propertiesCount: propertiesCount || 0,
+                    consultantsCount: consultantsCount || 0
+                });
+
+                // Fetch all profiles for name mapping
+                const { data: profiles, error: profilesError } = await supabase
+                    .from('profiles')
+                    .select('id, full_name');
+                
+                if (profilesError) throw profilesError;
+                const mapping: Record<string, string> = {};
+                profiles?.forEach(p => {
+                    mapping[p.id] = p.full_name || 'Unknown';
+                });
+                setProfilesMap(mapping);
+
                 // Fetch data for Top Properties (limit 100 recent)
                 const { data: recentBookings, error: recentBookingsError } = await supabase
                     .from('booking_vouchers')
@@ -75,7 +107,7 @@ export function useDashboardStats() {
                     propertyCounts[name] = (propertyCounts[name] || 0) + 1;
                 });
 
-                const topProperties = Object.entries(propertyCounts)
+                const processedTopProperties = Object.entries(propertyCounts)
                     .sort(([, a], [, b]) => b - a)
                     .slice(0, 3)
                     .map(([name, count]) => ({
@@ -83,140 +115,144 @@ export function useDashboardStats() {
                         bookings: count,
                         value: 0,
                     }));
+                
+                setTopProperties(processedTopProperties);
 
-                // Fetch data for Monthly Analytics (Revenue & Bookings)
-                let monthlyRevenue: { name: string; total: number }[] = [];
-                let monthlyBookings: { name: string; count: number }[] = [];
-
-                try {
-                    const { data: allBookingsData, error: analyticsError } = await supabase
-                        .from('booking_vouchers')
-                        .select('created_at, quotation_price, status');
-
-                    if (analyticsError) {
-                        console.warn('Analytics fetch error:', analyticsError);
-                    } else {
-                        const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-                        const revenueByMonth = new Array(12).fill(0);
-                        const bookingsByMonth = new Array(12).fill(0);
-
-                        allBookingsData?.forEach((booking) => {
-                            if (booking.created_at) {
-                                const date = new Date(booking.created_at);
-                                const monthIndex = date.getMonth(); // 0-11
-                                if (date.getFullYear() === new Date().getFullYear()) {
-                                    // Count bookings
-                                    bookingsByMonth[monthIndex]++;
-
-                                    // Calc Revenue (only issued)
-                                    if (booking.status === 'issued' && booking.quotation_price) {
-                                        const priceStr = String(booking.quotation_price).replace(/[^0-9.]/g, '');
-                                        const price = parseFloat(priceStr) || 0;
-                                        revenueByMonth[monthIndex] += price;
-                                    }
-                                }
-                            }
-                        });
-
-                        monthlyRevenue = monthNames.map((name, index) => ({
-                            name,
-                            total: revenueByMonth[index]
-                        }));
-
-                        monthlyBookings = monthNames.map((name, index) => ({
-                            name,
-                            count: bookingsByMonth[index]
-                        }));
-                    }
-                } catch (e) {
-                    console.warn('Failed to process analytics data', e);
-                }
-
-                // Process Lead Source Data
-                const leadSourceCounts: Record<string, number> = {
-                    'Unknown': 0,
-                    'Repeat Clients': 0,
-                    'Office Walk-in': 0
-                };
-
-                // Let's fetch all lead sources for analytics (lightweight query)
-                const { data: leadData, error: leadError } = await supabase
+                // Fetch all bookings for analytics
+                const { data: allBookings, error: analyticsError } = await supabase
                     .from('booking_vouchers')
-                    .select('lead_source');
+                    .select('created_at, quotation_price, status, lead_source, consultant_id');
 
-                if (!leadError && leadData) {
-                    leadData.forEach((booking) => {
-                        const source = booking.lead_source || 'Unknown';
-                        // Normalize specific variations if needed, or just count exact matches
-                        // For now, we trust the database values or map 'null' to 'Unknown'
-                        leadSourceCounts[source] = (leadSourceCounts[source] || 0) + 1;
-                    });
-                }
-
-                const leadSourceData = Object.entries(leadSourceCounts)
-                    .map(([name, value]) => ({ name, value }))
-                    .sort((a, b) => b.value - a.value);
-
-                // Fetch last year's bookings for comparison & revenue
-                const lastYearStart = new Date(new Date().getFullYear() - 1, 0, 1).toISOString();
-                const lastYearEnd = new Date(new Date().getFullYear() - 1, 11, 31).toISOString();
-
-                // Get count for last year
-                const { count: lastYearCount, error: lastYearError } = await supabase
-                    .from('booking_vouchers')
-                    .select('*', { count: 'exact', head: true })
-                    .gte('created_at', lastYearStart)
-                    .lte('created_at', lastYearEnd);
-
-                // Get revenue for last year (separate query for simplicity, or could combine)
-                const { data: lastYearRevenueData, error: lastYearRevenueError } = await supabase
-                    .from('booking_vouchers')
-                    .select('quotation_price, status')
-                    .gte('created_at', lastYearStart)
-                    .lte('created_at', lastYearEnd)
-                    .eq('status', 'issued');
-
-                let totalRevenue = 0;
-                let lastYearRevenue = 0;
-
-                // Calculate current year revenue from monthly data
-                totalRevenue = monthlyRevenue.reduce((sum, item) => sum + item.total, 0);
-
-                // Calculate last year revenue
-                if (lastYearRevenueData) {
-                    lastYearRevenue = lastYearRevenueData.reduce((sum, booking) => {
-                        const priceStr = String(booking.quotation_price).replace(/[^0-9.]/g, '');
-                        const price = parseFloat(priceStr) || 0;
-                        return sum + price;
-                    }, 0);
-                }
-
-                if (lastYearError) console.warn('Error fetching last year bookings:', lastYearError);
-                if (lastYearRevenueError) console.warn('Error fetching last year revenue:', lastYearRevenueError);
-
-                setStats({
-                    totalBookings: bookingsCount || 0,
-                    lastYearBookings: lastYearCount || 0,
-                    totalRevenue,
-                    lastYearRevenue,
-                    pendingQuotations: quotationsCount || 0,
-                    activeProperties: propertiesCount || 0,
-                    totalConsultants: consultantsCount || 0,
-                    topProperties,
-                    monthlyRevenue,
-                    leadSourceData,
-                    monthlyBookings,
-                    loading: false,
-                    error: null,
-                });
+                if (analyticsError) throw analyticsError;
+                setRawData(allBookings || []);
+                setLoading(false);
             } catch (err: any) {
                 console.error('Error fetching dashboard stats:', err);
-                setStats((prev) => ({ ...prev, loading: false, error: err.message }));
+                setError(err.message);
+                setLoading(false);
             }
         }
 
-        fetchStats();
+        fetchBaseData();
     }, []);
+
+    const stats = useMemo(() => {
+        const now = new Date();
+        let currentInterval: { start: Date; end: Date };
+        let lastInterval: { start: Date; end: Date };
+        let chartIntervals: Date[] = [];
+        let dateFormat = 'MMM';
+
+        if (period === 'week') {
+            currentInterval = { start: startOfDay(subDays(now, 6)), end: endOfDay(now) };
+            lastInterval = { start: startOfDay(subDays(now, 13)), end: endOfDay(subDays(now, 7)) };
+            chartIntervals = eachDayOfInterval(currentInterval);
+            dateFormat = 'EEE';
+        } else if (period === 'month') {
+            currentInterval = { start: startOfMonth(now), end: endOfMonth(now) };
+            lastInterval = { start: startOfMonth(subMonths(now, 1)), end: endOfMonth(subMonths(now, 1)) };
+            chartIntervals = eachDayOfInterval(currentInterval);
+            dateFormat = 'd';
+        } else {
+            currentInterval = { start: startOfYear(now), end: endOfYear(now) };
+            lastInterval = { start: startOfYear(subYears(now, 1)), end: endOfYear(subYears(now, 1)) };
+            chartIntervals = eachMonthOfInterval(currentInterval);
+            dateFormat = 'MMM';
+        }
+
+        let totalBookings = 0;
+        let comparisonBookings = 0;
+        let totalRevenue = 0;
+        let comparisonRevenue = 0;
+
+        const chartDataMap = new Map<string, { name: string; count: number; total: number }>();
+        chartIntervals.forEach(date => {
+            const key = format(date, dateFormat);
+            chartDataMap.set(key, { name: key, count: 0, total: 0 });
+        });
+
+        rawData.forEach(booking => {
+            if (!booking.created_at) return;
+            const date = new Date(booking.created_at);
+            const priceStr = String(booking.quotation_price || '0').replace(/[^0-9.]/g, '');
+            const price = parseFloat(priceStr) || 0;
+
+            if (isWithinInterval(date, currentInterval)) {
+                totalBookings++;
+                if (booking.status === 'issued') {
+                    totalRevenue += price;
+                }
+
+                // Add to chart data
+                const key = format(date, dateFormat);
+                if (chartDataMap.has(key)) {
+                    const existing = chartDataMap.get(key)!;
+                    existing.count++;
+                    if (booking.status === 'issued') {
+                        existing.total += price;
+                    }
+                }
+            } else if (isWithinInterval(date, lastInterval)) {
+                comparisonBookings++;
+                if (booking.status === 'issued') {
+                    comparisonRevenue += price;
+                }
+            }
+        });
+
+        // Process User Sales Data (for current period)
+        const userSalesMap = new Map<string, { name: string; total: number; count: number }>();
+        rawData.forEach(booking => {
+            if (!booking.created_at) return;
+            const date = new Date(booking.created_at);
+            if (!isWithinInterval(date, currentInterval)) return;
+
+            const priceStr = String(booking.quotation_price || '0').replace(/[^0-9.]/g, '');
+            const price = parseFloat(priceStr) || 0;
+            const consultantName = profilesMap[booking.consultant_id] || 'Unknown';
+
+            if (!userSalesMap.has(consultantName)) {
+                userSalesMap.set(consultantName, { name: consultantName, total: 0, count: 0 });
+            }
+            const userData = userSalesMap.get(consultantName)!;
+            userData.count++;
+            if (booking.status === 'issued') {
+                userData.total += price;
+            }
+        });
+
+        const userSalesData = Array.from(userSalesMap.values()).sort((a, b) => b.total - a.total);
+
+        // Process Lead Source Data from rawData
+        const leadSourceCounts: Record<string, number> = {
+            'Unknown': 0,
+            'Repeat Clients': 0,
+            'Office Walk-in': 0
+        };
+        rawData.forEach(booking => {
+            const source = booking.lead_source || 'Unknown';
+            leadSourceCounts[source] = (leadSourceCounts[source] || 0) + 1;
+        });
+        const leadSourceData = Object.entries(leadSourceCounts)
+            .map(([name, value]) => ({ name, value }))
+            .sort((a, b) => b.value - a.value);
+
+        return {
+            totalBookings,
+            comparisonBookings,
+            totalRevenue,
+            comparisonRevenue,
+            pendingQuotations: counts.quotationsCount,
+            activeProperties: counts.propertiesCount,
+            totalConsultants: counts.consultantsCount,
+            topProperties,
+            chartData: Array.from(chartDataMap.values()),
+            leadSourceData,
+            userSalesData,
+            loading,
+            error
+        };
+    }, [rawData, period, counts, topProperties, loading, error]);
 
     return stats;
 }

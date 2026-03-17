@@ -15,6 +15,9 @@ import {
     TableRow,
 } from '../../components/ui/Table';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/Card';
+import { useAuth } from '../../context/AuthContext';
+import { Switch } from '../../components/ui/Switch';
+import { Label } from '../../components/ui/Label';
 
 export default function QuotationList() {
     const navigate = useNavigate();
@@ -22,7 +25,9 @@ export default function QuotationList() {
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
+    const [showOnlyMine, setShowOnlyMine] = useState(false);
     const itemsPerPage = 15;
+    const { user } = useAuth();
 
     useEffect(() => {
         fetchQuotations();
@@ -45,10 +50,15 @@ export default function QuotationList() {
         }
     };
 
-    const filteredQuotations = quotations.filter(quote =>
-        quote.client_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        quote.reference_number.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    const filteredQuotations = quotations.filter(quote => {
+        const matchesSearch = 
+            quote.client_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            quote.reference_number.toLowerCase().includes(searchTerm.toLowerCase());
+            
+        const matchesMine = !showOnlyMine || quote.consultant_id === user?.id;
+        
+        return matchesSearch && matchesMine;
+    });
 
     const totalPages = Math.ceil(filteredQuotations.length / itemsPerPage);
     const currentQuotations = filteredQuotations.slice(
@@ -84,15 +94,25 @@ export default function QuotationList() {
             <Card>
                 <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 space-y-0 pb-7">
                     <CardTitle>Quotations</CardTitle>
-                    <div className="w-full sm:w-64">
-                        <div className="relative">
-                            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                            <Input
-                                placeholder="Search quotations..."
-                                className="pl-9"
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
+                    <div className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto">
+                        <div className="flex items-center space-x-2 bg-gray-50 px-3 py-2 rounded-lg border border-gray-100">
+                            <Switch 
+                                id="show-mine-quotes" 
+                                checked={showOnlyMine}
+                                onCheckedChange={setShowOnlyMine}
                             />
+                            <Label htmlFor="show-mine-quotes" className="text-sm font-medium cursor-pointer">My Quotations</Label>
+                        </div>
+                        <div className="w-full sm:w-64">
+                            <div className="relative">
+                                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                                <Input
+                                    placeholder="Search quotations..."
+                                    className="pl-9"
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                />
+                            </div>
                         </div>
                     </div>
                 </CardHeader>

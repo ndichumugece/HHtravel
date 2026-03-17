@@ -15,6 +15,9 @@ import {
     TableRow,
 } from '../../components/ui/Table';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/Card';
+import { useAuth } from '../../context/AuthContext';
+import { Switch } from '../../components/ui/Switch';
+import { Label } from '../../components/ui/Label';
 
 
 export default function BookingList() {
@@ -24,7 +27,9 @@ export default function BookingList() {
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 15;
     const [error, setError] = useState<string | null>(null);
+    const [showOnlyMine, setShowOnlyMine] = useState(false);
     const navigate = useNavigate();
+    const { user } = useAuth();
 
     useEffect(() => {
         fetchVouchers();
@@ -47,11 +52,16 @@ export default function BookingList() {
         }
     };
 
-    const filteredVouchers = vouchers.filter(voucher =>
-        voucher.guest_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        voucher.reference_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        voucher.property_name.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    const filteredVouchers = vouchers.filter(voucher => {
+        const matchesSearch = 
+            voucher.guest_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            voucher.reference_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            voucher.property_name.toLowerCase().includes(searchTerm.toLowerCase());
+        
+        const matchesMine = !showOnlyMine || voucher.consultant_id === user?.id;
+        
+        return matchesSearch && matchesMine;
+    });
 
     const totalPages = Math.ceil(filteredVouchers.length / itemsPerPage);
     const currentVouchers = filteredVouchers.slice(
@@ -95,15 +105,25 @@ export default function BookingList() {
             <Card>
                 <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 space-y-0 pb-7">
                     <CardTitle>Vouchers</CardTitle>
-                    <div className="w-full sm:w-64">
-                        <div className="relative">
-                            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                            <Input
-                                placeholder="Search vouchers..."
-                                className="pl-9"
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
+                    <div className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto">
+                        <div className="flex items-center space-x-2 bg-gray-50 px-3 py-2 rounded-lg border border-gray-100">
+                            <Switch 
+                                id="show-mine" 
+                                checked={showOnlyMine}
+                                onCheckedChange={setShowOnlyMine}
                             />
+                            <Label htmlFor="show-mine" className="text-sm font-medium cursor-pointer">My Vouchers</Label>
+                        </div>
+                        <div className="w-full sm:w-64">
+                            <div className="relative">
+                                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                                <Input
+                                    placeholder="Search vouchers..."
+                                    className="pl-9"
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                />
+                            </div>
                         </div>
                     </div>
                 </CardHeader>
