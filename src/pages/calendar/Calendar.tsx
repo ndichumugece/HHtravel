@@ -12,7 +12,6 @@ import {
     addWeeks,
     subWeeks,
     isToday,
-    isBefore,
     startOfDay,
     parseISO,
     isSameDay
@@ -60,9 +59,10 @@ export default function Calendar() {
             let startStr, endStr;
 
             if (view === 'list') {
-                // For list view, fetch from today onwards (next 6 months)
-                const start = startOfDay(new Date());
-                const end = addMonths(start, 6);
+                // For list view, fetch from 1 month ago to 6 months ahead
+                const now = new Date();
+                const start = startOfDay(subMonths(now, 1));
+                const end = addMonths(now, 6);
                 startStr = format(start, 'yyyy-MM-dd');
                 endStr = format(end, 'yyyy-MM-dd');
             } else {
@@ -105,10 +105,6 @@ export default function Calendar() {
     }) : [];
 
     const getDayBookings = (date: Date) => {
-        // If the date is in the past (before today), don't show bookings
-        if (isBefore(date, startOfDay(new Date()))) {
-            return [];
-        }
 
         const formattedDate = format(date, 'yyyy-MM-dd');
         return bookings.filter(booking => {
@@ -223,7 +219,7 @@ export default function Calendar() {
                             <div className="flex items-center bg-white rounded-lg border border-gray-200 shadow-sm p-1">
                                 <button
                                     onClick={prevPeriod}
-                                    disabled={view === 'month' ? isSameMonth(currentDate, new Date()) : isSameMonth(currentDate, new Date())}
+                                    disabled={false}
                                     className="p-1.5 hover:bg-gray-50 rounded-md text-gray-500 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                                 >
                                     <ChevronLeft className="h-5 w-5" />
