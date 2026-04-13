@@ -101,11 +101,6 @@ export default function ConfirmationForm() {
         setProperties(data || []);
     };
 
-    const fetchSettings = async () => {
-        const { data } = await supabase.from('company_settings').select('*').single();
-        if (data) setSettings(data);
-    };
-
     const fetchVoucher = async (vid: string) => {
         setLoading(true);
         const { data } = await supabase.from('confirmation_vouchers').select('*').eq('id', vid).single();

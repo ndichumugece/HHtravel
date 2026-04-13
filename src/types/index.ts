@@ -163,6 +163,7 @@ export interface ConfirmationVoucher {
     number_of_children: number;
     room_details?: RoomDetail[];
     room_arrangements?: string;
+    meal_plan?: string;
     special_requests?: string;
     flight_details?: string;
     arrival_time?: string;
