@@ -21,6 +21,7 @@ CREATE TABLE IF NOT EXISTS public.confirmation_vouchers (
   number_of_children INTEGER DEFAULT 0,
   room_details JSONB DEFAULT '[]'::jsonb,
   room_arrangements TEXT,
+  meal_plan TEXT,
 
   -- Details
   special_requests TEXT,

@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { useForm, useWatch, Controller } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { supabase } from '../../lib/supabase';
-import type { Property, ConfirmationVoucher, CompanySettings } from '../../types';
+import type { Property, ConfirmationVoucher } from '../../types';
 import { 
     ArrowLeft, 
     Save, 
@@ -11,7 +11,6 @@ import {
     Plus, 
     Trash2, 
     Settings2, 
-    Eye,
     CheckCircle2,
     Clock,
     Ban
@@ -19,7 +18,7 @@ import {
 import { useAuth } from '../../context/AuthContext';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../../components/ui/Card';
+import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/Card';
 import { format } from 'date-fns';
 import { Combobox } from '../../components/ui/Combobox';
 import { DatePicker } from '../../components/ui/DatePicker';
@@ -32,7 +31,6 @@ export default function ConfirmationForm() {
     const navigate = useNavigate();
     const { user } = useAuth();
     const [properties, setProperties] = useState<Property[]>([]);
-    const [settings, setSettings] = useState<CompanySettings>();
     const [loading, setLoading] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
     const isEditMode = !!id;
@@ -42,6 +40,8 @@ export default function ConfirmationForm() {
         { id: '1', room_type: '', adults: 2, children: 0 }
     ]);
     const [roomTypes, setRoomTypes] = useState<{ id: string, name: string }[]>([]);
+    const [bedTypes, setBedTypes] = useState<{ id: string, name: string }[]>([]);
+    const [mealPlans, setMealPlans] = useState<{ id: string, name: string }[]>([]);
 
     const { register, handleSubmit, setValue, control } = useForm<Partial<ConfirmationVoucher>>({
         defaultValues: {
@@ -58,8 +58,9 @@ export default function ConfirmationForm() {
 
     useEffect(() => {
         fetchProperties();
-        fetchSettings();
         fetchRoomTypes();
+        fetchBedTypes();
+        fetchMealPlans();
         if (id) fetchVoucher(id);
         else generateReference();
     }, [id]);
@@ -67,6 +68,16 @@ export default function ConfirmationForm() {
     const fetchRoomTypes = async () => {
         const { data } = await supabase.from('room_types').select('*').order('name');
         if (data) setRoomTypes(data);
+    };
+
+    const fetchBedTypes = async () => {
+        const { data } = await supabase.from('bed_types').select('*').order('name');
+        if (data) setBedTypes(data);
+    };
+
+    const fetchMealPlans = async () => {
+        const { data } = await supabase.from('meal_plans').select('*').order('name');
+        if (data) setMealPlans(data);
     };
 
     const generateReference = async () => {
@@ -232,17 +243,27 @@ export default function ConfirmationForm() {
                                     <div className="space-y-2">
                                         <Label>Check-in</Label>
                                         <DatePicker
-                                            date={formValues.check_in_date ? new Date(formValues.check_in_date) : undefined}
-                                            setDate={(d) => setValue('check_in_date', d ? format(d, 'yyyy-MM-dd') : '')}
+                                            value={formValues.check_in_date ? new Date(formValues.check_in_date) : undefined}
+                                            onChange={(d: Date) => setValue('check_in_date', d ? format(d, 'yyyy-MM-dd') : '')}
                                         />
                                     </div>
                                     <div className="space-y-2">
                                         <Label>Check-out</Label>
                                         <DatePicker
-                                            date={formValues.check_out_date ? new Date(formValues.check_out_date) : undefined}
-                                            setDate={(d) => setValue('check_out_date', d ? format(d, 'yyyy-MM-dd') : '')}
+                                            value={formValues.check_out_date ? new Date(formValues.check_out_date) : undefined}
+                                            onChange={(d: Date) => setValue('check_out_date', d ? format(d, 'yyyy-MM-dd') : '')}
                                         />
                                     </div>
+                                </div>
+                                <div className="space-y-2">
+                                    <Label>Meal Plan</Label>
+                                    <Combobox
+                                        options={mealPlans.map(mp => ({ label: mp.name, value: mp.name }))}
+                                        value={formValues.meal_plan}
+                                        onChange={(val) => setValue('meal_plan' as any, val)}
+                                        onCreate={handleCreateMealPlan}
+                                        placeholder="Select Meal Plan"
+                                    />
                                 </div>
                             </div>
 
@@ -277,6 +298,27 @@ export default function ConfirmationForm() {
                                                     }
                                                 }}
                                                 placeholder="Select Type"
+                                            />
+                                        </div>
+                                        <div className="w-40 space-y-2">
+                                            <Label className="text-xs">Bed Type</Label>
+                                            <Combobox
+                                                options={bedTypes.map(bt => ({ label: bt.name, value: bt.name }))}
+                                                value={room.bed_type}
+                                                onChange={(val) => {
+                                                    const newD = [...roomDetails];
+                                                    newD[idx].bed_type = val;
+                                                    setRoomDetails(newD);
+                                                }}
+                                                onCreate={async (val) => {
+                                                    const created = await handleCreateBedType(val);
+                                                    if (created) {
+                                                        const newD = [...roomDetails];
+                                                        newD[idx].bed_type = created;
+                                                        setRoomDetails(newD);
+                                                    }
+                                                }}
+                                                placeholder="Bed Type"
                                             />
                                         </div>
                                         <div className="w-20 space-y-2">

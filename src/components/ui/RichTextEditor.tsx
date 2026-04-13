@@ -28,7 +28,7 @@ export default function RichTextEditor({ value, onChange, placeholder, className
         clipboard: {
             matchVisual: false,
             matchers: [
-                ['*', (node: any, delta: any) => {
+                ['*', (_: any, delta: any) => {
                     delta.ops.forEach((op: any) => {
                         if (op.attributes) {
                             // Strip background and color to prevent issues when pasting from Google Docs/Dark Mode
