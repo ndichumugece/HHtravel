@@ -1,10 +1,10 @@
 import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '../../lib/supabase';
-import { ArrowLeft, Search, Hotel, TrendingUp, Calendar, Filter } from 'lucide-react';
+import { ArrowLeft, Search, Hotel, TrendingUp, Calendar } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../../components/ui/Card';
+import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/Card';
 import { format, subDays, subMonths, subYears, isWithinInterval, startOfDay, endOfDay } from 'date-fns';
 
 type TimePeriod = 'week' | 'month' | 'year' | 'all';

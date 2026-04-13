@@ -390,7 +390,7 @@ export default function ConfirmationForm() {
                                 <div className="grid grid-cols-1 gap-2">
                                     <Button
                                         type="button"
-                                        variant={formValues.status === 'confirmed' ? 'default' : 'outline'}
+                                        variant={formValues.status === 'confirmed' ? 'primary' : 'outline'}
                                         className={cn("justify-start gap-2 h-11", formValues.status === 'confirmed' && "bg-green-600 hover:bg-green-700")}
                                         onClick={() => setValue('status', 'confirmed')}
                                     >
