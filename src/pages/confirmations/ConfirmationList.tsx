@@ -1,8 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
-import type { QuotationVoucher } from '../../types';
-import { Plus, Calendar, Search, ChevronLeft, ChevronRight } from 'lucide-react';
+import type { ConfirmationVoucher } from '../../types';
+import { Plus, Calendar, Search, FileCheck, ChevronLeft, ChevronRight } from 'lucide-react';
 import { format } from 'date-fns';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
@@ -19,49 +19,51 @@ import { useAuth } from '../../context/AuthContext';
 import { Switch } from '../../components/ui/Switch';
 import { Label } from '../../components/ui/Label';
 
-export default function QuotationList() {
-    const navigate = useNavigate();
-    const [quotations, setQuotations] = useState<QuotationVoucher[]>([]);
+export default function ConfirmationList() {
+    const [vouchers, setVouchers] = useState<ConfirmationVoucher[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
-    const [showOnlyMine, setShowOnlyMine] = useState(false);
     const itemsPerPage = 15;
+    const [error, setError] = useState<string | null>(null);
+    const [showOnlyMine, setShowOnlyMine] = useState(false);
+    const navigate = useNavigate();
     const { user } = useAuth();
 
     useEffect(() => {
-        fetchQuotations();
+        fetchVouchers();
     }, []);
 
-    const fetchQuotations = async () => {
+    const fetchVouchers = async () => {
         try {
             const { data, error } = await supabase
-                .from('quotation_vouchers')
-                .select('*, profiles(full_name)')
+                .from('confirmation_vouchers')
+                .select('*, profiles:consultant_id(full_name)')
                 .order('created_at', { ascending: false });
 
             if (error) throw error;
-            // @ts-ignore - Supabase types might not automatically view the joined data without casting, but it works at runtime
-            setQuotations(data || []);
-        } catch (error) {
-            console.error('Error fetching quotations:', error);
+            setVouchers(data || []);
+        } catch (error: any) {
+            console.error('Error fetching vouchers:', error);
+            setError(error.message);
         } finally {
             setLoading(false);
         }
     };
 
-    const filteredQuotations = quotations.filter(quote => {
+    const filteredVouchers = vouchers.filter(voucher => {
         const matchesSearch = 
-            quote.client_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            quote.reference_number.toLowerCase().includes(searchTerm.toLowerCase());
-            
-        const matchesMine = !showOnlyMine || quote.consultant_id === user?.id;
+            voucher.guest_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            voucher.reference_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            voucher.property_name.toLowerCase().includes(searchTerm.toLowerCase());
+        
+        const matchesMine = !showOnlyMine || voucher.consultant_id === user?.id;
         
         return matchesSearch && matchesMine;
     });
 
-    const totalPages = Math.ceil(filteredQuotations.length / itemsPerPage);
-    const currentQuotations = filteredQuotations.slice(
+    const totalPages = Math.ceil(filteredVouchers.length / itemsPerPage);
+    const currentVouchers = filteredVouchers.slice(
         (currentPage - 1) * itemsPerPage,
         currentPage * itemsPerPage
     );
@@ -76,38 +78,46 @@ export default function QuotationList() {
         </div>
     );
 
+    if (error) return (
+        <div className="p-8 text-center text-red-600 bg-red-50 rounded-lg">
+            <p className="font-bold">Error loading vouchers</p>
+            <p className="text-sm">{error}</p>
+            <Button onClick={fetchVouchers} variant="outline" className="mt-4">Retry</Button>
+        </div>
+    );
+
     return (
         <div className="space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-3xl font-bold tracking-tight text-foreground">Quotations</h1>
-                    <p className="text-muted-foreground mt-1">Manage all client travel quotations.</p>
+                    <h1 className="text-3xl font-bold tracking-tight text-foreground">Confirmation Vouchers</h1>
+                    <p className="text-muted-foreground mt-1">Manage all your confirmed stay vouchers.</p>
                 </div>
-                <Link to="/quotations/new">
+                <Link to="/confirmations/new">
                     <Button>
                         <Plus className="h-4 w-4 mr-2" />
-                        Create Quotation
+                        Create Confirmation
                     </Button>
                 </Link>
             </div>
 
             <Card>
                 <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 space-y-0 pb-7">
-                    <CardTitle>Quotations</CardTitle>
+                    <CardTitle>Confirmations</CardTitle>
                     <div className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto">
                         <div className="flex items-center space-x-2 bg-gray-50 px-3 py-2 rounded-lg border border-gray-100">
                             <Switch 
-                                id="show-mine-quotes" 
+                                id="show-mine" 
                                 checked={showOnlyMine}
                                 onCheckedChange={setShowOnlyMine}
                             />
-                            <Label htmlFor="show-mine-quotes" className="text-sm font-medium cursor-pointer">My Quotations</Label>
+                            <Label htmlFor="show-mine" className="text-sm font-medium cursor-pointer">My Vouchers</Label>
                         </div>
                         <div className="w-full sm:w-64">
                             <div className="relative">
                                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                                 <Input
-                                    placeholder="Search quotations..."
+                                    placeholder="Search confirmations..."
                                     className="pl-9"
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
@@ -121,59 +131,59 @@ export default function QuotationList() {
                         <Table>
                             <TableHeader>
                                 <TableRow>
+                                    <TableHead className="w-[50px]"></TableHead>
                                     <TableHead>Reference</TableHead>
-                                    <TableHead>Client</TableHead>
-                                    <TableHead>Package Info</TableHead>
+                                    <TableHead>Created By</TableHead>
+                                    <TableHead>Guest & Property</TableHead>
+                                    <TableHead>Dates</TableHead>
                                     <TableHead>Status</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {loading ? (
+                                {filteredVouchers.length === 0 ? (
                                     <TableRow>
-                                        <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
-                                            Loading quotations...
-                                        </TableCell>
-                                    </TableRow>
-                                ) : filteredQuotations.length === 0 ? (
-                                    <TableRow>
-                                        <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
-                                            No quotations found. Create your first one!
+                                        <TableCell colSpan={6} className="h-24 text-center">
+                                            No confirmation vouchers found.
                                         </TableCell>
                                     </TableRow>
                                 ) : (
-                                    currentQuotations.map((quote) => (
+                                    currentVouchers.map((voucher) => (
                                         <TableRow
-                                            key={quote.id}
-                                            className="group cursor-pointer hover:bg-muted/50 transition-colors"
-                                            onClick={() => navigate(`/quotations/${quote.id}`)}
+                                            key={voucher.id}
+                                            className="cursor-pointer hover:bg-gray-50 transition-colors"
+                                            onClick={() => navigate(`/confirmations/${voucher.id}/edit`)}
                                         >
-                                            <TableCell className="font-medium">
+                                            <TableCell>
+                                                <div className="h-9 w-9 rounded-full bg-green-50 flex items-center justify-center text-green-600">
+                                                    <FileCheck className="h-4 w-4" />
+                                                </div>
+                                            </TableCell>
+                                            <TableCell className="font-medium font-mono text-xs">
+                                                {voucher.reference_number}
+                                            </TableCell>
+                                            <TableCell className="text-sm text-muted-foreground">
+                                                {voucher.profiles?.full_name || 'Unknown'}
+                                            </TableCell>
+                                            <TableCell>
                                                 <div className="flex flex-col">
-                                                    <span className="font-mono text-sm">{quote.reference_number || 'DRAFT'}</span>
-                                                    <span className="text-xs text-muted-foreground">
-                                                        Created by {Array.isArray(quote.profiles) ? quote.profiles[0]?.full_name : quote.profiles?.full_name || 'Unknown'}
-                                                    </span>
+                                                    <span className="font-medium text-foreground">{voucher.guest_name}</span>
+                                                    <span className="text-xs text-muted-foreground">{voucher.property_name}</span>
                                                 </div>
                                             </TableCell>
                                             <TableCell>
-                                                <div className="font-medium">{quote.client_name}</div>
-                                                <div className="text-xs text-muted-foreground">
-                                                    {quote.number_of_adults || 0}A, {quote.number_of_children || 0}C | {quote.number_of_rooms || 1} Room{quote.number_of_rooms !== 1 ? 's' : ''}
-                                                </div>
-                                            </TableCell>
-                                            <TableCell>
-                                                <div className="text-sm">{quote.package_type || 'Custom Package'}</div>
-                                                <div className="text-xs text-muted-foreground flex items-center mt-0.5">
+                                                <div className="flex items-center text-muted-foreground text-sm">
                                                     <Calendar className="h-3 w-3 mr-1" />
-                                                    {quote.check_in_date ? format(new Date(quote.check_in_date), 'MMM d, yyyy') : 'Date TBD'}
+                                                    {format(new Date(voucher.check_in_date), 'MMM d, yyyy')}
                                                 </div>
                                             </TableCell>
                                             <TableCell>
-                                                <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ring-1 ring-inset ${quote.booking_status === 'Confirmed'
+                                                <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ring-1 ring-inset ${voucher.status === 'confirmed'
                                                     ? 'bg-green-50 text-green-700 ring-green-600/20'
-                                                    : 'bg-yellow-50 text-yellow-800 ring-yellow-600/20'
+                                                    : voucher.status === 'draft'
+                                                    ? 'bg-blue-50 text-blue-700 ring-blue-600/20'
+                                                    : 'bg-red-50 text-red-700 ring-red-600/20'
                                                     }`}>
-                                                    {quote.booking_status}
+                                                    {voucher.status}
                                                 </span>
                                             </TableCell>
                                         </TableRow>
@@ -185,7 +195,7 @@ export default function QuotationList() {
                     {totalPages > 1 && (
                         <div className="flex items-center justify-between px-2 py-4">
                             <div className="text-sm text-muted-foreground">
-                                Showing {((currentPage - 1) * itemsPerPage) + 1} to {Math.min(currentPage * itemsPerPage, filteredQuotations.length)} of {filteredQuotations.length} entries
+                                Showing {((currentPage - 1) * itemsPerPage) + 1} to {Math.min(currentPage * itemsPerPage, filteredVouchers.length)} of {filteredVouchers.length} entries
                             </div>
                             <div className="flex items-center space-x-2">
                                 <Button

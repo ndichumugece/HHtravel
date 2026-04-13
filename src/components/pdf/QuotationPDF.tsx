@@ -226,7 +226,7 @@ export default function QuotationPDF({ voucher, settings, consultantName, option
                     </View>
 
                     <View style={styles.headerRight}>
-                        <Text style={styles.title}>Quotation Voucher</Text>
+                        <Text style={styles.title}>Quotation</Text>
                         <View style={styles.headerInfoRow}>
                             <Text style={styles.headerLabel}>Booking ID:</Text>
                             <Text style={styles.headerValue}>{voucher.booking_id}</Text>
@@ -254,9 +254,15 @@ export default function QuotationPDF({ voucher, settings, consultantName, option
                             <Text style={styles.infoLabel}>Guest Name</Text>
                             <Text style={styles.infoValue}>{voucher.client_name}</Text>
                         </View>
-                        <View style={[styles.clientCol, { flex: 0.7 }]}>
+                        <View style={[styles.clientCol, { flex: 1.5 }]}>
                             <Text style={styles.infoLabel}>Guests:</Text>
-                            <Text style={styles.infoValue}>{voucher.number_of_guests}</Text>
+                            <Text style={styles.infoValue}>
+                                {voucher.number_of_adults || 0} Adults, {voucher.number_of_children || 0} Children
+                            </Text>
+                        </View>
+                        <View style={[styles.clientCol, { flex: 0.7 }]}>
+                            <Text style={styles.infoLabel}>Rooms:</Text>
+                            <Text style={styles.infoValue}>{voucher.number_of_rooms || 1} Rooms</Text>
                         </View>
                         <View style={[styles.clientCol, { flex: 2 }]}>
                             <Text style={styles.infoLabel}>Travel Dates:</Text>
@@ -272,10 +278,16 @@ export default function QuotationPDF({ voucher, settings, consultantName, option
                             <Text style={styles.infoValue}>{voucher.booking_status}</Text>
                         </View>
                     </View>
+                    {voucher.room_arrangements && (
+                        <View style={{ marginTop: 8, padding: 10, backgroundColor: '#f1f5f9', borderRadius: 4 }}>
+                            <Text style={styles.infoLabel}>Room Arrangements:</Text>
+                            <Text style={[styles.infoValue, { fontSize: 10 }]}>{voucher.room_arrangements}</Text>
+                        </View>
+                    )}
                 </View>
 
                 {/* Hotel Comparison */}
-                {voucher.hotel_comparison && voucher.hotel_comparison.length > 0 && (
+                {voucher.show_hotel_comparison && voucher.hotel_comparison && voucher.hotel_comparison.length > 0 && (
                     <View wrap={false}>
                         <Text style={styles.sectionTitle}>Accommodation Options</Text>
                         <View style={styles.tableSection}>
@@ -310,7 +322,7 @@ export default function QuotationPDF({ voucher, settings, consultantName, option
                 )}
 
                 {/* Inclusions & Exclusions */}
-                {((voucher.inclusions?.length || 0) > 0 || (voucher.exclusions?.length || 0) > 0) && (
+                {voucher.show_inclusions_exclusions && ((voucher.inclusions?.length || 0) > 0 || (voucher.exclusions?.length || 0) > 0) && (
                     <View wrap={false}>
                         <Text style={styles.sectionTitle}>Inclusions & Exclusions</Text>
                         <View style={[styles.additionalSection, { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }]}>
@@ -393,21 +405,7 @@ export default function QuotationPDF({ voucher, settings, consultantName, option
                     </View>
                 )}
 
-                {/* Inclusions & Terms */}
-                <View wrap={false}>
-                    <Text style={styles.sectionTitle}>Details</Text>
-                    <View style={styles.additionalSection}>
-                        <View style={{ marginBottom: 0 }}>
-                            <Text style={styles.termTitle}>What's Included (Meal Plan):</Text>
-                            <Text style={styles.termText}>{voucher.meal_plan_explanation || 'Standard inclusions apply.'}</Text>
-                        </View>
-                    </View>
-                </View>
 
-                <View>
-                    <Text style={[styles.sectionTitle, { marginTop: 10 }]}>Terms & Conditions</Text>
-                    <Text style={styles.termText}>{settings?.terms_and_conditions || voucher.terms_and_conditions || 'Standard terms and conditions apply.'}</Text>
-                </View>
 
                 {/* Footer / Contact Information */}
                 <View wrap={false} style={{ marginTop: 20, paddingTop: 20, borderTopWidth: 1, borderTopColor: theme.divider, flexDirection: 'row', justifyContent: 'space-between' }}>

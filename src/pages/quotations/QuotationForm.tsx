@@ -9,6 +9,8 @@ import { ArrowLeft, Save, FileDown, Plus, Trash2, Loader2, Eye } from 'lucide-re
 import { useAuth } from '../../context/AuthContext';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
+import { Switch } from '../../components/ui/Switch';
+import { Label } from '../../components/ui/Label';
 import { Combobox } from '../../components/ui/Combobox';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../../components/ui/Card';
 import InclusionExclusionSelector from '../../components/quotations/InclusionExclusionSelector';
@@ -33,6 +35,11 @@ export default function QuotationForm() {
     const { register, handleSubmit, control, setValue } = useForm<Partial<QuotationVoucher>>({
         defaultValues: {
             booking_status: 'Tentative',
+            number_of_adults: 1,
+            number_of_children: 0,
+            number_of_rooms: 1,
+            show_hotel_comparison: true,
+            show_inclusions_exclusions: true,
             hotel_comparison: [{ property_name: '', meal_plan: '', single_price: '', double_price: '' }],
             inclusions: [],
             exclusions: [],
@@ -280,11 +287,27 @@ export default function QuotationForm() {
                             </div>
                             <div>
                                 <label className="text-sm font-medium leading-none">Package Type</label>
-                                <Input {...register('package_type')} className="mt-2" placeholder="e.g. Honeymoon Special" />
+                                <Input {...register('package_type')} className="mt-2" placeholder="e.g. Flying package" />
                             </div>
                             <div>
-                                <label className="text-sm font-medium leading-none">Guests</label>
-                                <Input {...register('number_of_guests')} className="mt-2" placeholder="e.g. 2 Adults, 1 Child" />
+                                <label className="text-sm font-medium leading-none">Adults</label>
+                                <Input type="number" {...register('number_of_adults')} className="mt-2" placeholder="1" />
+                            </div>
+                            <div>
+                                <label className="text-sm font-medium leading-none">Children</label>
+                                <Input type="number" {...register('number_of_children')} className="mt-2" placeholder="0" />
+                            </div>
+                            <div>
+                                <label className="text-sm font-medium leading-none">Rooms</label>
+                                <Input type="number" {...register('number_of_rooms')} className="mt-2" placeholder="1" />
+                            </div>
+                            <div className="col-span-2">
+                                <label className="text-sm font-medium leading-none">Room Arrangements</label>
+                                <textarea
+                                    {...register('room_arrangements')}
+                                    className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 mt-2"
+                                    placeholder="e.g. 1 Double Room, 2 Twin Rooms..."
+                                />
                             </div>
                         </CardContent>
                     </Card>
@@ -310,115 +333,119 @@ export default function QuotationForm() {
                             </div>
                         </CardContent>
                     </Card>
-
+ 
                     {/* Hotel Comparison */}
-                    <Card>
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0">
-                            <div>
-                                <CardTitle>Hotel Comparison</CardTitle>
-                                <CardDescription className="mt-1.5">Add multiple property options for the client to review.</CardDescription>
-                            </div>
-                            <Button
-                                type="button"
-                                variant="secondary"
-                                size="sm"
-                                onClick={() => append({ property_name: '', meal_plan: '', single_price: '', double_price: '' })}
-                            >
-                                <Plus className="h-3.5 w-3.5 mr-2" /> Add Option
-                            </Button>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                            {fields.map((item, index) => (
-                                <div key={item.id} className="relative grid grid-cols-1 md:grid-cols-2 gap-4 p-4 rounded-lg bg-muted/30 border border-border/50 transition-all hover:bg-muted/50">
-                                    <div className="md:col-span-2 flex justify-between items-start">
-                                        <label className="text-xs font-semibold uppercase text-muted-foreground tracking-wider mb-1">Option {index + 1}</label>
-                                        <button
-                                            type="button"
-                                            onClick={() => remove(index)}
-                                            className="text-muted-foreground hover:text-destructive transition-colors p-1"
-                                        >
-                                            <Trash2 className="h-4 w-4" />
-                                        </button>
-                                    </div>
+                    {formValues.show_hotel_comparison && (
+                        <Card>
+                            <CardHeader className="flex flex-row items-center justify-between space-y-0">
+                                <div>
+                                    <CardTitle>Hotel Comparison</CardTitle>
+                                    <CardDescription className="mt-1.5">Add multiple property options for the client to review.</CardDescription>
+                                </div>
+                                <Button
+                                    type="button"
+                                    variant="secondary"
+                                    size="sm"
+                                    onClick={() => append({ property_name: '', meal_plan: '', single_price: '', double_price: '' })}
+                                >
+                                    <Plus className="h-3.5 w-3.5 mr-2" /> Add Option
+                                </Button>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                {fields.map((item, index) => (
+                                    <div key={item.id} className="relative grid grid-cols-1 md:grid-cols-2 gap-4 p-4 rounded-lg bg-muted/30 border border-border/50 transition-all hover:bg-muted/50">
+                                        <div className="md:col-span-2 flex justify-between items-start">
+                                            <label className="text-xs font-semibold uppercase text-muted-foreground tracking-wider mb-1">Option {index + 1}</label>
+                                            <button
+                                                type="button"
+                                                onClick={() => remove(index)}
+                                                className="text-muted-foreground hover:text-destructive transition-colors p-1"
+                                            >
+                                                <Trash2 className="h-4 w-4" />
+                                            </button>
+                                        </div>
 
-                                    <div className="md:col-span-2">
-                                        <label className="text-sm font-medium leading-none">Property</label>
-                                        <div className="mt-2">
-                                            <Controller
-                                                control={control}
-                                                name={`hotel_comparison.${index}.property_name` as const}
-                                                render={({ field }) => (
-                                                    <Combobox
-                                                        options={properties.map(p => ({ label: p.name, value: p.name }))}
-                                                        value={field.value}
-                                                        onChange={field.onChange}
-                                                        placeholder="Select Property"
-                                                        className="w-full"
-                                                    />
-                                                )}
+                                        <div className="md:col-span-2">
+                                            <label className="text-sm font-medium leading-none">Property</label>
+                                            <div className="mt-2">
+                                                <Controller
+                                                    control={control}
+                                                    name={`hotel_comparison.${index}.property_name` as const}
+                                                    render={({ field }) => (
+                                                        <Combobox
+                                                            options={properties.map(p => ({ label: p.name, value: p.name }))}
+                                                            value={field.value}
+                                                            onChange={field.onChange}
+                                                            placeholder="Select Property"
+                                                            className="w-full"
+                                                        />
+                                                    )}
+                                                />
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label className="text-sm font-medium leading-none">Meal Plan</label>
+                                            <select
+                                                {...register(`hotel_comparison.${index}.meal_plan` as const)}
+                                                className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 mt-2"
+                                            >
+                                                <option value="">Select Meal Plan</option>
+                                                {mealPlans.map(plan => (
+                                                    <option key={plan.id} value={plan.name}>{plan.name}</option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label className="text-sm font-medium leading-none">Price</label>
+                                            <Input {...register(`hotel_comparison.${index}.double_price` as const)} className="mt-2" placeholder="$" />
+                                        </div>
+                                        <div className="md:col-span-2">
+                                            <label className="text-sm font-medium leading-none">More Info / Description</label>
+                                            <textarea
+                                                {...register(`hotel_comparison.${index}.description` as const)}
+                                                rows={2}
+                                                className="flex min-h-[60px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 mt-2"
+                                                placeholder="Add details about this option..."
                                             />
                                         </div>
                                     </div>
-                                    <div>
-                                        <label className="text-sm font-medium leading-none">Meal Plan</label>
-                                        <select
-                                            {...register(`hotel_comparison.${index}.meal_plan` as const)}
-                                            className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 mt-2"
-                                        >
-                                            <option value="">Select Meal Plan</option>
-                                            {mealPlans.map(plan => (
-                                                <option key={plan.id} value={plan.name}>{plan.name}</option>
-                                            ))}
-                                        </select>
+                                ))}
+                                {fields.length === 0 && (
+                                    <div className="text-center py-8 text-muted-foreground text-sm border-2 border-dashed rounded-lg">
+                                        No options added. Click "Add Option" to compare hotels.
                                     </div>
-                                    <div>
-                                        <label className="text-sm font-medium leading-none">Price</label>
-                                        <Input {...register(`hotel_comparison.${index}.double_price` as const)} className="mt-2" placeholder="$" />
-                                    </div>
-                                    <div className="md:col-span-2">
-                                        <label className="text-sm font-medium leading-none">More Info / Description</label>
-                                        <textarea
-                                            {...register(`hotel_comparison.${index}.description` as const)}
-                                            rows={2}
-                                            className="flex min-h-[60px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 mt-2"
-                                            placeholder="Add details about this option..."
-                                        />
-                                    </div>
-                                </div>
-                            ))}
-                            {fields.length === 0 && (
-                                <div className="text-center py-8 text-muted-foreground text-sm border-2 border-dashed rounded-lg">
-                                    No options added. Click "Add Option" to compare hotels.
-                                </div>
-                            )}
-                        </CardContent>
-                    </Card>
+                                )}
+                            </CardContent>
+                        </Card>
+                    )}
 
                     {/* Inclusions & Exclusions */}
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Inclusions & Exclusions</CardTitle>
-                            <CardDescription>Select what is included and excluded in this quotation.</CardDescription>
-                        </CardHeader>
-                        <CardContent className="space-y-6">
-                            <div>
-                                <label className="text-sm font-medium leading-none mb-2 block">Inclusions</label>
-                                <InclusionExclusionSelector
-                                    type="inclusions"
-                                    selectedItems={formValues.inclusions || []}
-                                    onChange={(items) => setValue('inclusions', items)}
-                                />
-                            </div>
-                            <div className="pt-4 border-t">
-                                <label className="text-sm font-medium leading-none mb-2 block">Exclusions</label>
-                                <InclusionExclusionSelector
-                                    type="exclusions"
-                                    selectedItems={formValues.exclusions || []}
-                                    onChange={(items) => setValue('exclusions', items)}
-                                />
-                            </div>
-                        </CardContent>
-                    </Card>
+                    {formValues.show_inclusions_exclusions && (
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Inclusions & Exclusions</CardTitle>
+                                <CardDescription>Select what is included and excluded in this quotation.</CardDescription>
+                            </CardHeader>
+                            <CardContent className="space-y-6">
+                                <div>
+                                    <label className="text-sm font-medium leading-none mb-2 block">Inclusions</label>
+                                    <InclusionExclusionSelector
+                                        type="inclusions"
+                                        selectedItems={formValues.inclusions || []}
+                                        onChange={(items) => setValue('inclusions', items)}
+                                    />
+                                </div>
+                                <div className="pt-4 border-t">
+                                    <label className="text-sm font-medium leading-none mb-2 block">Exclusions</label>
+                                    <InclusionExclusionSelector
+                                        type="exclusions"
+                                        selectedItems={formValues.exclusions || []}
+                                        onChange={(items) => setValue('exclusions', items)}
+                                    />
+                                </div>
+                            </CardContent>
+                        </Card>
+                    )}
 
                     {/* Additional Notes (Rich Text) */}
                     <Card>
@@ -434,7 +461,7 @@ export default function QuotationForm() {
                                     <RichTextEditor
                                         value={field.value || ''}
                                         onChange={field.onChange}
-                                        className="h-64 mb-12" // Add margin-bottom for spacing
+                                        className="min-h-[400px] mb-12" // Allow it to grow, set a healthy minimum
                                         placeholder="Paste your content here..."
                                     />
                                 )}
@@ -442,22 +469,50 @@ export default function QuotationForm() {
                         </CardContent>
                     </Card>
 
-                    {/* Terms */}
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Terms & Conditions</CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                            <div>
-                                <label className="text-sm font-medium leading-none">Meal Plan Explanation</label>
-                                <textarea
-                                    {...register('meal_plan_explanation')}
-                                    rows={2}
-                                    className="flex min-h-[60px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 mt-2"
-                                />
+
+
+                    {/* Disabled Sections Container */}
+                    {(!formValues.show_hotel_comparison || !formValues.show_inclusions_exclusions) && (
+                        <div className="mt-12 pt-12 border-t-2 border-dashed border-slate-200 dark:border-slate-800">
+                            <div className="flex items-center gap-3 mb-8">
+                                <div className="h-px flex-1 bg-slate-200 dark:bg-slate-800"></div>
+                                <h3 className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.2em] whitespace-nowrap">Optional Sections (Disabled in PDF)</h3>
+                                <div className="h-px flex-1 bg-slate-200 dark:bg-slate-800"></div>
                             </div>
-                        </CardContent>
-                    </Card>
+                            
+                            <div className="space-y-6">
+                                {!formValues.show_hotel_comparison && (
+                                    <div className="opacity-60 hover:opacity-100 transition-opacity">
+                                        <Card className="border-dashed bg-slate-50/50 dark:bg-slate-900/50">
+                                            <CardHeader className="flex flex-row items-center justify-between pb-2">
+                                                <CardTitle className="text-sm font-semibold text-muted-foreground">Hotel Comparison</CardTitle>
+                                                <span className="text-[10px] font-bold bg-slate-200 dark:bg-slate-800 px-2 py-0.5 rounded text-muted-foreground">HIDDEN IN PDF</span>
+                                            </CardHeader>
+                                            <CardContent>
+                                                <p className="text-xs text-muted-foreground italic mb-4">This section is currently hidden from the PDF. You can still manage it below, but it won't be visible to the client.</p>
+                                                <div className="pointer-events-auto">
+                                                    {/* Re-rendering the actual form content here if we want them to stay editable at bottom */}
+                                                </div>
+                                            </CardContent>
+                                        </Card>
+                                    </div>
+                                )}
+                                {!formValues.show_inclusions_exclusions && (
+                                    <div className="opacity-60 hover:opacity-100 transition-opacity">
+                                        <Card className="border-dashed bg-slate-50/50 dark:bg-slate-900/50">
+                                            <CardHeader className="flex flex-row items-center justify-between pb-2">
+                                                <CardTitle className="text-sm font-semibold text-muted-foreground">Inclusions & Exclusions</CardTitle>
+                                                <span className="text-[10px] font-bold bg-slate-200 dark:bg-slate-800 px-2 py-0.5 rounded text-muted-foreground">HIDDEN IN PDF</span>
+                                            </CardHeader>
+                                            <CardContent>
+                                                <p className="text-xs text-muted-foreground italic mb-4">This section is currently hidden from the PDF. You can still manage it below, but it won't be visible to the client.</p>
+                                            </CardContent>
+                                        </Card>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 {/* Sidebar Column */}
@@ -484,6 +539,46 @@ export default function QuotationForm() {
                                     <option value="Tentative">Tentative</option>
                                     <option value="Confirmed">Confirmed</option>
                                 </select>
+                            </div>
+
+                            <div className="pt-4 border-t space-y-4">
+                                <Label className="text-xs font-bold uppercase text-muted-foreground tracking-widest">Section Visibility</Label>
+                                
+                                <div className="flex items-center justify-between">
+                                    <div className="space-y-0.5">
+                                        <Label htmlFor="show_hotel_comparison" className="text-sm">Hotel Comparison</Label>
+                                        <p className="text-[10px] text-muted-foreground">Show comparison table in PDF</p>
+                                    </div>
+                                    <Controller
+                                        control={control}
+                                        name="show_hotel_comparison"
+                                        render={({ field }) => (
+                                            <Switch
+                                                id="show_hotel_comparison"
+                                                checked={field.value}
+                                                onCheckedChange={field.onChange}
+                                            />
+                                        )}
+                                    />
+                                </div>
+
+                                <div className="flex items-center justify-between">
+                                    <div className="space-y-0.5">
+                                        <Label htmlFor="show_inclusions_exclusions" className="text-sm">Inclusions & Exclusions</Label>
+                                        <p className="text-[10px] text-muted-foreground">Show inclusions in PDF</p>
+                                    </div>
+                                    <Controller
+                                        control={control}
+                                        name="show_inclusions_exclusions"
+                                        render={({ field }) => (
+                                            <Switch
+                                                id="show_inclusions_exclusions"
+                                                checked={field.value}
+                                                onCheckedChange={field.onChange}
+                                            />
+                                        )}
+                                    />
+                                </div>
                             </div>
                         </CardContent>
                     </Card>

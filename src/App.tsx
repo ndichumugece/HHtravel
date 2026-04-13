@@ -7,10 +7,13 @@ import AppLayout from './components/layout/AppLayout';
 import Dashboard from './pages/Dashboard';
 import PropertiesList from './pages/properties/PropertiesList';
 import PropertyForm from './pages/properties/PropertyForm';
+import TopBookedProperties from './pages/properties/TopBookedProperties';
 import BookingList from './pages/bookings/BookingList';
 import BookingForm from './pages/bookings/BookingForm';
 import QuotationList from './pages/quotations/QuotationList';
 import QuotationForm from './pages/quotations/QuotationForm';
+import ConfirmationList from './pages/confirmations/ConfirmationList';
+import ConfirmationForm from './pages/confirmations/ConfirmationForm';
 import UsersList from './pages/admin/UsersList';
 import UserEdit from './pages/admin/UserEdit';
 import AdminReports from './pages/admin/AdminReports';
@@ -64,6 +67,7 @@ function App() {
 
               {/* Properties */}
               <Route path="/properties" element={<PropertiesList />} />
+              <Route path="/properties/top" element={<TopBookedProperties />} />
               <Route path="/properties/new" element={<PropertyForm />} />
               <Route path="/properties/:id/edit" element={<PropertyForm />} />
 
@@ -81,6 +85,11 @@ function App() {
               <Route path="/quotations/new" element={<QuotationForm />} />
               <Route path="/quotations/:id" element={<QuotationForm />} />
               <Route path="/quotations/:id/edit" element={<QuotationForm />} />
+
+              {/* Confirmations */}
+              <Route path="/confirmations" element={<ConfirmationList />} />
+              <Route path="/confirmations/new" element={<ConfirmationForm />} />
+              <Route path="/confirmations/:id/edit" element={<ConfirmationForm />} />
 
               {/* Admin Routes */}
               <Route element={<ProtectedRoute allowedRoles={['admin']} />}>

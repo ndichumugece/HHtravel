@@ -78,6 +78,8 @@ export interface QuotationVoucher {
     check_out_date?: string;
     number_of_nights?: number;
     number_of_guests?: string;
+    number_of_adults?: number;
+    number_of_children?: number;
     number_of_rooms?: number;
     hotel_comparison?: HotelComparison[];
     includes_list?: string[];
@@ -85,10 +87,13 @@ export interface QuotationVoucher {
     terms_and_conditions?: string;
     inclusions?: string[];
     exclusions?: string[];
+    show_hotel_comparison?: boolean;
+    show_inclusions_exclusions?: boolean;
     created_at?: string;
     profiles?: {
         full_name: string;
     } | null;
+    room_arrangements?: string;
     rich_text_notes?: string;
 }
 
@@ -141,4 +146,34 @@ export interface Exclusion {
     is_published: boolean;
     created_at?: string;
 }
+
+export interface ConfirmationVoucher {
+    id: string;
+    reference_number: string;
+    consultant_id: string;
+    guest_name: string;
+    guest_nationality?: string;
+    guest_contact?: string;
+    check_in_date: string;
+    check_out_date: string;
+    number_of_nights?: number;
+    property_name: string;
+    number_of_rooms: number;
+    number_of_adults: number;
+    number_of_children: number;
+    room_details?: RoomDetail[];
+    room_arrangements?: string;
+    special_requests?: string;
+    flight_details?: string;
+    arrival_time?: string;
+    departure_time?: string;
+    show_flight_details?: boolean;
+    show_special_requests?: boolean;
+    status: 'confirmed' | 'cancelled' | 'draft';
+    created_at?: string;
+    profiles?: {
+        full_name: string;
+    } | null;
+}
+
 

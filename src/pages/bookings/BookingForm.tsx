@@ -181,6 +181,73 @@ export default function BookingForm() {
         if (beds) setBedTypes(beds);
     };
 
+    const handleCreateRoomType = async (name: string, index: number) => {
+        try {
+            const { data, error } = await supabase
+                .from('room_types')
+                .insert([{ name }])
+                .select()
+                .single();
+
+            if (error) throw error;
+
+            if (data) {
+                // Update local list
+                setRoomTypes(prev => [...prev, data].sort((a, b) => a.name.localeCompare(b.name)));
+                
+                // Update current row
+                const newDetails = [...roomDetails];
+                newDetails[index].room_type = data.name;
+                setRoomDetails(newDetails);
+            }
+        } catch (error: any) {
+            console.error('Error creating room type:', error);
+            alert('Failed to create room type. It might already exist.');
+        }
+    };
+
+    const handleCreateBedType = async (name: string, index: number) => {
+        try {
+            const { data, error } = await supabase
+                .from('bed_types')
+                .insert([{ name }])
+                .select()
+                .single();
+
+            if (error) throw error;
+
+            if (data) {
+                setBedTypes(prev => [...prev, data].sort((a, b) => a.name.localeCompare(b.name)));
+                const newDetails = [...roomDetails];
+                newDetails[index].bed_type = data.name;
+                setRoomDetails(newDetails);
+            }
+        } catch (error: any) {
+            console.error('Error creating bed type:', error);
+            alert('Failed to create bed type.');
+        }
+    };
+
+    const handleCreateMealPlan = async (name: string) => {
+        try {
+            const { data, error } = await supabase
+                .from('meal_plans')
+                .insert([{ name }])
+                .select()
+                .single();
+
+            if (error) throw error;
+
+            if (data) {
+                setMealPlans(prev => [...prev, data].sort((a, b) => a.name.localeCompare(b.name)));
+                setValue('meal_plan', data.name);
+            }
+        } catch (error: any) {
+            console.error('Error creating meal plan:', error);
+            alert('Failed to create meal plan.');
+        }
+    };
+
     const generateReference = async () => {
         try {
             const { data: lastBooking } = await supabase
@@ -567,17 +634,16 @@ export default function BookingForm() {
                                         <option value="Ground Package">Ground Package</option>
                                     </select>
                                 </div>
-                                <div>
+                                 <div>
                                     <label className="text-sm font-medium leading-none">Meal Plan</label>
-                                    <select
-                                        {...register('meal_plan')}
-                                        className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 mt-2"
-                                    >
-                                        <option value="">Select Meal Plan</option>
-                                        {mealPlans.map(mp => (
-                                            <option key={mp.id} value={mp.name}>{mp.name}</option>
-                                        ))}
-                                    </select>
+                                    <Combobox
+                                        options={mealPlans.map(mp => ({ label: mp.name, value: mp.name }))}
+                                        value={formValues.meal_plan}
+                                        onChange={(val) => setValue('meal_plan', val)}
+                                        onCreate={handleCreateMealPlan}
+                                        placeholder="Select Meal Plan"
+                                        className="mt-2"
+                                    />
                                 </div>
                             </div>
                             <div className="col-span-2">
@@ -596,24 +662,22 @@ export default function BookingForm() {
                                             {index + 1}
                                         </div>
 
-                                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+                                        <div className="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
                                             {/* 1. Room Type */}
-                                            <div className="md:col-span-1">
+                                            <div className="md:col-span-2">
                                                 <label className="text-sm font-medium leading-none">Room Type</label>
-                                                <select
+                                                <Combobox
+                                                    options={roomTypes.map(rt => ({ label: rt.name, value: rt.name }))}
                                                     value={room.room_type}
-                                                    onChange={(e) => {
+                                                    onChange={(val) => {
                                                         const newDetails = [...roomDetails];
-                                                        newDetails[index].room_type = e.target.value;
+                                                        newDetails[index].room_type = val;
                                                         setRoomDetails(newDetails);
                                                     }}
-                                                    className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 mt-2"
-                                                >
-                                                    <option value="">Select Room Type</option>
-                                                    {roomTypes.map(rt => (
-                                                        <option key={rt.id} value={rt.name}>{rt.name}</option>
-                                                    ))}
-                                                </select>
+                                                    onCreate={(val) => handleCreateRoomType(val, index)}
+                                                    placeholder="Select Room Type"
+                                                    className="mt-2"
+                                                />
                                             </div>
 
                                             {/* 2. Adults */}
@@ -663,20 +727,18 @@ export default function BookingForm() {
                                             {/* 4. Bed Type */}
                                             <div className="md:col-span-1">
                                                 <label className="text-sm font-medium leading-none">Bed Type</label>
-                                                <select
+                                                <Combobox
+                                                    options={bedTypes.map(bt => ({ label: bt.name, value: bt.name }))}
                                                     value={room.bed_type}
-                                                    onChange={(e) => {
+                                                    onChange={(val) => {
                                                         const newDetails = [...roomDetails];
-                                                        newDetails[index].bed_type = e.target.value;
+                                                        newDetails[index].bed_type = val;
                                                         setRoomDetails(newDetails);
                                                     }}
-                                                    className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 mt-2"
-                                                >
-                                                    <option value="">Select Bed Type</option>
-                                                    {bedTypes.map(bt => (
-                                                        <option key={bt.id} value={bt.name}>{bt.name}</option>
-                                                    ))}
-                                                </select>
+                                                    onCreate={(val) => handleCreateBedType(val, index)}
+                                                    placeholder="Select Bed Type"
+                                                    className="mt-2"
+                                                />
                                             </div>
                                         </div>
 

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Bar, ResponsiveContainer, Tooltip, ComposedChart, Line, XAxis } from 'recharts';
 import { useDashboardStats, type TimePeriod } from '../hooks/useDashboardStats';
 import { ArrowUpRight, Users, MoreVertical, Activity, Calendar } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { format } from 'date-fns';
 import { useAuth } from '../context/AuthContext';
 
@@ -340,9 +341,9 @@ export default function Dashboard() {
                                 <h3 className="font-semibold text-foreground">Top Properties</h3>
                                 <p className="text-xs text-muted-foreground mt-0.5">Most booked destinations</p>
                             </div>
-                            <div className="w-8 h-8 rounded-full bg-white dark:bg-slate-800 shadow-sm flex items-center justify-center">
-                                <ArrowUpRight className="w-4 h-4 text-emerald-500" />
-                            </div>
+                            <Link to="/properties/top" className="w-8 h-8 rounded-full bg-white dark:bg-slate-800 shadow-sm flex items-center justify-center hover:bg-primary/10 transition-colors group">
+                                <ArrowUpRight className="w-4 h-4 text-emerald-500 group-hover:scale-110 transition-transform" />
+                            </Link>
                         </div>
 
                         <div className="space-y-6 relative border-l-2 border-slate-200 dark:border-slate-800 ml-6">

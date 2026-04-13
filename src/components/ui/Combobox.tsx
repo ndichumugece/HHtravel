@@ -1,5 +1,5 @@
 import * as React from "react"
-import { Check, ChevronsUpDown } from "lucide-react"
+import { Check, ChevronsUpDown, Plus } from "lucide-react"
 import { cn } from "../../lib/utils"
 
 export interface ComboboxOption {
@@ -14,6 +14,7 @@ interface ComboboxProps {
     placeholder?: string
     className?: string
     disabled?: boolean
+    onCreate?: (value: string) => void
 }
 
 export function Combobox({
@@ -23,6 +24,7 @@ export function Combobox({
     placeholder = "Select option...",
     className,
     disabled = false,
+    onCreate,
 }: ComboboxProps) {
     const [open, setOpen] = React.useState(false)
     const [searchQuery, setSearchQuery] = React.useState("")
@@ -34,6 +36,10 @@ export function Combobox({
         return options.filter((option) =>
             option.label.toLowerCase().includes(searchQuery.toLowerCase())
         )
+    }, [options, searchQuery])
+
+    const exactMatch = React.useMemo(() => {
+        return options.find(opt => opt.label.toLowerCase() === searchQuery.toLowerCase())
     }, [options, searchQuery])
 
     // Handle clicking outside to close
@@ -67,7 +73,7 @@ export function Combobox({
             </div>
 
             {open && (
-                <div className="absolute z-50 mt-1 max-h-60 w-full overflow-auto rounded-md border bg-white text-popover-foreground shadow-md animate-in fade-in-0 zoom-in-95">
+                <div className="absolute z-50 mt-1 max-h-60 min-w-full w-max max-w-[400px] overflow-auto rounded-md border bg-white text-popover-foreground shadow-md animate-in fade-in-0 zoom-in-95">
                     <div className="sticky top-0 z-10 bg-white p-1">
                         <input
                             className="flex h-8 w-full rounded-md border border-slate-200 bg-transparent px-3 py-1 text-sm outline-none placeholder:text-slate-400 focus:border-slate-900 disabled:cursor-not-allowed disabled:opacity-50"
@@ -79,33 +85,47 @@ export function Combobox({
                         />
                     </div>
                     <div className="p-1">
-                        {filteredOptions.length === 0 ? (
+                        {filteredOptions.length === 0 && !onCreate && (
                             <div className="py-2 text-center text-sm text-muted-foreground">
                                 No results found.
                             </div>
-                        ) : (
-                            filteredOptions.map((option) => (
-                                <div
-                                    key={option.value}
+                        )}
+                        
+                        {filteredOptions.map((option) => (
+                            <div
+                                key={option.value}
+                                className={cn(
+                                    "relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-slate-100 hover:text-slate-900",
+                                    value === option.value && "bg-slate-100"
+                                )}
+                                onClick={() => {
+                                    onChange(option.value)
+                                    setOpen(false)
+                                    setSearchQuery("")
+                                }}
+                            >
+                                <Check
                                     className={cn(
-                                        "relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-slate-100 hover:text-slate-900",
-                                        value === option.value && "bg-slate-100"
+                                        "mr-2 h-4 w-4",
+                                        value === option.value ? "opacity-100" : "opacity-0"
                                     )}
-                                    onClick={() => {
-                                        onChange(option.value)
-                                        setOpen(false)
-                                        setSearchQuery("")
-                                    }}
-                                >
-                                    <Check
-                                        className={cn(
-                                            "mr-2 h-4 w-4",
-                                            value === option.value ? "opacity-100" : "opacity-0"
-                                        )}
-                                    />
-                                    {option.label}
-                                </div>
-                            ))
+                                />
+                                {option.label}
+                            </div>
+                        ))}
+
+                        {onCreate && searchQuery && !exactMatch && (
+                            <div
+                                className="relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-slate-100 text-blue-600 font-medium"
+                                onClick={() => {
+                                    onCreate(searchQuery)
+                                    setOpen(false)
+                                    setSearchQuery("")
+                                }}
+                            >
+                                <Plus className="mr-2 h-4 w-4" />
+                                Create "{searchQuery}"
+                            </div>
                         )}
                     </div>
                 </div>

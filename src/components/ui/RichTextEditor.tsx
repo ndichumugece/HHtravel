@@ -22,9 +22,23 @@ export default function RichTextEditor({ value, onChange, placeholder, className
             ['link', 'clean'],
             [{ 'align': [] }],
             [{ 'color': [] }, { 'background': [] }],
+            ['table'],
         ],
+        table: true,
         clipboard: {
             matchVisual: false,
+            matchers: [
+                ['*', (node: any, delta: any) => {
+                    delta.ops.forEach((op: any) => {
+                        if (op.attributes) {
+                            // Strip background and color to prevent issues when pasting from Google Docs/Dark Mode
+                            delete op.attributes.background;
+                            delete op.attributes.color;
+                        }
+                    });
+                    return delta;
+                }]
+            ]
         },
     };
 
@@ -35,6 +49,7 @@ export default function RichTextEditor({ value, onChange, placeholder, className
         'link',
         'align',
         'color', 'background',
+        'table',
     ];
 
     return (
@@ -43,7 +58,8 @@ export default function RichTextEditor({ value, onChange, placeholder, className
                 .ql-container {
                     border-bottom-left-radius: 0.5rem;
                     border-bottom-right-radius: 0.5rem;
-                    min-height: 200px;
+                    min-height: 400px;
+                    height: auto;
                     font-size: 16px; /* Ensure readable font size */
                 }
                 .ql-toolbar {
@@ -52,7 +68,9 @@ export default function RichTextEditor({ value, onChange, placeholder, className
                     background-color: #f8fafc;
                 }
                 .ql-editor {
-                    min-height: 200px;
+                    min-height: 400px;
+                    height: auto;
+                    overflow-y: hidden;
                 }
             `}</style>
             <ReactQuill
@@ -61,7 +79,7 @@ export default function RichTextEditor({ value, onChange, placeholder, className
                 onChange={onChange}
                 modules={modules}
                 formats={formats}
-                className="h-full bg-background"
+                className="bg-background"
                 placeholder={placeholder}
             />
         </div>
