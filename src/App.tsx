@@ -14,9 +14,13 @@ import QuotationList from './pages/quotations/QuotationList';
 import QuotationForm from './pages/quotations/QuotationForm';
 import ConfirmationList from './pages/confirmations/ConfirmationList';
 import ConfirmationForm from './pages/confirmations/ConfirmationForm';
+import TrainReceiptList from './pages/trains/TrainReceiptList';
+import TrainReceiptForm from './pages/trains/TrainReceiptForm';
 import UsersList from './pages/admin/UsersList';
 import UserEdit from './pages/admin/UserEdit';
 import AdminReports from './pages/admin/AdminReports';
+import LeadsReport from './pages/admin/LeadsReport';
+import ClientsReport from './pages/admin/ClientsReport';
 import Settings from './pages/admin/Settings';
 import { isSupabaseConfigured } from './lib/supabase';
 import OptionsList from './pages/settings/OptionsList';
@@ -91,6 +95,11 @@ function App() {
               <Route path="/confirmations/new" element={<ConfirmationForm />} />
               <Route path="/confirmations/:id/edit" element={<ConfirmationForm />} />
 
+              {/* Train Receipts */}
+              <Route path="/trains" element={<TrainReceiptList />} />
+              <Route path="/trains/new" element={<TrainReceiptForm />} />
+              <Route path="/trains/:id/edit" element={<TrainReceiptForm />} />
+
               {/* Admin Routes */}
               <Route element={<ProtectedRoute allowedRoles={['admin']} />}>
                 <Route path="/requests" element={<div className="p-8">Properties & Requests module coming soon</div>} />
@@ -102,6 +111,8 @@ function App() {
                 <Route path="/users/new" element={<UserEdit />} />
                 <Route path="/users/:id" element={<UserEdit />} />
                 <Route path="/reports" element={<AdminReports />} />
+                <Route path="/reports/leads" element={<LeadsReport />} />
+                <Route path="/reports/clients" element={<ClientsReport />} />
                 <Route path="/settings" element={<Settings />} />
                 <Route path="/settings/meal-plans" element={<OptionsList title="Meal Plans" tableName="meal_plans" />} />
                 <Route path="/settings/room-types" element={<OptionsList title="Room Types" tableName="room_types" />} />

@@ -88,7 +88,7 @@ export default function Login() {
                                         required
                                         value={firstName}
                                         onChange={(e) => setFirstName(e.target.value)}
-                                        className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all outline-none text-sm"
+                                        className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-brand-500 focus:ring-2 focus:ring-brand-200 transition-all outline-none text-sm"
                                         placeholder="John"
                                     />
                                 </div>
@@ -101,7 +101,7 @@ export default function Login() {
                                         required
                                         value={lastName}
                                         onChange={(e) => setLastName(e.target.value)}
-                                        className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all outline-none text-sm"
+                                        className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-brand-500 focus:ring-2 focus:ring-brand-200 transition-all outline-none text-sm"
                                         placeholder="Doe"
                                     />
                                 </div>
@@ -152,14 +152,14 @@ export default function Login() {
                                     <input
                                         id="remember_me"
                                         type="checkbox"
-                                        className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                                        className="h-4 w-4 text-brand-600 focus:ring-brand-500 border-gray-300 rounded"
                                     />
                                     <label htmlFor="remember_me" className="ml-2 block text-sm font-medium text-slate-700 leading-none">
                                         Remember me
                                     </label>
                                 </div>
                                 <div className="text-sm">
-                                    <button type="button" className="font-medium text-indigo-600 hover:text-indigo-500">
+                                    <button type="button" className="font-medium text-brand-600 hover:text-brand-500">
                                         Forgot your password?
                                     </button>
                                 </div>
@@ -181,7 +181,7 @@ export default function Login() {
                         <button
                             type="submit"
                             disabled={loading}
-                            className="w-full py-3.5 px-4 bg-[#544AF4] hover:bg-[#453CC9] text-white font-medium rounded-lg shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-200 disabled:opacity-70 disabled:cursor-not-allowed flex justify-center items-center text-sm tracking-wide"
+                            className="w-full py-3.5 px-4 bg-brand-600 hover:bg-brand-700 text-white font-medium rounded-lg shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-500 transition-all duration-200 disabled:opacity-70 disabled:cursor-not-allowed flex justify-center items-center text-sm tracking-wide"
                         >
                             {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : (isLogin ? 'Log In' : 'Register')}
                         </button>
@@ -194,7 +194,7 @@ export default function Login() {
                         </span>
                         <button
                             onClick={() => setIsLogin(!isLogin)}
-                            className="text-[#544AF4] hover:text-[#453CC9] underline transition-colors"
+                            className="text-brand-600 hover:text-brand-700 underline transition-colors"
                         >
                             {isLogin ? "Register here" : "Log in here"}
                         </button>

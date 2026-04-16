@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { useForm, useWatch, Controller } from 'react-hook-form';
 import { supabase } from '../../lib/supabase';
 import type { Property, BookingVoucher, CompanySettings } from '../../types';
@@ -75,6 +75,7 @@ export default function BookingForm() {
     const [bedTypes, setBedTypes] = useState<{ id: string, name: string }[]>([]);
     const [qrCodeUrl, setQrCodeUrl] = useState<string>('');
     const [isDownloading, setIsDownloading] = useState(false);
+    const location = useLocation();
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
     const handleDelete = async () => {
@@ -119,20 +120,24 @@ export default function BookingForm() {
         fetchProperties();
         fetchSettings();
         fetchDynamicOptions();
+
+        const queryParams = new URLSearchParams(location.search);
+        const quotationId = queryParams.get('quotationId');
+
         if (id) {
             fetchVoucher(id);
-            // Generate QR Code for the specific booking URL
-            // Generate QR Code for the specific booking URL
-            // Ensure we use the production domain and point to the public route
             const productionUrl = `https://portal.hhtravel.co/public/bookings/${id}`;
             QRCode.toDataURL(productionUrl)
                 .then(url => setQrCodeUrl(url))
                 .catch(err => console.error('QR Code error', err));
+        } else if (quotationId) {
+            fetchFromQuotation(quotationId);
+            generateReference();
         } else if (user) {
             fetchUserProfile(user.id);
             generateReference();
         }
-    }, [id, user]);
+    }, [id, user, location.search]);
 
     useEffect(() => {
         const count = parseInt(String(formValues.number_of_rooms || 0), 10);
@@ -290,6 +295,41 @@ export default function BookingForm() {
         const { data } = await supabase.from('profiles').select('full_name').eq('id', userId).single();
         if (data && data.full_name) {
             setValue('profiles', { full_name: data.full_name });
+        }
+    };
+
+    const fetchFromQuotation = async (quoteId: string) => {
+        setLoading(true);
+        try {
+            const { data, error } = await supabase
+                .from('quotation_vouchers')
+                .select('*')
+                .eq('id', quoteId)
+                .single();
+
+            if (error) throw error;
+
+            if (data) {
+                // Map Quotation fields to Booking fields
+                setValue('guest_name', data.client_name);
+                setValue('number_of_adults', data.number_of_adults);
+                setValue('number_of_children', data.number_of_children);
+                setValue('number_of_rooms', data.number_of_rooms);
+                setValue('check_in_date', data.check_in_date);
+                setValue('check_out_date', data.check_out_date);
+                setValue('package_type', data.package_type);
+                
+                // Use first hotel comparison option for property and meal plan
+                if (data.hotel_comparison && Array.isArray(data.hotel_comparison) && data.hotel_comparison.length > 0) {
+                    const firstOption = data.hotel_comparison[0];
+                    setValue('property_name', firstOption.property_name);
+                    setValue('meal_plan', firstOption.meal_plan);
+                }
+            }
+        } catch (error) {
+            console.error('Error fetching quotation for pre-fill:', error);
+        } finally {
+            setLoading(false);
         }
     };
 

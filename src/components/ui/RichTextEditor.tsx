@@ -45,7 +45,7 @@ export default function RichTextEditor({ value, onChange, placeholder, className
     const formats = [
         'header',
         'bold', 'italic', 'underline', 'strike', 'blockquote',
-        'list', 'bullet', 'indent',
+        'list', 'indent',
         'link',
         'align',
         'color', 'background',

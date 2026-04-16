@@ -38,8 +38,9 @@ export default function QuotationForm() {
             number_of_adults: 1,
             number_of_children: 0,
             number_of_rooms: 1,
-            show_hotel_comparison: true,
-            show_inclusions_exclusions: true,
+            show_hotel_comparison: false,
+            show_inclusions_exclusions: false,
+            travel_date_type: 'specific',
             hotel_comparison: [{ property_name: '', meal_plan: '', single_price: '', double_price: '' }],
             inclusions: [],
             exclusions: [],
@@ -54,7 +55,7 @@ export default function QuotationForm() {
     const { check_in_date, check_out_date } = formValues;
 
     useEffect(() => {
-        if (check_in_date && check_out_date) {
+        if (formValues.travel_date_type === 'specific' && check_in_date && check_out_date) {
             const start = parseISO(check_in_date);
             const end = parseISO(check_out_date);
             const nights = differenceInCalendarDays(end, start);
@@ -65,7 +66,7 @@ export default function QuotationForm() {
                 setValue('number_of_nights', 0);
             }
         }
-    }, [check_in_date, check_out_date, setValue]);
+    }, [check_in_date, check_out_date, formValues.travel_date_type, setValue]);
 
 
 
@@ -263,6 +264,16 @@ export default function QuotationForm() {
                         <FileDown className="h-4 w-4 mr-2" />
                         Download PDF
                     </Button>
+                    {isEditMode && (
+                        <Button 
+                            variant="secondary"
+                            onClick={() => navigate(`/bookings/new?quotationId=${id}`)}
+                            className="w-full sm:w-auto bg-brand-50 text-brand-700 hover:bg-brand-100 border-brand-200"
+                        >
+                            <Plus className="h-4 w-4 mr-2" />
+                            Generate Booking
+                        </Button>
+                    )}
                     <Button onClick={handleSubmit(onSubmit)} disabled={loading} className="w-full sm:w-auto">
                         {loading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
                         {!loading && <Save className="h-4 w-4 mr-2" />}
@@ -315,22 +326,68 @@ export default function QuotationForm() {
                     {/* Stay Information */}
                     <Card>
                         <CardHeader>
-                            <CardTitle>Stay Information</CardTitle>
-                            <CardDescription>Proposed travel dates.</CardDescription>
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <CardTitle>Stay Information</CardTitle>
+                                    <CardDescription>Proposed travel dates.</CardDescription>
+                                </div>
+                                <div className="flex bg-muted p-1 rounded-lg">
+                                    <button
+                                        type="button"
+                                        onClick={() => setValue('travel_date_type', 'specific')}
+                                        className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${formValues.travel_date_type === 'specific' || !formValues.travel_date_type ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+                                    >
+                                        Specific Date
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setValue('travel_date_type', 'month')}
+                                        className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${formValues.travel_date_type === 'month' ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+                                    >
+                                        Months
+                                    </button>
+                                </div>
+                            </div>
                         </CardHeader>
-                        <CardContent className="grid gap-6 sm:grid-cols-3">
-                            <div>
-                                <label className="text-sm font-medium leading-none">Check In</label>
-                                <Input type="date" {...register('check_in_date')} className="mt-2" />
-                            </div>
-                            <div>
-                                <label className="text-sm font-medium leading-none">Check Out</label>
-                                <Input type="date" {...register('check_out_date')} className="mt-2" />
-                            </div>
-                            <div>
-                                <label className="text-sm font-medium leading-none">Nights</label>
-                                <Input type="number" {...register('number_of_nights')} className="mt-2" />
-                            </div>
+                        <CardContent>
+                            {formValues.travel_date_type === 'month' ? (
+                                <div className="grid gap-6 sm:grid-cols-2">
+                                    <div className="col-span-1">
+                                        <label className="text-sm font-medium leading-none">Select Month</label>
+                                        <select
+                                            {...register('travel_month')}
+                                            className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 mt-2"
+                                        >
+                                            <option value="">Select a Month</option>
+                                            {[
+                                                'January', 'February', 'March', 'April', 'May', 'June',
+                                                'July', 'August', 'September', 'October', 'November', 'December'
+                                            ].map(month => (
+                                                <option key={month} value={month}>{month}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="text-sm font-medium leading-none">Approx. Nights</label>
+                                        <Input type="number" {...register('number_of_nights')} className="mt-2" placeholder="Nights" />
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="grid gap-6 sm:grid-cols-3">
+                                    <div>
+                                        <label className="text-sm font-medium leading-none">Check In</label>
+                                        <Input type="date" {...register('check_in_date')} className="mt-2" />
+                                    </div>
+                                    <div>
+                                        <label className="text-sm font-medium leading-none">Check Out</label>
+                                        <Input type="date" {...register('check_out_date')} className="mt-2" />
+                                    </div>
+                                    <div>
+                                        <label className="text-sm font-medium leading-none">Nights</label>
+                                        <Input type="number" {...register('number_of_nights')} className="mt-2" />
+                                    </div>
+                                </div>
+                            )}
                         </CardContent>
                     </Card>
  

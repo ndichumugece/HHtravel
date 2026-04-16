@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
 import { AreaChart, Area, BarChart, Bar, Tooltip, ResponsiveContainer, Cell } from 'recharts';
-import { Users, MoreVertical, ArrowUpRight, TrendingUp } from 'lucide-react';
+import { Users, MoreVertical, ArrowUpRight, TrendingUp, Award } from 'lucide-react';
 
 export default function AdminReports() {
     const [stats, setStats] = useState({
@@ -10,6 +11,7 @@ export default function AdminReports() {
         totalRevenue: 0,
         topConsultants: [] as any[],
         topProperties: [] as any[],
+        topClients: [] as any[],
         recentQuotations: [] as any[]
     });
     const [loading, setLoading] = useState(true);
@@ -20,7 +22,7 @@ export default function AdminReports() {
 
     const fetchStats = async () => {
         try {
-            const { data: bookings } = await supabase.from('booking_vouchers').select('property_name, consultant_id, created_at');
+            const { data: bookings } = await supabase.from('booking_vouchers').select('property_name, consultant_id, guest_name, created_at');
             const { data: quotations } = await supabase.from('quotation_vouchers').select('*').order('created_at', { ascending: false }).limit(5);
             const { count: quoteCount } = await supabase.from('quotation_vouchers').select('*', { count: 'exact', head: true });
             const { data: profiles } = await supabase.from('profiles').select('id, full_name, email');
@@ -30,11 +32,13 @@ export default function AdminReports() {
 
             const propertyCounts: Record<string, number> = {};
             const consultantCounts: Record<string, number> = {};
+            const clientCounts: Record<string, number> = {};
 
             bookings?.forEach(b => {
                 if (b.property_name) propertyCounts[b.property_name] = (propertyCounts[b.property_name] || 0) + 1;
                 const cName = consultantMap.get(b.consultant_id) || 'Unknown';
                 consultantCounts[cName] = (consultantCounts[cName] || 0) + 1;
+                if (b.guest_name) clientCounts[b.guest_name] = (clientCounts[b.guest_name] || 0) + 1;
             });
 
             const topProperties = Object.entries(propertyCounts)
@@ -47,12 +51,18 @@ export default function AdminReports() {
                 .sort((a, b) => b.bookings - a.bookings)
                 .slice(0, 5);
 
+            const topClients = Object.entries(clientCounts)
+                .map(([name, count]) => ({ name, count }))
+                .sort((a, b) => b.count - a.count)
+                .slice(0, 4);
+
             setStats({
                 totalBookings: bookings?.length || 0,
                 totalQuotations: quoteCount || 0,
                 totalRevenue: 0, // Placeholder
                 topConsultants,
                 topProperties,
+                topClients,
                 recentQuotations: quotations || []
             });
 
@@ -188,6 +198,9 @@ export default function AdminReports() {
                 {/* Right Column (Lists & Secondary Stats) */}
                 <div className="space-y-6">
                     {/* Recent Card */}
+
+
+                    {/* Top Consultants Card */}
                     <div className="bg-white dark:bg-card rounded-[2rem] p-6 shadow-sm border min-h-[200px]">
                         <div className="flex items-center justify-between mb-6">
                             <div className="flex items-center gap-3">
@@ -255,6 +268,43 @@ export default function AdminReports() {
                                     </div>
                                 </div>
                             ))}
+                        </div>
+                    </div>
+                    {/* Top Clients Card */}
+                    <div className="bg-white dark:bg-card rounded-[2rem] p-6 shadow-sm border min-h-[200px] transition-all hover:shadow-md animate-fade-in">
+                        <div className="flex items-center justify-between mb-6">
+                            <div className="flex items-center gap-3">
+                                <div className="p-2 bg-brand-50 rounded-xl">
+                                    <Award className="w-5 h-5 text-brand-600" />
+                                </div>
+                                <h3 className="font-semibold text-foreground">Top Clients</h3>
+                            </div>
+                            <Link to="/reports/clients">
+                                <ArrowUpRight className="w-5 h-5 text-muted-foreground hover:text-brand-600 cursor-pointer transition-colors" />
+                            </Link>
+                        </div>
+
+                        <div className="space-y-4">
+                            {stats.topClients.map((client, i) => (
+                                <div key={i} className="flex items-center justify-between group cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 p-2 rounded-xl transition-colors -mx-2">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 rounded-full bg-brand-100 flex items-center justify-center text-brand-700 font-bold text-xs uppercase">
+                                            {client.name.charAt(0)}
+                                        </div>
+                                        <div>
+                                            <p className="text-sm font-semibold text-foreground uppercase truncate max-w-[120px]">{client.name}</p>
+                                            <p className="text-[10px] text-muted-foreground italic">Repeat Guest</p>
+                                        </div>
+                                    </div>
+                                    <div className="text-right">
+                                        <p className="text-sm font-bold text-brand-600">{client.count}</p>
+                                        <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Bookings</p>
+                                    </div>
+                                </div>
+                            ))}
+                            {stats.topClients.length === 0 && (
+                                <p className="text-sm text-muted-foreground text-center py-4">No data available</p>
+                            )}
                         </div>
                     </div>
                 </div>

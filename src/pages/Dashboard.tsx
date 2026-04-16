@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Bar, ResponsiveContainer, Tooltip, ComposedChart, Line, XAxis } from 'recharts';
 import { useDashboardStats, type TimePeriod } from '../hooks/useDashboardStats';
-import { ArrowUpRight, Users, MoreVertical, Activity, Calendar } from 'lucide-react';
+import { ArrowUpRight, Users, MoreVertical, Activity, Calendar, Award } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { format } from 'date-fns';
 import { useAuth } from '../context/AuthContext';
@@ -300,17 +300,18 @@ export default function Dashboard() {
                                 </div>
                                 <h3 className="font-semibold text-foreground">Lead Sources</h3>
                             </div>
-                            <MoreVertical className="w-5 h-5 text-muted-foreground cursor-pointer" />
+                            <Link to="/reports/leads" className="w-8 h-8 rounded-full bg-slate-50 dark:bg-slate-800 shadow-sm flex items-center justify-center hover:bg-primary/10 transition-colors group">
+                                <ArrowUpRight className="w-4 h-4 text-brand-500 group-hover:scale-110 transition-transform" />
+                            </Link>
                         </div>
 
                         <div className="space-y-4">
-                            {stats.leadSourceData?.map((source, i) => {
+                            {stats.leadSourceData?.slice(0, 4).map((source, i) => {
                                 const colors = [
-                                    { bg: 'bg-indigo-50 dark:bg-indigo-500/10', text: 'text-indigo-700 dark:text-indigo-300' },
+                                    { bg: 'bg-brand-50 dark:bg-brand-500/10', text: 'text-brand-700 dark:text-brand-300' },
                                     { bg: 'bg-emerald-50 dark:bg-emerald-500/10', text: 'text-emerald-700 dark:text-emerald-300' },
                                     { bg: 'bg-amber-50 dark:bg-amber-500/10', text: 'text-amber-700 dark:text-amber-300' },
                                     { bg: 'bg-rose-50 dark:bg-rose-500/10', text: 'text-rose-700 dark:text-rose-300' },
-                                    { bg: 'bg-sky-50 dark:bg-sky-500/10', text: 'text-sky-700 dark:text-sky-300' },
                                 ];
                                 const color = colors[i % colors.length];
 
@@ -366,6 +367,43 @@ export default function Dashboard() {
                                     </div>
                                 </div>
                             ))}
+                        </div>
+                    </div>
+                    {/* Top Clients List */}
+                    <div className="bg-white dark:bg-card rounded-[2rem] p-6 shadow-sm border min-h-[200px] transition-all hover:shadow-md animate-fade-in">
+                        <div className="flex items-center justify-between mb-6">
+                            <div className="flex items-center gap-3">
+                                <div className="p-2 bg-brand-50 rounded-xl">
+                                    <Award className="w-5 h-5 text-brand-600" />
+                                </div>
+                                <h3 className="font-semibold text-foreground">Top Clients</h3>
+                            </div>
+                            <Link to="/reports/clients" className="w-8 h-8 rounded-full bg-slate-50 dark:bg-slate-800 shadow-sm flex items-center justify-center hover:bg-primary/10 transition-colors group">
+                                <ArrowUpRight className="w-4 h-4 text-brand-500 group-hover:scale-110 transition-transform" />
+                            </Link>
+                        </div>
+
+                        <div className="space-y-4">
+                            {stats.topClients?.map((client, i) => (
+                                <div key={i} className="flex items-center justify-between group cursor-pointer p-2 rounded-xl transition-all hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 rounded-full bg-brand-100 flex items-center justify-center text-brand-700 font-bold text-xs uppercase">
+                                            {client.name.charAt(0)}
+                                        </div>
+                                        <div>
+                                            <p className="text-sm font-semibold text-foreground uppercase truncate max-w-[120px]">{client.name}</p>
+                                            <p className="text-[10px] text-muted-foreground italic">Repeat Guest</p>
+                                        </div>
+                                    </div>
+                                    <div className="text-right">
+                                        <p className="text-sm font-bold text-brand-600">{client.count}</p>
+                                        <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Bookings</p>
+                                    </div>
+                                </div>
+                            ))}
+                            {(!stats.topClients || stats.topClients.length === 0) && (
+                                <p className="text-sm text-muted-foreground text-center py-4">No data available</p>
+                            )}
                         </div>
                     </div>
                 </div>

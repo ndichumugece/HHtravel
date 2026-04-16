@@ -95,6 +95,8 @@ export interface QuotationVoucher {
     } | null;
     room_arrangements?: string;
     rich_text_notes?: string;
+    travel_date_type?: 'specific' | 'month';
+    travel_month?: string;
 }
 
 export interface HotelComparison {
@@ -178,3 +180,40 @@ export interface ConfirmationVoucher {
 }
 
 
+export interface TrainReceipt {
+    id: string;
+    reference_number: string;
+    consultant_id: string;
+    client_name: string;
+    mobile_number?: string;
+    train_type: string;
+    from_station: string;
+    to_station: string;
+    departure_date: string;
+    departure_time: string;
+    arrival_time: string;
+    ticket_number?: string;
+    
+    // Return Journey
+    has_return_journey?: boolean;
+    return_train_type?: string;
+    return_from_station?: string;
+    return_to_station?: string;
+    return_departure_date?: string;
+    return_departure_time?: string;
+    return_arrival_time?: string;
+    return_ticket_number?: string;
+    return_guests?: TrainGuest[];
+
+    guests: TrainGuest[];
+    created_at?: string;
+    profiles?: {
+        full_name: string;
+    } | null;
+}
+
+export interface TrainGuest {
+    name: string;
+    coach_no: string;
+    seat_no: string;
+}

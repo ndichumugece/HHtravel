@@ -34,6 +34,7 @@ export interface DashboardStats {
     chartData: { name: string; count: number; total: number }[];
     leadSourceData: { name: string; value: number }[];
     userSalesData: { name: string; total: number; count: number }[];
+    topClients: { name: string; count: number }[];
     loading: boolean;
     error: string | null;
 }
@@ -121,7 +122,7 @@ export function useDashboardStats(period: TimePeriod = 'year') {
                 // Fetch all bookings for analytics
                 const { data: allBookings, error: analyticsError } = await supabase
                     .from('booking_vouchers')
-                    .select('created_at, quotation_price, status, lead_source, consultant_id');
+                    .select('created_at, quotation_price, status, lead_source, consultant_id, guest_name');
 
                 if (analyticsError) throw analyticsError;
                 setRawData(allBookings || []);
@@ -237,6 +238,20 @@ export function useDashboardStats(period: TimePeriod = 'year') {
             .map(([name, value]) => ({ name, value }))
             .sort((a, b) => b.value - a.value);
 
+        // Process Top Clients
+        const clientCounts: Record<string, number> = {};
+        rawData.forEach(booking => {
+            const name = booking.guest_name;
+            if (name) {
+                clientCounts[name] = (clientCounts[name] || 0) + 1;
+            }
+        });
+
+        const topClients = Object.entries(clientCounts)
+            .map(([name, count]) => ({ name, count }))
+            .sort((a, b) => b.count - a.count)
+            .slice(0, 4);
+
         return {
             totalBookings,
             comparisonBookings,
@@ -249,6 +264,7 @@ export function useDashboardStats(period: TimePeriod = 'year') {
             chartData: Array.from(chartDataMap.values()),
             leadSourceData,
             userSalesData,
+            topClients,
             loading,
             error
         };

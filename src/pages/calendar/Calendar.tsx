@@ -174,70 +174,73 @@ export default function Calendar() {
     return (
         <div className="space-y-6 animate-in fade-in duration-500">
             {/* Header Section */}
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                <div>
-                    <h1 className="text-3xl font-bold tracking-tight text-gray-900">Calendar</h1>
-                    <p className="text-muted-foreground mt-1">Manage bookings and track guest arrivals.</p>
+            <div className="flex flex-col gap-6 mb-8">
+                <div className="border-b border-gray-100 pb-4">
+                    <h1 className="text-2xl font-bold tracking-tight text-gray-900">Calendar</h1>
+                    <p className="text-sm text-muted-foreground mt-1">Manage bookings and track guest arrivals.</p>
                 </div>
-                <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
+                
+                <div className="flex flex-wrap items-center justify-between gap-4">
                     {/* View Toggle */}
-                    <div className="flex items-center bg-gray-100 rounded-lg p-1 border border-gray-200">
+                    <div className="inline-flex items-center bg-gray-100 rounded-xl p-1.5 border border-gray-200/60 shadow-inner">
                         <button
                             onClick={() => setView('month')}
-                            className={`px-3 py-1.5 text-sm font-medium rounded-md transition-all flex items-center gap-2 ${view === 'month'
-                                ? 'bg-white text-primary shadow-sm'
-                                : 'text-gray-500 hover:text-gray-700'
+                            className={`px-4 py-2 text-sm font-semibold rounded-lg transition-all flex items-center gap-2.5 ${view === 'month'
+                                ? 'bg-white text-primary shadow-md'
+                                : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50/50'
                                 }`}
                         >
                             <CalendarIcon className="h-4 w-4" />
-                            <span className="hidden sm:inline">Month</span>
+                            <span>Month</span>
                         </button>
                         <button
                             onClick={() => setView('week')}
-                            className={`px-3 py-1.5 text-sm font-medium rounded-md transition-all flex items-center gap-2 ${view === 'week'
-                                ? 'bg-white text-primary shadow-sm'
-                                : 'text-gray-500 hover:text-gray-700'
+                            className={`px-4 py-2 text-sm font-semibold rounded-lg transition-all flex items-center gap-2.5 ${view === 'week'
+                                ? 'bg-white text-primary shadow-md'
+                                : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50/50'
                                 }`}
                         >
                             <CalendarIcon className="h-4 w-4" />
-                            <span className="hidden sm:inline">Week</span>
+                            <span>Week</span>
                         </button>
                         <button
                             onClick={() => setView('list')}
-                            className={`px-3 py-1.5 text-sm font-medium rounded-md transition-all flex items-center gap-2 ${view === 'list'
-                                ? 'bg-white text-primary shadow-sm'
-                                : 'text-gray-500 hover:text-gray-700'
+                            className={`px-4 py-2 text-sm font-semibold rounded-lg transition-all flex items-center gap-2.5 ${view === 'list'
+                                ? 'bg-white text-primary shadow-md'
+                                : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50/50'
                                 }`}
                         >
                             <ListIcon className="h-4 w-4" />
-                            <span className="hidden sm:inline">List</span>
+                            <span>List</span>
                         </button>
                     </div>
 
-                    <div className="flex items-center gap-3 w-full sm:w-auto">
+                    <div className="flex items-center gap-4 flex-1 sm:flex-initial justify-between sm:justify-start">
                         {view !== 'list' && (
-                            <div className="flex items-center bg-white rounded-lg border border-gray-200 shadow-sm p-1">
+                            <div className="flex items-center bg-white rounded-xl border border-gray-200 shadow-sm p-1.5 hover:border-gray-300 transition-colors">
                                 <button
                                     onClick={prevPeriod}
-                                    disabled={false}
-                                    className="p-1.5 hover:bg-gray-50 rounded-md text-gray-500 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                                    className="p-2 hover:bg-gray-50 rounded-lg text-gray-400 hover:text-gray-600 transition-all active:scale-95"
                                 >
                                     <ChevronLeft className="h-5 w-5" />
                                 </button>
-                                <span className="px-3 py-1.5 text-sm font-semibold text-gray-900 border-x border-transparent mx-1 min-w-[140px] text-center select-none">
+                                <span className="px-4 py-2 text-sm font-bold text-gray-900 min-w-[160px] text-center select-none tabular-nums">
                                     {view === 'month'
                                         ? format(currentDate, 'MMMM yyyy')
                                         : `${format(startOfWeek(currentDate), 'MMM d')} - ${format(endOfWeek(currentDate), 'MMM d, yyyy')}`
                                     }
                                 </span>
-                                <button onClick={nextPeriod} className="p-1.5 hover:bg-gray-50 rounded-md text-gray-500 transition-colors">
+                                <button
+                                    onClick={nextPeriod}
+                                    className="p-2 hover:bg-gray-50 rounded-lg text-gray-400 hover:text-gray-600 transition-all active:scale-95"
+                                >
                                     <ChevronRight className="h-5 w-5" />
                                 </button>
                             </div>
                         )}
                         <Link
                             to="/bookings/new"
-                            className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors shadow-sm ml-auto sm:ml-0"
+                            className="flex items-center justify-center gap-2 bg-primary text-primary-foreground px-5 py-2.5 rounded-xl text-sm font-bold hover:bg-primary/90 transition-all shadow-lg shadow-primary/20 active:scale-95 whitespace-nowrap ml-auto"
                         >
                             <Plus className="h-4 w-4" />
                             Add Booking

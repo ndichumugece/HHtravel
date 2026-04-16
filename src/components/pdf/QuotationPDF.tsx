@@ -267,7 +267,10 @@ export default function QuotationPDF({ voucher, settings, consultantName, option
                         <View style={[styles.clientCol, { flex: 2 }]}>
                             <Text style={styles.infoLabel}>Travel Dates:</Text>
                             <Text style={styles.infoValue}>
-                                {voucher.check_in_date ? formatDate(voucher.check_in_date) : 'TBD'} - {voucher.check_out_date ? formatDate(voucher.check_out_date) : 'TBD'}
+                                {voucher.travel_date_type === 'month' 
+                                    ? (voucher.travel_month || 'TBD') 
+                                    : `${voucher.check_in_date ? formatDate(voucher.check_in_date) : 'TBD'} - ${voucher.check_out_date ? formatDate(voucher.check_out_date) : 'TBD'}`
+                                }
                             </Text>
                             {voucher.number_of_nights && (
                                 <Text style={{ fontSize: 9, color: theme.textMuted }}>({voucher.number_of_nights} Nights)</Text>
