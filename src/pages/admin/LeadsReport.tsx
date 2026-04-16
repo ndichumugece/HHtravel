@@ -24,11 +24,10 @@ import {
     Calendar,
     Activity,
     ChevronLeft,
-    ChevronRight,
     ChevronRight
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { format, subMonths } from 'date-fns';
+import { format } from 'date-fns';
 
 export default function LeadsReport() {
     const [loading, setLoading] = useState(true);

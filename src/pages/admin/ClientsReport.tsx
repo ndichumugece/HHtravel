@@ -9,12 +9,9 @@ import {
     Tooltip, 
     ResponsiveContainer, 
     Cell,
-    ResponsiveContainer, 
-    Cell,
 } from 'recharts';
 import { 
     Users, 
-    TrendingUp, 
     ArrowLeft, 
     Search,
     Download,

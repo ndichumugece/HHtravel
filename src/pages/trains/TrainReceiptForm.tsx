@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useForm, useFieldArray, useWatch } from 'react-hook-form';
 import { supabase } from '../../lib/supabase';
-import type { TrainReceipt, TrainGuest, CompanySettings } from '../../types';
+import type { TrainReceipt, CompanySettings } from '../../types';
 import { pdf } from '@react-pdf/renderer';
 import TrainReceiptPDF from '../../components/pdf/TrainReceiptPDF';
 import { ArrowLeft, Save, FileDown, Plus, Trash2, Loader2, Eye, TrainFront } from 'lucide-react';

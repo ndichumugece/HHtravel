@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Bar, ResponsiveContainer, Tooltip, ComposedChart, Line, XAxis } from 'recharts';
 import { useDashboardStats, type TimePeriod } from '../hooks/useDashboardStats';
-import { ArrowUpRight, Users, MoreVertical, Activity, Calendar, Award } from 'lucide-react';
+import { ArrowUpRight, Users, Activity, Calendar, Award } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { format } from 'date-fns';
 import { useAuth } from '../context/AuthContext';
