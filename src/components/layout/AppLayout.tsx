@@ -317,7 +317,6 @@ export default function AppLayout() {
         setIsMobileOpen(false);
     }, [location.pathname]);
 
-    const isEditPage = location.pathname.startsWith('/bookings/') || location.pathname.startsWith('/quotations/');
 
     const sidebarProps = {
         isMobileOpen,
@@ -337,7 +336,7 @@ export default function AppLayout() {
         <div className={cn("min-h-screen flex font-sans text-foreground overflow-x-hidden bg-mesh")}>
             {/* Desktop Sidebar */}
             <div className={cn("hidden md:block fixed h-screen z-40 transition-all duration-500 p-4", isCollapsed ? "w-28" : "w-72")}>
-                <SidebarContent isCollapsed={isCollapsed} {...sidebarProps} />
+                <SidebarContent {...sidebarProps} />
             </div>
 
             {/* Mobile Header */}

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
 import { AreaChart, Area, BarChart, Bar, Tooltip, ResponsiveContainer, Cell } from 'recharts';
-import { Users, MoreVertical, ArrowUpRight, TrendingUp, Award } from 'lucide-react';
+import { Users, ArrowUpRight, Award } from 'lucide-react';
 
 export default function AdminReports() {
     const [stats, setStats] = useState({
@@ -147,7 +147,7 @@ export default function AdminReports() {
                         <div className="bg-primary/10 rounded-[2.5rem] p-8 relative overflow-hidden border border-primary/20 flex flex-col justify-between min-h-[280px]">
                             <div className="flex justify-between items-start">
                                 <div className="p-3 bg-white rounded-2xl shadow-sm">
-                                    <TrendingUp className="w-6 h-6 text-primary" />
+                                    <ArrowUpRight className="w-6 h-6 text-primary" />
                                 </div>
                                 <div className="flex gap-2">
                                     <button className="w-8 h-8 rounded-full border border-primary/20 flex items-center justify-center hover:bg-white/50 transition-colors">
@@ -209,7 +209,6 @@ export default function AdminReports() {
                                 </div>
                                 <h3 className="font-semibold text-foreground">Top Consultants</h3>
                             </div>
-                            <MoreVertical className="w-5 h-5 text-muted-foreground cursor-pointer" />
                         </div>
 
                         <div className="space-y-4">

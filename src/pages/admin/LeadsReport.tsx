@@ -18,7 +18,6 @@ import {
     TrendingUp, 
     ArrowLeft, 
     Search,
-    Filter,
     Download,
     Phone,
     User,
@@ -26,10 +25,10 @@ import {
     Activity,
     ChevronLeft,
     ChevronRight,
-    LayoutGrid
+    ChevronRight
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { format, subMonths, startOfMonth, endOfMonth } from 'date-fns';
+import { format, subMonths } from 'date-fns';
 
 export default function LeadsReport() {
     const [loading, setLoading] = useState(true);
@@ -232,7 +231,7 @@ export default function LeadsReport() {
                                     contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
                                 />
                                 <Bar dataKey="value" radius={[0, 8, 8, 0]} barSize={24}>
-                                    {leadStats.map((entry, index) => (
+                                    {leadStats.map((_, index) => (
                                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                                     ))}
                                 </Bar>
@@ -256,7 +255,7 @@ export default function LeadsReport() {
                                     paddingAngle={5}
                                     dataKey="value"
                                 >
-                                    {leadStats.map((entry, index) => (
+                                    {leadStats.map((_, index) => (
                                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                                     ))}
                                 </Pie>

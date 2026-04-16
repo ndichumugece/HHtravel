@@ -9,9 +9,8 @@ import {
     Tooltip, 
     ResponsiveContainer, 
     Cell,
-    PieChart,
-    Pie,
-    Legend
+    ResponsiveContainer, 
+    Cell,
 } from 'recharts';
 import { 
     Users, 
@@ -243,7 +242,7 @@ export default function ClientsReport() {
                                     contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
                                 />
                                 <Bar dataKey="bookings" radius={[0, 8, 8, 0]} barSize={20}>
-                                    {clientStats.map((entry, index) => (
+                                    {clientStats.map((_, index) => (
                                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                                     ))}
                                 </Bar>
