@@ -30,6 +30,8 @@ export default function TrainReceiptForm() {
     const { user, profile } = useAuth();
     const [settings, setSettings] = useState<CompanySettings>();
     const [loading, setLoading] = useState(false);
+    const [isPreviewing, setIsPreviewing] = useState(false);
+    const [isDownloading, setIsDownloading] = useState(false);
     const [consultantName, setConsultantName] = useState<string>('');
     const isEditMode = !!id;
 
@@ -148,6 +150,7 @@ export default function TrainReceiptForm() {
 
     const previewPDF = async () => {
         try {
+            setIsPreviewing(true);
             // Create a preview version of the receipt with a temporary reference if needed
             const previewReceipt = {
                 ...formValues,
@@ -167,11 +170,14 @@ export default function TrainReceiptForm() {
         } catch (error) {
             console.error('Error generating PDF preview:', error);
             alert(`Could not generate PDF preview. Please ensure all required fields are filled correctly. Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        } finally {
+            setIsPreviewing(false);
         }
     };
 
     const downloadPDF = async () => {
         try {
+            setIsDownloading(true);
             // Create a preview version of the receipt with a temporary reference if needed
             const previewReceipt = {
                 ...formValues,
@@ -199,6 +205,8 @@ export default function TrainReceiptForm() {
         } catch (error) {
             console.error('Error downloading PDF:', error);
             alert(`Could not download PDF. Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        } finally {
+            setIsDownloading(false);
         }
     };
 
@@ -222,15 +230,27 @@ export default function TrainReceiptForm() {
                 </div>
 
                 <div className="flex flex-col sm:flex-row gap-3 w-full xl:w-auto">
-                    <Button variant="outline" onClick={previewPDF} className="w-full sm:w-auto">
-                        <Eye className="h-4 w-4 mr-2" />
+                    <Button
+                        type="button"
+                        variant="outline"
+                        onClick={previewPDF}
+                        disabled={isPreviewing || isDownloading || loading}
+                        className="w-full sm:w-auto"
+                    >
+                        {isPreviewing ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Eye className="h-4 w-4 mr-2" />}
                         Preview PDF
                     </Button>
-                    <Button variant="outline" onClick={downloadPDF} className="w-full sm:w-auto">
-                        <FileDown className="h-4 w-4 mr-2" />
+                    <Button
+                        type="button"
+                        variant="outline"
+                        onClick={downloadPDF}
+                        disabled={isPreviewing || isDownloading || loading}
+                        className="w-full sm:w-auto"
+                    >
+                        {isDownloading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <FileDown className="h-4 w-4 mr-2" />}
                         Download PDF
                     </Button>
-                    <Button onClick={handleSubmit(onSubmit)} disabled={loading} className="w-full sm:w-auto">
+                    <Button onClick={handleSubmit(onSubmit)} disabled={loading || isPreviewing || isDownloading} className="w-full sm:w-auto">
                         {loading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
                         Save Ticket
                     </Button>

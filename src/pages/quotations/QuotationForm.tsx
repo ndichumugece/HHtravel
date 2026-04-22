@@ -27,6 +27,8 @@ export default function QuotationForm() {
     const [properties, setProperties] = useState<Property[]>([]);
     const [settings, setSettings] = useState<CompanySettings>();
     const [loading, setLoading] = useState(false);
+    const [isPreviewing, setIsPreviewing] = useState(false);
+    const [isDownloading, setIsDownloading] = useState(false);
     const [isEditMode] = useState(!!id);
     const [consultantName, setConsultantName] = useState<string>('');
     const [optionsMap, setOptionsMap] = useState<Record<string, string>>({});
@@ -114,7 +116,7 @@ export default function QuotationForm() {
             }
         });
 
-        console.log('Fetched Options Map:', map);
+
         setOptionsMap(map);
     };
 
@@ -237,34 +239,52 @@ export default function QuotationForm() {
                 <div className="flex flex-col sm:flex-row gap-3 w-full xl:w-auto">
                     <Button
                         variant="outline"
+                        disabled={isPreviewing || isDownloading || loading}
                         onClick={async () => {
-                            const blob = await pdf(<QuotationPDF voucher={formValues as QuotationVoucher} settings={settings} consultantName={consultantName} optionsMap={optionsMap} />).toBlob();
-                            const url = URL.createObjectURL(blob);
-                            window.open(url, '_blank');
+                            try {
+                                setIsPreviewing(true);
+                                const blob = await pdf(<QuotationPDF voucher={formValues as QuotationVoucher} settings={settings} consultantName={consultantName} optionsMap={optionsMap} />).toBlob();
+                                const url = URL.createObjectURL(blob);
+                                window.open(url, '_blank');
+                            } catch (error) {
+                                console.error('Error generating preview:', error);
+                                alert('Failed to generate PDF preview');
+                            } finally {
+                                setIsPreviewing(false);
+                            }
                         }}
                         className="w-full sm:w-auto"
                     >
-                        <Eye className="h-4 w-4 mr-2" />
+                        {isPreviewing ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Eye className="h-4 w-4 mr-2" />}
                         Preview PDF
                     </Button>
                     <Button
                         variant="outline"
+                        disabled={isPreviewing || isDownloading || loading}
                         className="w-full sm:w-auto"
                         onClick={async () => {
-                            const blob = await pdf(<QuotationPDF voucher={formValues as QuotationVoucher} settings={settings} consultantName={consultantName} optionsMap={optionsMap} />).toBlob();
-                            const url = URL.createObjectURL(blob);
-                            const link = document.createElement('a');
-                            link.href = url;
-                            const today = format(new Date(), 'yyyy-MM-dd');
-                            const clientNameSanitized = (formValues.client_name || 'Client').replace(/[^a-z0-9]/gi, '_');
-                            const reference = formValues.reference_number || 'Draft';
-                            link.download = `Quotation_${reference}_${clientNameSanitized}_${today}.pdf`;
-                            document.body.appendChild(link);
-                            link.click();
-                            document.body.removeChild(link);
+                            try {
+                                setIsDownloading(true);
+                                const blob = await pdf(<QuotationPDF voucher={formValues as QuotationVoucher} settings={settings} consultantName={consultantName} optionsMap={optionsMap} />).toBlob();
+                                const url = URL.createObjectURL(blob);
+                                const link = document.createElement('a');
+                                link.href = url;
+                                const today = format(new Date(), 'yyyy-MM-dd');
+                                const clientNameSanitized = (formValues.client_name || 'Client').replace(/[^a-z0-9]/gi, '_');
+                                const reference = formValues.reference_number || 'Draft';
+                                link.download = `Quotation_${reference}_${clientNameSanitized}_${today}.pdf`;
+                                document.body.appendChild(link);
+                                link.click();
+                                document.body.removeChild(link);
+                            } catch (error) {
+                                console.error('Error downloading PDF:', error);
+                                alert('Failed to download PDF');
+                            } finally {
+                                setIsDownloading(false);
+                            }
                         }}
                     >
-                        <FileDown className="h-4 w-4 mr-2" />
+                        {isDownloading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <FileDown className="h-4 w-4 mr-2" />}
                         Download PDF
                     </Button>
                     {isEditMode && (

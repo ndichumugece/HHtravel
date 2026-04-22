@@ -63,9 +63,11 @@ export default function BookingForm() {
     const { id } = useParams();
     const navigate = useNavigate();
     const { user } = useAuth();
+    const [loading, setLoading] = useState(false);
+    const [isPreviewing, setIsPreviewing] = useState(false);
+    const [isDownloading, setIsDownloading] = useState(false);
     const [properties, setProperties] = useState<Property[]>([]);
     const [settings, setSettings] = useState<CompanySettings>();
-    const [loading, setLoading] = useState(false);
     const isEditMode = !!id;
     const [isPropertyModalOpen, setIsPropertyModalOpen] = useState(false);
 
@@ -74,7 +76,6 @@ export default function BookingForm() {
     const [roomTypes, setRoomTypes] = useState<{ id: string, name: string }[]>([]); // For the dynamic rows
     const [bedTypes, setBedTypes] = useState<{ id: string, name: string }[]>([]);
     const [qrCodeUrl, setQrCodeUrl] = useState<string>('');
-    const [isDownloading, setIsDownloading] = useState(false);
     const location = useLocation();
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
@@ -455,22 +456,31 @@ export default function BookingForm() {
                 <div className="flex flex-col sm:flex-row gap-3 w-full xl:w-auto">
                     <Button
                         variant="outline"
+                        disabled={isPreviewing || isDownloading || loading}
                         onClick={async () => {
-                            const { pdf } = await import('@react-pdf/renderer');
-                            const blob = await pdf(
-                                <BookingPDF voucher={formValues as BookingVoucher} settings={settings} qrCodeUrl={qrCodeUrl} />
-                            ).toBlob();
-                            const url = URL.createObjectURL(blob);
-                            window.open(url, '_blank');
+                            try {
+                                setIsPreviewing(true);
+                                const { pdf } = await import('@react-pdf/renderer');
+                                const blob = await pdf(
+                                    <BookingPDF voucher={formValues as BookingVoucher} settings={settings} qrCodeUrl={qrCodeUrl} />
+                                ).toBlob();
+                                const url = URL.createObjectURL(blob);
+                                window.open(url, '_blank');
+                            } catch (error) {
+                                console.error('Error generating preview:', error);
+                                alert('Failed to generate PDF preview');
+                            } finally {
+                                setIsPreviewing(false);
+                            }
                         }}
                         className="w-full sm:w-auto"
                     >
-                        <Eye className="h-4 w-4 mr-2" />
+                        {isPreviewing ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Eye className="h-4 w-4 mr-2" />}
                         Preview PDF
                     </Button>
                     <Button
                         variant="outline"
-                        disabled={isDownloading}
+                        disabled={isPreviewing || isDownloading || loading}
                         className="w-full sm:w-auto min-w-[150px]"
                         onClick={async () => {
                             try {
@@ -495,11 +505,7 @@ export default function BookingForm() {
                             }
                         }}
                     >
-                        {isDownloading ? (
-                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        ) : (
-                            <FileDown className="h-4 w-4 mr-2" />
-                        )}
+                        {isDownloading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <FileDown className="h-4 w-4 mr-2" />}
                         Download PDF
                     </Button>
                     {isEditMode && (
@@ -513,9 +519,8 @@ export default function BookingForm() {
                             <Trash2 className="h-5 w-5" />
                         </Button>
                     )}
-                    <Button onClick={handleSubmit(onSubmit)} disabled={loading} className="w-full sm:w-auto">
-                        {loading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                        {!loading && <Save className="h-4 w-4 mr-2" />}
+                    <Button onClick={handleSubmit(onSubmit)} disabled={loading || isPreviewing || isDownloading} className="w-full sm:w-auto min-w-[150px]">
+                        {loading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
                         Save Voucher
                     </Button>
                 </div>

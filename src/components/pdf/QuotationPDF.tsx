@@ -8,7 +8,9 @@ Font.register({
     family: 'Roboto',
     fonts: [
         { src: 'https://cdnjs.cloudflare.com/ajax/libs/ink/3.1.10/fonts/Roboto/roboto-regular-webfont.ttf', fontWeight: 'normal' },
+        { src: 'https://cdnjs.cloudflare.com/ajax/libs/ink/3.1.10/fonts/Roboto/roboto-italic-webfont.ttf', fontWeight: 'normal', fontStyle: 'italic' },
         { src: 'https://cdnjs.cloudflare.com/ajax/libs/ink/3.1.10/fonts/Roboto/roboto-bold-webfont.ttf', fontWeight: 'bold' },
+        { src: 'https://cdnjs.cloudflare.com/ajax/libs/ink/3.1.10/fonts/Roboto/roboto-bolditalic-webfont.ttf', fontWeight: 'bold', fontStyle: 'italic' },
     ],
 });
 
@@ -102,7 +104,6 @@ const styles = StyleSheet.create({
         padding: 15,
         borderRadius: 8,
         marginBottom: 20,
-        flexDirection: 'row',
     },
     clientCol: {
         flex: 1,
@@ -247,38 +248,47 @@ export default function QuotationPDF({ voucher, settings, consultantName, option
                 </View>
 
                 {/* Client Information */}
-                <View wrap={false}>
+                <View>
                     <Text style={styles.sectionTitle}>Guest Information</Text>
                     <View style={styles.clientCard}>
-                        <View style={[styles.clientCol, { flex: 2 }]}>
-                            <Text style={styles.infoLabel}>Guest Name</Text>
-                            <Text style={styles.infoValue}>{voucher.client_name}</Text>
+                        {/* Primary Row */}
+                        <View style={{ flexDirection: 'row', marginBottom: 15 }}>
+                            <View style={[styles.clientCol, { flex: 2.5 }]}>
+                                <Text style={styles.infoLabel}>Guest Name</Text>
+                                <Text style={styles.infoValue}>{voucher.client_name}</Text>
+                            </View>
+                            <View style={[styles.clientCol, { flex: 1 }]}>
+                                <Text style={styles.infoLabel}>Booking Status</Text>
+                                <Text style={styles.infoValue}>{voucher.booking_status}</Text>
+                            </View>
                         </View>
-                        <View style={[styles.clientCol, { flex: 1.5 }]}>
-                            <Text style={styles.infoLabel}>Guests:</Text>
-                            <Text style={styles.infoValue}>
-                                {voucher.number_of_adults || 0} Adults, {voucher.number_of_children || 0} Children
-                            </Text>
-                        </View>
-                        <View style={[styles.clientCol, { flex: 0.7 }]}>
-                            <Text style={styles.infoLabel}>Rooms:</Text>
-                            <Text style={styles.infoValue}>{voucher.number_of_rooms || 1} Rooms</Text>
-                        </View>
-                        <View style={[styles.clientCol, { flex: 2 }]}>
-                            <Text style={styles.infoLabel}>Travel Dates:</Text>
-                            <Text style={styles.infoValue}>
-                                {voucher.travel_date_type === 'month' 
-                                    ? (voucher.travel_month || 'TBD') 
-                                    : `${voucher.check_in_date ? formatDate(voucher.check_in_date) : 'TBD'} - ${voucher.check_out_date ? formatDate(voucher.check_out_date) : 'TBD'}`
-                                }
-                            </Text>
-                            {voucher.number_of_nights && (
-                                <Text style={{ fontSize: 9, color: theme.textMuted }}>({voucher.number_of_nights} Nights)</Text>
-                            )}
-                        </View>
-                        <View style={[styles.clientCol, { flex: 1 }]}>
-                            <Text style={styles.infoLabel}>Status:</Text>
-                            <Text style={styles.infoValue}>{voucher.booking_status}</Text>
+
+                        {/* Secondary Row */}
+                        <View style={{ flexDirection: 'row' }}>
+                            <View style={[styles.clientCol, { flex: 1.5 }]}>
+                                <Text style={styles.infoLabel}>Group Composition</Text>
+                                <Text style={styles.infoValue}>
+                                    {voucher.number_of_adults || 0} Adults, {voucher.number_of_children || 0} Children
+                                </Text>
+                            </View>
+                            <View style={[styles.clientCol, { flex: 0.8 }]}>
+                                <Text style={styles.infoLabel}>Rooms</Text>
+                                <Text style={styles.infoValue}>{voucher.number_of_rooms || 1} Rooms</Text>
+                            </View>
+                            <View style={[styles.clientCol, { flex: 2 }]}>
+                                <Text style={styles.infoLabel}>Travel Schedule</Text>
+                                <Text style={styles.infoValue}>
+                                    {voucher.travel_date_type === 'month' 
+                                        ? (voucher.travel_month || 'TBD') 
+                                        : `${voucher.check_in_date ? formatDate(voucher.check_in_date) : 'TBD'} - ${voucher.check_out_date ? formatDate(voucher.check_out_date) : 'TBD'}`
+                                    }
+                                </Text>
+                                {voucher.number_of_nights && (
+                                    <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 2 }}>
+                                        <Text style={{ fontSize: 9, color: theme.textMuted }}>({voucher.number_of_nights} Nights)</Text>
+                                    </View>
+                                )}
+                            </View>
                         </View>
                     </View>
                     {voucher.room_arrangements && (
@@ -291,7 +301,7 @@ export default function QuotationPDF({ voucher, settings, consultantName, option
 
                 {/* Hotel Comparison */}
                 {voucher.show_hotel_comparison && voucher.hotel_comparison && voucher.hotel_comparison.length > 0 && (
-                    <View wrap={false}>
+                    <View>
                         <Text style={styles.sectionTitle}>Accommodation Options</Text>
                         <View style={styles.tableSection}>
                             <View style={styles.tableHeader}>
@@ -326,7 +336,7 @@ export default function QuotationPDF({ voucher, settings, consultantName, option
 
                 {/* Inclusions & Exclusions */}
                 {voucher.show_inclusions_exclusions && ((voucher.inclusions?.length || 0) > 0 || (voucher.exclusions?.length || 0) > 0) && (
-                    <View wrap={false}>
+                    <View>
                         <Text style={styles.sectionTitle}>Inclusions & Exclusions</Text>
                         <View style={[styles.additionalSection, { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }]}>
 
@@ -380,8 +390,8 @@ export default function QuotationPDF({ voucher, settings, consultantName, option
 
                 {/* Additional Notes (Rich Text) */}
                 {voucher.rich_text_notes && (
-                    <View wrap={false}>
-                        <Text style={styles.sectionTitle}>Additional Notes</Text>
+                    <View>
+
                         <Html
                             stylesheet={{
                                 p: { fontSize: 10, lineHeight: 1.4, color: theme.textMain, marginBottom: 5 },
@@ -405,6 +415,16 @@ export default function QuotationPDF({ voucher, settings, consultantName, option
                         >
                             {voucher.rich_text_notes}
                         </Html>
+                    </View>
+                )}
+
+                {/* Terms and Conditions */}
+                {settings?.terms_and_conditions && (
+                    <View style={{ marginTop: 10 }}>
+                        <Text style={styles.sectionTitle}>Terms & Conditions</Text>
+                        <View style={styles.additionalSection}>
+                            <Text style={styles.termText}>{settings.terms_and_conditions}</Text>
+                        </View>
                     </View>
                 )}
 
