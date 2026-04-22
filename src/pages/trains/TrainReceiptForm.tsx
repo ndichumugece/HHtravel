@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { format } from 'date-fns';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useForm, useFieldArray, useWatch } from 'react-hook-form';
 import { supabase } from '../../lib/supabase';
@@ -188,7 +189,10 @@ export default function TrainReceiptForm() {
             const url = URL.createObjectURL(blob);
             const link = document.createElement('a');
             link.href = url;
-            link.download = `${formValues.reference_number || 'train-receipt'}.pdf`;
+            const today = format(new Date(), 'yyyy-MM-dd');
+            const clientNameSanitized = (formValues.client_name || 'Client').replace(/[^a-z0-9]/gi, '_');
+            const reference = formValues.reference_number || 'Draft';
+            link.download = `TrainTicket_${reference}_${clientNameSanitized}_${today}.pdf`;
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
@@ -209,10 +213,10 @@ export default function TrainReceiptForm() {
                     <div>
                         <h1 className="text-2xl font-bold tracking-tight text-foreground flex items-center gap-2">
                             <TrainFront className="h-6 w-6 text-brand-600" />
-                            {isEditMode ? 'Edit Train Receipt' : 'New Train Receipt'}
+                            {isEditMode ? 'Edit Train Ticket' : 'New Train Ticket'}
                         </h1>
                         <p className="text-sm text-muted-foreground">
-                            {isEditMode ? `Ref: ${formValues.reference_number}` : 'Generate a new train travel receipt'}
+                            {isEditMode ? `Ref: ${formValues.reference_number}` : 'Generate a new train travel ticket'}
                         </p>
                     </div>
                 </div>
@@ -228,7 +232,7 @@ export default function TrainReceiptForm() {
                     </Button>
                     <Button onClick={handleSubmit(onSubmit)} disabled={loading} className="w-full sm:w-auto">
                         {loading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
-                        Save Receipt
+                        Save Ticket
                     </Button>
                 </div>
             </div>
@@ -471,7 +475,7 @@ export default function TrainReceiptForm() {
                             </div>
                             <div className="pt-4 border-t">
                                 <p className="text-[10px] text-muted-foreground leading-relaxed italic">
-                                    The disclaimer about this being an auto-generated receipt will be automatically included at the bottom of the generated PDF.
+                                    The disclaimer about this being an auto-generated ticket will be automatically included at the bottom of the generated PDF.
                                 </p>
                             </div>
                         </CardContent>

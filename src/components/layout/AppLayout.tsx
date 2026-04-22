@@ -238,7 +238,7 @@ export default function AppLayout() {
                 { name: 'Booking Voucher', href: '/bookings', icon: FileText },
                 { name: 'Quotation Voucher', href: '/quotations', icon: FileBadge },
                 { name: 'Confirmation Voucher', href: '/confirmations', icon: FileCheck },
-                { name: 'Train Receipt', href: '/trains', icon: TrainFront },
+                { name: 'Train Ticket', href: '/trains', icon: TrainFront },
             ]
         },
         { name: 'Calendar', href: '/calendar', icon: CalendarIcon },

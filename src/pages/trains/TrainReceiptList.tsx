@@ -111,21 +111,21 @@ export default function TrainReceiptList() {
                 <div>
                     <h1 className="text-3xl font-bold tracking-tight text-foreground flex items-center gap-3">
                         <TrainFront className="h-8 w-8 text-brand-600" />
-                        Train Receipts
+                        Train Tickets
                     </h1>
-                    <p className="text-muted-foreground mt-1">Manage all generated train travel receipts.</p>
+                    <p className="text-muted-foreground mt-1">Manage all generated train travel tickets.</p>
                 </div>
                 <Link to="/trains/new">
                     <Button>
                         <Plus className="h-4 w-4 mr-2" />
-                        New Receipt
+                        New Ticket
                     </Button>
                 </Link>
             </div>
 
             <Card>
                 <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 space-y-0 pb-7">
-                    <CardTitle>All Receipts</CardTitle>
+                    <CardTitle>All Tickets</CardTitle>
                     <div className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto">
                         <div className="flex items-center space-x-2 bg-gray-50 px-3 py-2 rounded-lg border border-gray-100">
                             <Switch 
@@ -133,13 +133,13 @@ export default function TrainReceiptList() {
                                 checked={showOnlyMine}
                                 onCheckedChange={setShowOnlyMine}
                             />
-                            <Label htmlFor="show-mine-receipts" className="text-sm font-medium cursor-pointer">My Receipts</Label>
+                            <Label htmlFor="show-mine-receipts" className="text-sm font-medium cursor-pointer">My Tickets</Label>
                         </div>
                         <div className="w-full sm:w-64">
                             <div className="relative">
                                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                                 <Input
-                                    placeholder="Search receipts..."
+                                    placeholder="Search tickets..."
                                     className="pl-9"
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
@@ -164,7 +164,7 @@ export default function TrainReceiptList() {
                                 {filteredReceipts.length === 0 ? (
                                     <TableRow>
                                         <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
-                                            No receipts found.
+                                            No tickets found.
                                         </TableCell>
                                     </TableRow>
                                 ) : (
@@ -256,10 +256,10 @@ export default function TrainReceiptList() {
                     <DialogHeader>
                         <div className="flex items-center gap-3 text-destructive mb-2">
                             <AlertTriangle className="h-6 w-6" />
-                            <DialogTitle>Delete Receipt</DialogTitle>
+                            <DialogTitle>Delete Ticket</DialogTitle>
                         </div>
                         <DialogDescription>
-                            Are you sure you want to delete this train receipt? This action cannot be undone.
+                            Are you sure you want to delete this train ticket? This action cannot be undone.
                         </DialogDescription>
                     </DialogHeader>
                     <div className="flex justify-end gap-3 mt-4">
@@ -275,7 +275,7 @@ export default function TrainReceiptList() {
                             onClick={() => deleteId && handleDelete(deleteId)}
                             disabled={deleting}
                         >
-                            {deleting ? 'Deleting...' : 'Delete Receipt'}
+                            {deleting ? 'Deleting...' : 'Delete Ticket'}
                         </Button>
                     </div>
                 </DialogContent>

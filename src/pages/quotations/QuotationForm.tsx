@@ -16,7 +16,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../..
 import InclusionExclusionSelector from '../../components/quotations/InclusionExclusionSelector';
 import RichTextEditor from '../../components/ui/RichTextEditor';
 
-import { differenceInCalendarDays, parseISO } from 'date-fns';
+import { differenceInCalendarDays, parseISO, format } from 'date-fns';
 
 export default function QuotationForm() {
 
@@ -255,7 +255,10 @@ export default function QuotationForm() {
                             const url = URL.createObjectURL(blob);
                             const link = document.createElement('a');
                             link.href = url;
-                            link.download = `${formValues.reference_number || 'quotation'}.pdf`;
+                            const today = format(new Date(), 'yyyy-MM-dd');
+                            const clientNameSanitized = (formValues.client_name || 'Client').replace(/[^a-z0-9]/gi, '_');
+                            const reference = formValues.reference_number || 'Draft';
+                            link.download = `Quotation_${reference}_${clientNameSanitized}_${today}.pdf`;
                             document.body.appendChild(link);
                             link.click();
                             document.body.removeChild(link);

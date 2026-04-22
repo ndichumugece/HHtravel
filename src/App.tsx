@@ -95,7 +95,7 @@ function App() {
               <Route path="/confirmations/new" element={<ConfirmationForm />} />
               <Route path="/confirmations/:id/edit" element={<ConfirmationForm />} />
 
-              {/* Train Receipts */}
+              {/* Train Tickets */}
               <Route path="/trains" element={<TrainReceiptList />} />
               <Route path="/trains/new" element={<TrainReceiptForm />} />
               <Route path="/trains/:id/edit" element={<TrainReceiptForm />} />
