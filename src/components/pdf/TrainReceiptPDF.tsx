@@ -226,13 +226,9 @@ export default function TrainReceiptPDF({ receipt, settings, consultantName }: {
                 {/* Client Information */}
                 <View style={styles.card}>
                     <View style={styles.infoRow}>
-                        <View style={[styles.infoCol, { flex: 2 }]}>
+                        <View style={styles.infoCol}>
                             <Text style={styles.infoLabel}>Client Name</Text>
                             <Text style={styles.infoValue}>{receipt.client_name}</Text>
-                        </View>
-                        <View style={styles.infoCol}>
-                            <Text style={styles.infoLabel}>Mobile Number</Text>
-                            <Text style={styles.infoValue}>{receipt.mobile_number || 'N/A'}</Text>
                         </View>
                     </View>
                 </View>
@@ -249,6 +245,10 @@ export default function TrainReceiptPDF({ receipt, settings, consultantName }: {
                             <Text style={styles.infoLabel}>Ticket Number</Text>
                             <Text style={styles.infoValue}>{receipt.ticket_number || 'N/A'}</Text>
                         </View>
+                        <View style={styles.infoCol}>
+                            <Text style={styles.infoLabel}>Phone Number Used</Text>
+                            <Text style={styles.infoValue}>{receipt.mobile_number || 'N/A'}</Text>
+                        </View>
                     </View>
                     
                     <View style={styles.infoRow}>
@@ -261,7 +261,7 @@ export default function TrainReceiptPDF({ receipt, settings, consultantName }: {
                             <Text style={styles.infoValue}>{receipt.to_station}</Text>
                         </View>
                     </View>
-262: 
+
                     <View style={styles.infoRow}>
                         <View style={styles.infoCol}>
                             <Text style={styles.infoLabel}>Departure Date</Text>
@@ -291,6 +291,10 @@ export default function TrainReceiptPDF({ receipt, settings, consultantName }: {
                                 <View style={styles.infoCol}>
                                     <Text style={styles.infoLabel}>Ticket Number (Return)</Text>
                                     <Text style={styles.infoValue}>{receipt.return_ticket_number || 'N/A'}</Text>
+                                </View>
+                                <View style={styles.infoCol}>
+                                    <Text style={styles.infoLabel}>Phone Number Used</Text>
+                                    <Text style={styles.infoValue}>{receipt.mobile_number || 'N/A'}</Text>
                                 </View>
                             </View>
                             
