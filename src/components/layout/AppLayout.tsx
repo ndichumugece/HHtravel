@@ -244,6 +244,7 @@ export default function AppLayout() {
         { name: 'Calendar', href: '/calendar', icon: CalendarIcon },
         ...(role === 'admin' ? [
             { name: 'Dashboard', href: '/', icon: LayoutDashboard },
+            { name: 'Hotels', href: '/hotels', icon: Hotel },
             {
                 name: 'Administration',
                 icon: Shield,
@@ -369,7 +370,12 @@ export default function AppLayout() {
                 isCollapsed ? "md:ml-20" : "md:ml-64"
             )}>
                 <OfflineNotice />
-                <main className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 animate-fade-in">
+                <main className={cn(
+                    "animate-fade-in",
+                    location.pathname === '/hotels' 
+                        ? "h-[calc(100vh-4rem)] md:h-screen w-full p-0" 
+                        : "max-w-7xl mx-auto p-4 sm:p-6 lg:p-8"
+                )}>
                     <Outlet />
                 </main>
             </div>

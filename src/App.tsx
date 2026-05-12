@@ -29,6 +29,7 @@ import { ReloadPrompt } from './components/ui/ReloadPrompt';
 import Calendar from './pages/calendar/Calendar';
 import InclusionsExclusionsManager from './components/admin/InclusionsExclusionsManager';
 import DebugIcons from './pages/admin/DebugIcons';
+import Hotels from './pages/Hotels';
 
 function App() {
   if (!isSupabaseConfigured) {
@@ -67,6 +68,7 @@ function App() {
               {/* Dashboard - Admin Only */}
               <Route element={<ProtectedRoute allowedRoles={['admin']} />}>
                 <Route path="/" element={<Dashboard />} />
+                <Route path="/hotels" element={<Hotels />} />
               </Route>
 
               {/* Properties */}
