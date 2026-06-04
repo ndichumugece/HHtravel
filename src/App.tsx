@@ -3,6 +3,7 @@ import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import Login from './pages/Login';
 import SignUp from './pages/auth/SignUp';
+import ResetPassword from './pages/auth/ResetPassword';
 import AppLayout from './components/layout/AppLayout';
 import Dashboard from './pages/Dashboard';
 import PropertiesList from './pages/properties/PropertiesList';
@@ -61,6 +62,7 @@ function App() {
         <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<SignUp />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/public/bookings/:id" element={<ViewBooking />} />
 
           <Route element={<ProtectedRoute />}>

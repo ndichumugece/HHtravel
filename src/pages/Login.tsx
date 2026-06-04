@@ -11,6 +11,7 @@ export default function Login() {
     const invitedEmail = queryParams.get('email') || '';
 
     const [isLogin, setIsLogin] = useState(!signupMode);
+    const [isForgotPassword, setIsForgotPassword] = useState(false);
     const [firstName, setFirstName] = useState('');
     const [lastName, setLastName] = useState('');
     const [email, setEmail] = useState(invitedEmail);
@@ -34,7 +35,13 @@ export default function Login() {
         setMessage(null);
 
         try {
-            if (isLogin) {
+            if (isForgotPassword) {
+                const { error } = await supabase.auth.resetPasswordForEmail(email, {
+                    redirectTo: `${window.location.origin}/reset-password`,
+                });
+                if (error) throw error;
+                setMessage('Check your email for the password reset link.');
+            } else if (isLogin) {
                 const { error } = await supabase.auth.signInWithPassword({
                     email,
                     password,
@@ -71,13 +78,13 @@ export default function Login() {
 
                 <div className="w-full max-w-md mx-auto lg:mx-0">
                     <h1 className="text-3xl sm:text-4xl font-bold mb-2 text-slate-900">
-                        {isLogin ? 'Welcome back !' : 'Create Account !'}
+                        {isForgotPassword ? 'Reset Password !' : (isLogin ? 'Welcome back !' : 'Create Account !')}
                     </h1>
                     {/* User requested to remove text below welcome back - keeping this empty spacer or just removing it. */}
                     <div className="mb-8"></div>
 
                     <form onSubmit={handleAuth} className="space-y-6">
-                        {!isLogin && (
+                        {!isLogin && !isForgotPassword && (
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <label className="block text-sm font-semibold text-slate-700 mb-1">
@@ -122,31 +129,33 @@ export default function Login() {
                             />
                         </div>
 
-                        <div>
-                            <label className="block text-sm font-semibold text-slate-700 mb-1">
-                                Password <span className="text-red-500">*</span>
-                            </label>
-                            <div className="relative">
-                                <input
-                                    type={showPassword ? "text" : "password"}
-                                    required
-                                    value={password}
-                                    onChange={(e) => setPassword(e.target.value)}
-                                    className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all outline-none text-sm placeholder:text-gray-400 pr-10"
-                                    placeholder="Enter password"
-                                />
-                                <button
-                                    type="button"
-                                    onClick={() => setShowPassword(!showPassword)}
-                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none"
-                                >
-                                    {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                                </button>
+                        {!isForgotPassword && (
+                            <div>
+                                <label className="block text-sm font-semibold text-slate-700 mb-1">
+                                    Password <span className="text-red-500">*</span>
+                                </label>
+                                <div className="relative">
+                                    <input
+                                        type={showPassword ? "text" : "password"}
+                                        required
+                                        value={password}
+                                        onChange={(e) => setPassword(e.target.value)}
+                                        className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all outline-none text-sm placeholder:text-gray-400 pr-10"
+                                        placeholder="Enter password"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowPassword(!showPassword)}
+                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none"
+                                    >
+                                        {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                                    </button>
+                                </div>
                             </div>
-                        </div>
+                        )}
 
                         {/* Remember & Forgot options */}
-                        {isLogin && (
+                        {isLogin && !isForgotPassword && (
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center">
                                     <input
@@ -159,7 +168,15 @@ export default function Login() {
                                     </label>
                                 </div>
                                 <div className="text-sm">
-                                    <button type="button" className="font-medium text-brand-600 hover:text-brand-500">
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setIsForgotPassword(true);
+                                            setError(null);
+                                            setMessage(null);
+                                        }}
+                                        className="font-medium text-brand-600 hover:text-brand-500"
+                                    >
                                         Forgot your password?
                                     </button>
                                 </div>
@@ -183,21 +200,44 @@ export default function Login() {
                             disabled={loading}
                             className="w-full py-3.5 px-4 bg-brand-600 hover:bg-brand-700 text-white font-medium rounded-lg shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-500 transition-all duration-200 disabled:opacity-70 disabled:cursor-not-allowed flex justify-center items-center text-sm tracking-wide"
                         >
-                            {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : (isLogin ? 'Log In' : 'Register')}
+                            {loading ? (
+                                <Loader2 className="h-5 w-5 animate-spin" />
+                            ) : (
+                                isForgotPassword ? 'Send Reset Link' : (isLogin ? 'Log In' : 'Register')
+                            )}
                         </button>
                     </form>
 
                     {/* Footer / Toggle */}
                     <div className="mt-8 text-center text-sm font-medium">
-                        <span className="text-gray-600">
-                            {isLogin ? "Don't have an account? " : "Already have an account? "}
-                        </span>
-                        <button
-                            onClick={() => setIsLogin(!isLogin)}
-                            className="text-brand-600 hover:text-brand-700 underline transition-colors"
-                        >
-                            {isLogin ? "Register here" : "Log in here"}
-                        </button>
+                        {isForgotPassword ? (
+                            <button
+                                onClick={() => {
+                                    setIsForgotPassword(false);
+                                    setError(null);
+                                    setMessage(null);
+                                }}
+                                className="text-brand-600 hover:text-brand-700 underline transition-colors"
+                            >
+                                Back to Log In
+                            </button>
+                        ) : (
+                            <>
+                                <span className="text-gray-600">
+                                    {isLogin ? "Don't have an account? " : "Already have an account? "}
+                                </span>
+                                <button
+                                    onClick={() => {
+                                        setIsLogin(!isLogin);
+                                        setError(null);
+                                        setMessage(null);
+                                    }}
+                                    className="text-brand-600 hover:text-brand-700 underline transition-colors"
+                                >
+                                    {isLogin ? "Register here" : "Log in here"}
+                                </button>
+                            </>
+                        )}
                     </div>
                 </div>
             </div>
