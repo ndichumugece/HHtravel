@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useForm, useWatch } from 'react-hook-form';
 import { supabase } from '../../lib/supabase';
-import type { Property, ConfirmationVoucher } from '../../types';
+import type { Property, ConfirmationVoucher, CompanySettings } from '../../types';
+import ConfirmationPDF from '../../components/pdf/ConfirmationPDF';
 import { 
     ArrowLeft, 
     Save, 
@@ -13,7 +14,8 @@ import {
     Settings2, 
     CheckCircle2,
     Clock,
-    Ban
+    Ban,
+    Eye
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { Button } from '../../components/ui/Button';
@@ -33,6 +35,9 @@ export default function ConfirmationForm() {
     const [properties, setProperties] = useState<Property[]>([]);
     const [loading, setLoading] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
+    const [isPreviewing, setIsPreviewing] = useState(false);
+    const [isDownloading, setIsDownloading] = useState(false);
+    const [settings, setSettings] = useState<CompanySettings>();
     const isEditMode = !!id;
 
     // Room Details State (Sync with table)
@@ -61,9 +66,16 @@ export default function ConfirmationForm() {
         fetchRoomTypes();
         fetchBedTypes();
         fetchMealPlans();
-        if (id) fetchVoucher(id);
-        else generateReference();
-    }, [id]);
+        fetchSettings();
+        if (id) {
+            fetchVoucher(id);
+        } else {
+            generateReference();
+            if (user) {
+                fetchUserProfile(user.id);
+            }
+        }
+    }, [id, user]);
 
     const fetchRoomTypes = async () => {
         const { data } = await supabase.from('room_types').select('*').order('name');
@@ -101,9 +113,25 @@ export default function ConfirmationForm() {
         setProperties(data || []);
     };
 
+    const fetchUserProfile = async (userId: string) => {
+        const { data } = await supabase.from('profiles').select('full_name').eq('id', userId).single();
+        if (data && data.full_name) {
+            setValue('profiles', { full_name: data.full_name });
+        }
+    };
+
+    const fetchSettings = async () => {
+        const { data } = await supabase.from('company_settings').select('*').single();
+        if (data) setSettings(data);
+    };
+
     const fetchVoucher = async (vid: string) => {
         setLoading(true);
-        const { data } = await supabase.from('confirmation_vouchers').select('*').eq('id', vid).single();
+        const { data } = await supabase
+            .from('confirmation_vouchers')
+            .select('*, profiles:consultant_id(full_name)')
+            .eq('id', vid)
+            .single();
         if (data) {
             Object.entries(data).forEach(([key, val]) => setValue(key as any, val));
             if (data.room_details) setRoomDetails(data.room_details);
@@ -159,9 +187,11 @@ export default function ConfirmationForm() {
                 room_details: roomDetails,
             };
 
+            const { profiles, ...sanitizedPayload } = payload;
+
             const { error } = isEditMode 
-                ? await supabase.from('confirmation_vouchers').update(payload).eq('id', id)
-                : await supabase.from('confirmation_vouchers').insert([payload]);
+                ? await supabase.from('confirmation_vouchers').update(sanitizedPayload).eq('id', id)
+                : await supabase.from('confirmation_vouchers').insert([sanitizedPayload]);
 
             if (error) throw error;
             navigate('/confirmations');
@@ -169,6 +199,81 @@ export default function ConfirmationForm() {
             alert(err.message);
         } finally {
             setIsSaving(false);
+        }
+    };
+
+    const getVoucherFileName = () => {
+        if (!formValues.reference_number) return 'confirmation-voucher.pdf';
+
+        const parts = [
+            formValues.reference_number,
+            formValues.guest_name || 'Guest',
+        ];
+
+        if (formValues.check_in_date && formValues.check_out_date) {
+            try {
+                const checkIn = new Date(formValues.check_in_date);
+                const checkOut = new Date(formValues.check_out_date);
+
+                const startDay = format(checkIn, 'do');
+                const endDay = format(checkOut, 'do');
+                const month = format(checkIn, 'MMMM');
+
+                if (checkIn.getMonth() !== checkOut.getMonth()) {
+                    const endMonth = format(checkOut, 'MMMM');
+                    parts.push(`${startDay} ${month}-${endDay} ${endMonth}`);
+                } else {
+                    parts.push(`${startDay}-${endDay} ${month}`);
+                }
+            } catch (e) {
+                parts.push('Dates');
+            }
+        }
+
+        if (formValues.property_name) {
+            parts.push(formValues.property_name);
+        }
+
+        return `${parts.join('-')}.pdf`.replace(/[^a-zA-Z0-9\-\.\s]/g, '');
+    };
+
+    const previewPDF = async () => {
+        try {
+            setIsPreviewing(true);
+            const { pdf } = await import('@react-pdf/renderer');
+            const blob = await pdf(
+                <ConfirmationPDF voucher={formValues as ConfirmationVoucher} settings={settings} />
+            ).toBlob();
+            const url = URL.createObjectURL(blob);
+            window.open(url, '_blank');
+        } catch (error) {
+            console.error('Error generating preview:', error);
+            alert('Failed to generate PDF preview');
+        } finally {
+            setIsPreviewing(false);
+        }
+    };
+
+    const downloadPDF = async () => {
+        try {
+            setIsDownloading(true);
+            const { pdf } = await import('@react-pdf/renderer');
+            const blob = await pdf(
+                <ConfirmationPDF voucher={formValues as ConfirmationVoucher} settings={settings} />
+            ).toBlob();
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = getVoucherFileName();
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        } catch (error) {
+            console.error('Error downloading PDF:', error);
+            alert('Failed to download PDF');
+        } finally {
+            setIsDownloading(false);
         }
     };
 
@@ -197,7 +302,7 @@ export default function ConfirmationForm() {
                 {/* Main Content (Left) */}
                 <div className="lg:col-span-2 space-y-6">
                     {/* 1. Client Details */}
-                    <Card>
+                    <Card className="relative z-30">
                         <CardHeader>
                             <CardTitle className="text-lg">Client Details</CardTitle>
                         </CardHeader>
@@ -218,7 +323,7 @@ export default function ConfirmationForm() {
                     </Card>
 
                     {/* 2. Property & Stay */}
-                    <Card>
+                    <Card className="overflow-visible relative z-20">
                         <CardHeader>
                             <CardTitle className="text-lg">Stay Information</CardTitle>
                         </CardHeader>
@@ -344,7 +449,7 @@ export default function ConfirmationForm() {
                     </Card>
 
                     {/* 3. Additional Details */}
-                    <Card>
+                    <Card className="relative z-10">
                         <CardHeader>
                             <CardTitle className="text-lg">Additional Information</CardTitle>
                         </CardHeader>
@@ -472,10 +577,21 @@ export default function ConfirmationForm() {
                                 <Button
                                     type="button"
                                     variant="outline"
+                                    disabled={isPreviewing || isDownloading || loading}
                                     className="w-full gap-2 h-11 border-primary/20 hover:bg-primary/5 text-primary"
-                                    onClick={() => alert('PDF generation is coming soon')}
+                                    onClick={previewPDF}
                                 >
-                                    <FileDown className="h-4 w-4" />
+                                    {isPreviewing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Eye className="h-4 w-4" />}
+                                    Preview PDF
+                                </Button>
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    disabled={isPreviewing || isDownloading || loading}
+                                    className="w-full gap-2 h-11 border-primary/20 hover:bg-primary/5 text-primary"
+                                    onClick={downloadPDF}
+                                >
+                                    {isDownloading ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileDown className="h-4 w-4" />}
                                     Download PDF
                                 </Button>
                             </div>

@@ -151,11 +151,11 @@
   }
 
   .glass-dropdown {
-    background: var(--glass-dropdown-bg) !important;
+    background: #ffffff !important;
     backdrop-filter: blur(16px) saturate(120%);
     -webkit-backdrop-filter: blur(16px) saturate(120%);
     border: 1px solid var(--glass-dropdown-border) !important;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
   }
 
   .glass-panel {

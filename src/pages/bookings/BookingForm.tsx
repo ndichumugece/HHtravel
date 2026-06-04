@@ -564,7 +564,7 @@ export default function BookingForm() {
                 {/* Main Column */}
                 <div className="lg:col-span-2 space-y-6">
                     {/* Guest Information */}
-                    <Card>
+                    <Card className="relative z-40">
                         <CardHeader>
                             <CardTitle>Guest Information</CardTitle>
                             <CardDescription>Primary contact details for the reservation.</CardDescription>
@@ -603,7 +603,7 @@ export default function BookingForm() {
                     </Card>
 
                     {/* Stay Details */}
-                    <Card>
+                    <Card className="overflow-visible relative z-30">
                         <CardHeader>
                             <CardTitle>Stay Details</CardTitle>
                             <CardDescription>Property, dates, and room configuration.</CardDescription>
@@ -824,7 +824,7 @@ export default function BookingForm() {
                     </Card>
 
                     {/* Transport Details */}
-                    <Card>
+                    <Card className="relative z-20">
                         <CardHeader>
                             <CardTitle>Transport Details</CardTitle>
                         </CardHeader>
@@ -1027,7 +1027,7 @@ export default function BookingForm() {
                     </Card>
 
                     {/* Additional Details */}
-                    <Card>
+                    <Card className="relative z-10">
                         <CardHeader>
                             <CardTitle>Additional Information</CardTitle>
                         </CardHeader>

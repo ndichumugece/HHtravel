@@ -309,7 +309,7 @@ export default function QuotationForm() {
                 {/* Main Column */}
                 <div className="lg:col-span-2 space-y-6">
                     {/* Client Information */}
-                    <Card>
+                    <Card className="relative z-50">
                         <CardHeader>
                             <CardTitle>Client Details</CardTitle>
                             <CardDescription>Primary client information for this quote.</CardDescription>
@@ -347,7 +347,7 @@ export default function QuotationForm() {
                     </Card>
 
                     {/* Stay Information */}
-                    <Card>
+                    <Card className="relative z-40">
                         <CardHeader>
                             <div className="flex items-center justify-between">
                                 <div>
@@ -416,7 +416,7 @@ export default function QuotationForm() {
  
                     {/* Hotel Comparison */}
                     {formValues.show_hotel_comparison && (
-                        <Card>
+                        <Card className="overflow-visible relative z-30">
                             <CardHeader className="flex flex-row items-center justify-between space-y-0">
                                 <div>
                                     <CardTitle>Hotel Comparison</CardTitle>
@@ -501,7 +501,7 @@ export default function QuotationForm() {
 
                     {/* Inclusions & Exclusions */}
                     {formValues.show_inclusions_exclusions && (
-                        <Card>
+                        <Card className="relative z-20">
                             <CardHeader>
                                 <CardTitle>Inclusions & Exclusions</CardTitle>
                                 <CardDescription>Select what is included and excluded in this quotation.</CardDescription>
@@ -528,7 +528,7 @@ export default function QuotationForm() {
                     )}
 
                     {/* Additional Notes (Rich Text) */}
-                    <Card>
+                    <Card className="relative z-10">
                         <CardHeader>
                             <CardTitle>Additional Notes</CardTitle>
                             <CardDescription>Add distinct notes, tables, or formatted text (e.g. from Word).</CardDescription>
