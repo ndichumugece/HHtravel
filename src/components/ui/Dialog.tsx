@@ -1,6 +1,9 @@
 import * as React from "react"
 import { createPortal } from "react-dom"
+import { motion, AnimatePresence } from "framer-motion"
+import type { HTMLMotionProps } from "framer-motion"
 import { cn } from "../../lib/utils"
+import { modalVariants } from "../../lib/motion"
 
 const Dialog = ({
     open,
@@ -11,37 +14,46 @@ const Dialog = ({
     onOpenChange?: (open: boolean) => void
     children: React.ReactNode
 }) => {
-    if (!open) return null
-
     return createPortal(
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-            {/* Backdrop */}
-            <div
-                className="fixed inset-0 bg-black/50 backdrop-blur-sm transition-opacity"
-                onClick={() => onOpenChange?.(false)}
-            />
-            {/* Dialog */}
-            <div className="z-50">{children}</div>
-        </div>,
+        <AnimatePresence>
+            {open && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                    {/* Backdrop */}
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.2 }}
+                        className="fixed inset-0 bg-black/40 backdrop-blur-[6px]"
+                        onClick={() => onOpenChange?.(false)}
+                    />
+                    {/* Dialog Wrapper */}
+                    <div className="z-50 w-full max-w-lg">{children}</div>
+                </div>
+            )}
+        </AnimatePresence>,
         document.body
     )
 }
 
 const DialogContent = React.forwardRef<
     HTMLDivElement,
-    React.HTMLAttributes<HTMLDivElement> & { className?: string }
+    HTMLMotionProps<"div">
 >(({ className, children, ...props }, ref) => (
-    <div
+    <motion.div
         ref={ref}
+        variants={modalVariants}
+        initial="initial"
+        animate="animate"
+        exit="exit"
         className={cn(
-            "relative z-50 grid w-full max-w-lg gap-4 border bg-background p-6 shadow-lg duration-200 sm:rounded-lg animate-in fade-in zoom-in-95 slide-in-from-left-1/2 slide-in-from-top-[48%]",
+            "relative z-50 grid w-full max-w-lg gap-4 rounded-2xl glass-modal p-6 shadow-2xl overflow-hidden",
             className
         )}
         {...props}
     >
         {children}
-        {/* We could add a close button here if we passed onOpenChange down, but for now we rely on the parent or backdrop */}
-    </div>
+    </motion.div>
 ))
 DialogContent.displayName = "DialogContent"
 

@@ -1,8 +1,9 @@
 import * as React from "react"
+import { motion } from "framer-motion"
+import type { HTMLMotionProps } from "framer-motion"
 import { cn } from "../../lib/utils"
 
-export interface ButtonProps
-    extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+export interface ButtonProps extends HTMLMotionProps<"button"> {
     variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'destructive'
     size?: 'sm' | 'md' | 'lg' | 'icon'
 }
@@ -10,15 +11,18 @@ export interface ButtonProps
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     ({ className, variant = 'primary', size = 'md', ...props }, ref) => {
         return (
-            <button
+            <motion.button
                 ref={ref}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.97 }}
+                transition={{ type: "spring", stiffness: 500, damping: 15 }}
                 className={cn(
-                    "inline-flex items-center justify-center rounded-md text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50",
+                    "inline-flex items-center justify-center rounded-xl text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 shadow-sm",
                     // Variants
-                    variant === 'primary' && "bg-primary text-primary-foreground shadow-sm hover:translate-y-[-1px] hover:shadow-md active:translate-y-[0px]",
-                    variant === 'secondary' && "bg-secondary text-secondary-foreground hover:bg-secondary/80",
-                    variant === 'outline' && "border border-input bg-background hover:bg-accent hover:text-accent-foreground",
-                    variant === 'ghost' && "hover:bg-accent hover:text-accent-foreground",
+                    variant === 'primary' && "bg-primary text-primary-foreground hover:bg-primary/95",
+                    variant === 'secondary' && "bg-secondary text-secondary-foreground hover:bg-secondary/90",
+                    variant === 'outline' && "border border-white/20 bg-white/20 backdrop-blur-md hover:bg-white/30 text-foreground",
+                    variant === 'ghost' && "hover:bg-accent/40 text-foreground shadow-none",
                     variant === 'destructive' && "bg-destructive/10 text-destructive hover:bg-destructive/20",
 
                     // Sizes

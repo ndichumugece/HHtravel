@@ -644,7 +644,7 @@ export default function BookingForm() {
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-2 gap-4 col-span-2">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 col-span-2">
                                 <div>
                                     <label className="text-sm font-medium leading-none">Check In</label>
                                     <DatePicker
@@ -667,7 +667,7 @@ export default function BookingForm() {
                                     />
                                 </div>
                             </div>
-                            <div className="grid grid-cols-2 gap-4 col-span-2">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 col-span-2">
                                 <div>
                                     <label className="text-sm font-medium leading-none">Package Type</label>
                                     <select

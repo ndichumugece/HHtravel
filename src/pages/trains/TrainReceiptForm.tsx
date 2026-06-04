@@ -410,7 +410,7 @@ export default function TrainReceiptForm() {
                                         {STATIONS.map(s => <option key={s} value={s}>{s}</option>)}
                                     </select>
                                 </div>
-                                <div className="grid grid-cols-2 gap-4">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <div>
                                         <label className="text-sm font-medium text-muted-foreground">Dep. Time</label>
                                         <Input type="time" {...register('return_departure_time')} className="mt-1.5" />

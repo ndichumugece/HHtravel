@@ -23,6 +23,12 @@ import type { BookingVoucher } from '../../types';
 import SlideOver from '../../components/ui/SlideOver';
 import BookingDetailsPanel from './BookingDetailsPanel';
 
+interface CalendarEvent {
+    id: string;
+    type: 'in' | 'out';
+    booking: BookingVoucher;
+}
+
 export default function Calendar() {
     const [currentDate, setCurrentDate] = useState(new Date());
     const [bookings, setBookings] = useState<BookingVoucher[]>([]);
@@ -78,12 +84,12 @@ export default function Calendar() {
                 endStr = format(end, 'yyyy-MM-dd');
             }
 
-            // Fetch bookings for the current view
+            // Fetch bookings for the current view (overlapping with range)
             const { data, error } = await supabase
                 .from('booking_vouchers')
                 .select('*, profiles(color, full_name)')
-                .gte('check_in_date', startStr)
                 .lte('check_in_date', endStr)
+                .gte('check_out_date', startStr)
                 .order('check_in_date', { ascending: true }); // Important for list view
 
             if (error) {
@@ -104,13 +110,56 @@ export default function Calendar() {
         end: view === 'month' ? endOfWeek(endOfMonth(currentDate)) : endOfWeek(currentDate)
     }) : [];
 
-    const getDayBookings = (date: Date) => {
-
+    const getDayEvents = (date: Date): CalendarEvent[] => {
         const formattedDate = format(date, 'yyyy-MM-dd');
-        return bookings.filter(booking => {
-            const bookingDate = booking.check_in_date.split('T')[0];
-            return bookingDate === formattedDate;
+        const events: CalendarEvent[] = [];
+
+        bookings.forEach(booking => {
+            if (booking.check_in_date) {
+                const checkInStr = booking.check_in_date.split('T')[0];
+                if (checkInStr === formattedDate) {
+                    events.push({
+                        id: `${booking.id}-in`,
+                        type: 'in',
+                        booking
+                    });
+                }
+            }
+            if (booking.check_out_date) {
+                const checkOutStr = booking.check_out_date.split('T')[0];
+                if (checkOutStr === formattedDate) {
+                    events.push({
+                        id: `${booking.id}-out`,
+                        type: 'out',
+                        booking
+                    });
+                }
+            }
         });
+
+        return events;
+    };
+
+    const getCalendarEventStyle = (type: 'in' | 'out') => {
+        if (type === 'in') {
+            return {
+                className: 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100',
+                style: {
+                    backgroundColor: '#ecfdf5',
+                    color: '#047857',
+                    borderColor: '#a7f3d0'
+                }
+            };
+        } else {
+            return {
+                className: 'bg-rose-50 text-rose-700 border-rose-200 hover:bg-rose-100',
+                style: {
+                    backgroundColor: '#fff1f2',
+                    color: '#be123c',
+                    borderColor: '#fecdd3'
+                }
+            };
+        }
     };
 
     const getTransportIcon = (mode: string | undefined) => {
@@ -363,7 +412,7 @@ export default function Calendar() {
                         {/* Days Grid */}
                         <div className="grid grid-cols-7 flex-1 auto-rows-fr bg-gray-200 gap-px">
                             {days.map((day) => {
-                                const dayBookings = getDayBookings(day);
+                                const dayEvents = getDayEvents(day);
                                 const isCurrentMonth = isSameMonth(day, currentDate);
                                 const isTodayDate = isToday(day);
 
@@ -384,20 +433,21 @@ export default function Calendar() {
                                             >
                                                 {format(day, 'd')}
                                             </time>
-                                            {dayBookings.length > 0 && (
+                                            {dayEvents.length > 0 && (
                                                 <span className="text-[10px] font-medium text-gray-400 px-1.5 py-0.5 bg-gray-100 rounded-full">
-                                                    {dayBookings.length}
+                                                    {dayEvents.length}
                                                 </span>
                                             )}
                                         </div>
 
                                         {/* Events List */}
                                         <div className="flex-1 flex flex-col gap-1.5 mt-1 overflow-y-auto custom-scrollbar pr-1">
-                                            {dayBookings.map((booking) => {
-                                                const { className, style } = getEventStyle(booking);
+                                            {dayEvents.map((event) => {
+                                                const booking = event.booking;
+                                                const { className, style } = getCalendarEventStyle(event.type);
                                                 return (
                                                     <div
-                                                        key={booking.id}
+                                                        key={event.id}
                                                         onClick={(e) => {
                                                             e.stopPropagation();
                                                             setSelectedBooking(booking);
@@ -406,9 +456,17 @@ export default function Calendar() {
                                                         style={style}
                                                     >
                                                         <div className="flex items-center justify-between gap-1">
-                                                            <span className="font-semibold truncate leading-tight">{booking.guest_name}</span>
-                                                            {booking.arrival_time && (
+                                                            <span className="font-semibold truncate leading-tight flex items-center gap-1">
+                                                                <span className={event.type === 'in' ? 'text-emerald-600 font-bold' : 'text-rose-600 font-bold'}>
+                                                                    {event.type === 'in' ? '↓' : '↑'}
+                                                                </span>
+                                                                {booking.guest_name}
+                                                            </span>
+                                                            {event.type === 'in' && booking.arrival_time && (
                                                                 <span className="opacity-75 text-[10px] whitespace-nowrap">{booking.arrival_time}</span>
+                                                            )}
+                                                            {event.type === 'out' && booking.departure_time && (
+                                                                <span className="opacity-75 text-[10px] whitespace-nowrap">{booking.departure_time}</span>
                                                             )}
                                                         </div>
 
@@ -417,11 +475,19 @@ export default function Calendar() {
                                                             <span className="truncate">{booking.property_name}</span>
                                                         </div>
 
-                                                        {(booking.mode_of_transport || booking.flight_details) && (
+                                                        {event.type === 'in' && (booking.mode_of_transport || booking.flight_details) && (
                                                             <div className="flex items-center gap-1 opacity-75 truncate text-[10px] mt-0.5 pt-0.5 border-t border-black/5">
                                                                 {getTransportIcon(booking.mode_of_transport)}
                                                                 <span className="truncate">
                                                                     {booking.mode_of_transport || booking.flight_details}
+                                                                </span>
+                                                            </div>
+                                                        )}
+                                                        {event.type === 'out' && (booking.departure_mode_of_transport || booking.flight_departure_date) && (
+                                                            <div className="flex items-center gap-1 opacity-75 truncate text-[10px] mt-0.5 pt-0.5 border-t border-black/5">
+                                                                {getTransportIcon(booking.departure_mode_of_transport)}
+                                                                <span className="truncate">
+                                                                    {booking.departure_mode_of_transport || booking.flight_departure_date}
                                                                 </span>
                                                             </div>
                                                         )}

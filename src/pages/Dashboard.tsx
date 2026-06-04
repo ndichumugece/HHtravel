@@ -42,7 +42,7 @@ export default function Dashboard() {
                 {/* Left Column (Main Stats) */}
                 <div className="lg:col-span-2 space-y-6">
                     {/* Redesigned Total Bookings Card (Income Tracker Style) */}
-                    <div className="bg-white dark:bg-card rounded-[2.5rem] p-8 shadow-sm border min-h-[380px] flex flex-col justify-between">
+                    <div className="glass-card rounded-[2.5rem] p-8 min-h-[380px] flex flex-col justify-between">
                         <div className="flex flex-col sm:flex-row justify-between items-start gap-4 mb-6">
                             <div className="flex items-center gap-4">
                                 <div className="p-3 bg-slate-100 dark:bg-slate-800 rounded-2xl">
@@ -175,7 +175,7 @@ export default function Dashboard() {
                     {/* Green Revenue Card + Stats */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         {/* Revenue Card (Redesigned) */}
-                        <div className="bg-white dark:bg-card rounded-[2.5rem] p-8 shadow-sm border min-h-[280px] flex flex-col justify-between relative overflow-hidden">
+                        <div className="glass-card rounded-[2.5rem] p-8 min-h-[280px] flex flex-col justify-between relative overflow-hidden">
                             <div className="relative z-10 flex flex-col h-full justify-between">
                                 <div>
                                     <div className="flex items-center gap-2 mb-1">
@@ -208,7 +208,7 @@ export default function Dashboard() {
 
 
                         {/* Pending Quotations Stat */}
-                        <div className="bg-white dark:bg-card rounded-[2.5rem] p-8 border shadow-sm flex flex-col justify-between">
+                        <div className="glass-card rounded-[2.5rem] p-8 flex flex-col justify-between">
                             <div>
                                 <div className="flex items-center justify-between mb-4">
                                     <h3 className="text-lg font-semibold text-foreground">Pending Quotes</h3>
@@ -234,7 +234,7 @@ export default function Dashboard() {
                     </div>
 
                     {/* Consultant Sales Performance Section */}
-                    <div className="bg-white dark:bg-card rounded-[2.5rem] p-8 border shadow-sm">
+                    <div className="glass-card rounded-[2.5rem] p-8">
                         <div className="flex items-center justify-between mb-8">
                             <div>
                                 <h3 className="text-xl font-bold text-foreground">Consultant Sales Performance</h3>
@@ -292,7 +292,7 @@ export default function Dashboard() {
                 {/* Right Column (Lists) */}
                 <div className="space-y-6">
                     {/* Lead Sources Card */}
-                    <div className="bg-white dark:bg-card rounded-[2rem] p-6 shadow-sm border min-h-[200px]">
+                    <div className="glass-card rounded-[2rem] p-6 min-h-[200px]">
                         <div className="flex items-center justify-between mb-6">
                             <div className="flex items-center gap-3">
                                 <div className="p-2 bg-slate-100 dark:bg-slate-800 rounded-xl">
@@ -336,7 +336,7 @@ export default function Dashboard() {
                     </div>
 
                     {/* Top Properties List */}
-                    <div className="bg-slate-50 dark:bg-slate-900/50 rounded-[2rem] p-6 border border-slate-200 dark:border-slate-800 flex flex-col h-fit">
+                    <div className="glass-card rounded-[2rem] p-6 flex flex-col h-fit">
                         <div className="flex items-center justify-between mb-6">
                             <div>
                                 <h3 className="font-semibold text-foreground">Top Properties</h3>
@@ -370,7 +370,7 @@ export default function Dashboard() {
                         </div>
                     </div>
                     {/* Top Clients List */}
-                    <div className="bg-white dark:bg-card rounded-[2rem] p-6 shadow-sm border min-h-[200px] transition-all hover:shadow-md animate-fade-in">
+                    <div className="glass-card rounded-[2rem] p-6 min-h-[200px] transition-all hover:shadow-md">
                         <div className="flex items-center justify-between mb-6">
                             <div className="flex items-center gap-3">
                                 <div className="p-2 bg-brand-50 rounded-xl">

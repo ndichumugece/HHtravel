@@ -234,7 +234,7 @@ export default function ConfirmationForm() {
                                         placeholder="Select Property"
                                     />
                                 </div>
-                                <div className="grid grid-cols-2 gap-2">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                     <div className="space-y-2">
                                         <Label>Check-in</Label>
                                         <DatePicker
@@ -356,7 +356,7 @@ export default function ConfirmationForm() {
                                 </div>
                                 <div className="space-y-2">
                                     <Label>Arrival/Departure Times</Label>
-                                    <div className="flex gap-2">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                         <Input {...register('arrival_time')} placeholder="Arrival" />
                                         <Input {...register('departure_time')} placeholder="Departure" />
                                     </div>

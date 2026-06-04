@@ -149,7 +149,7 @@ export default function TrainReceiptList() {
                     </div>
                 </CardHeader>
                 <CardContent>
-                    <div className="rounded-md border">
+                    <div className="rounded-md border overflow-x-auto">
                         <Table>
                             <TableHeader>
                                 <TableRow>
@@ -163,7 +163,7 @@ export default function TrainReceiptList() {
                             <TableBody>
                                 {filteredReceipts.length === 0 ? (
                                     <TableRow>
-                                        <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
+                                        <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
                                             No tickets found.
                                         </TableCell>
                                     </TableRow>

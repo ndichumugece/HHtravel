@@ -3,6 +3,8 @@ import { useEffect, useState, useMemo } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { supabase } from '../../lib/supabase';
 import { OfflineNotice } from '../ui/OfflineNotice';
+import { motion, AnimatePresence } from 'framer-motion';
+import { pageVariants, sidebarVariants } from '../../lib/motion';
 import {
     LayoutDashboard,
     FileText,
@@ -29,6 +31,7 @@ import {
     TrainFront
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
+
 
 // Component defined outside to prevent re-creation on every render, 
 // which ensures state stability and prevents hooks logic from resetting.
@@ -58,7 +61,7 @@ function SidebarContent({
     role: string | null;
 }) {
     return (
-        <div className={cn("flex flex-col h-full segmented-sidebar transition-all duration-500 relative z-10 rounded-[2.5rem] shadow-2xl border border-white/20", isCollapsed ? "w-20" : "w-64")}>
+        <div className={cn("flex flex-col h-full segmented-sidebar transition-all duration-500 relative z-10 rounded-none shadow-2xl border border-white/20", isCollapsed ? "w-20" : "w-64")}>
             <div className={cn("flex items-center relative z-20", isCollapsed ? "justify-center p-4 px-2" : "px-6 py-8 pb-4")}>
                 {/* Desktop Toggle Button */}
                 {!isMobileOpen && (
@@ -104,10 +107,10 @@ function SidebarContent({
                                     <button
                                         onClick={() => !isCollapsed && toggleMenu(item.name)}
                                         className={cn(
-                                            "flex items-center w-full px-4 py-3 text-sm font-semibold rounded-2xl transition-all duration-300 group relative select-none z-20 segmented-item-hover",
+                                            "flex items-center w-full px-4 py-3 text-sm font-semibold transition-all duration-300 group relative select-none z-20 segmented-item-hover",
                                             isActive || expandedMenus[item.name]
-                                                ? "text-brand-700 bg-white/40"
-                                                : "text-muted-foreground hover:text-foreground",
+                                                ? "text-brand-700 bg-white/40 rounded-2xl"
+                                                : "text-muted-foreground hover:text-foreground rounded-none",
                                             isCollapsed && "justify-center px-0"
                                         )}
                                         title={isCollapsed ? item.name : undefined}
@@ -130,7 +133,7 @@ function SidebarContent({
 
                                     {/* Submenu */}
                                     {!isCollapsed && expandedMenus[item.name] && (
-                                        <div className="pl-4 space-y-1 animate-accordion-down overflow-hidden z-20 relative">
+                                        <div className="ml-6 pl-4 border-l border-foreground/10 space-y-1 animate-accordion-down overflow-hidden z-20 relative">
                                             {item.children.map((child: any) => {
                                                 const isChildActive = location.pathname.startsWith(child.href);
                                                 return (
@@ -138,12 +141,15 @@ function SidebarContent({
                                                         key={child.name}
                                                         to={child.href}
                                                         className={cn(
-                                                            "flex items-center pl-3 pr-3 py-2 text-sm font-semibold rounded-xl transition-all duration-300 relative group segmented-item-hover",
+                                                            "flex items-center pl-3 pr-3 py-2 text-sm transition-all duration-300 relative group",
                                                             isChildActive
-                                                                ? "segmented-active segmented-active-text"
-                                                                : "text-muted-foreground hover:text-foreground"
+                                                                ? "text-brand-700 dark:text-brand-400 font-bold"
+                                                                : "text-muted-foreground hover:text-foreground font-medium"
                                                         )}
                                                     >
+                                                        {isChildActive && (
+                                                            <span className="absolute -left-[17px] top-1/2 -translate-y-1/2 w-[2px] h-5 bg-brand-600 dark:bg-brand-400" />
+                                                        )}
                                                         {child.name}
                                                     </Link>
                                                 );
@@ -159,10 +165,10 @@ function SidebarContent({
                                 key={item.name}
                                 to={item.href!}
                                 className={cn(
-                                    "flex items-center px-4 py-3 text-sm font-bold rounded-2xl transition-all duration-500 group relative z-20",
+                                    "flex items-center px-4 py-3 text-sm font-bold transition-all duration-500 group relative z-20",
                                     isActive
-                                        ? "segmented-active segmented-active-text"
-                                        : "text-muted-foreground hover:text-foreground segmented-item-hover",
+                                        ? "segmented-active segmented-active-text rounded-2xl"
+                                        : "text-muted-foreground hover:text-foreground segmented-item-hover rounded-none",
                                     isCollapsed && "justify-center px-0"
                                  )}
                                 title={isCollapsed ? item.name : undefined}
@@ -181,7 +187,7 @@ function SidebarContent({
 
             <div className="mt-auto p-4 border-t border-white/10 space-y-2 z-20 relative">
                 {role === 'admin' && (
-                    <Link to="/settings" className={cn("flex items-center px-2 bg-white/40 p-2.5 rounded-3xl transition-all duration-500 cursor-pointer group hover:bg-white/60 hover:scale-[1.02] active:scale-[0.98]", isCollapsed && "justify-center")}>
+                    <Link to="/settings" className={cn("flex items-center px-2 bg-white/40 p-2.5 rounded-none transition-all duration-500 cursor-pointer group hover:bg-white/60 hover:scale-[1.02] active:scale-[0.98]", isCollapsed && "justify-center")}>
                         <div className="h-9 w-9 min-w-[2.25rem] rounded-full bg-brand-100 flex items-center justify-center text-xs font-black text-brand-700 group-hover:bg-brand-500 group-hover:text-white transition-all duration-500 shadow-sm border border-brand-200/50">
                             {user?.email?.substring(0, 2).toUpperCase()}
                         </div>
@@ -194,7 +200,7 @@ function SidebarContent({
                     </Link>
                 )}
                 {role !== 'admin' && (
-                    <div className={cn("flex items-center px-2 bg-white/40 p-2.5 rounded-3xl", isCollapsed && "justify-center")}>
+                    <div className={cn("flex items-center px-2 bg-white/40 p-2.5 rounded-none", isCollapsed && "justify-center")}>
                         <div className="h-9 w-9 min-w-[2.25rem] rounded-full bg-muted flex items-center justify-center text-xs font-black text-muted-foreground">
                             {user?.email?.substring(0, 2).toUpperCase()}
                         </div>
@@ -210,7 +216,7 @@ function SidebarContent({
                 <button
                     onClick={handleSignOut}
                     className={cn(
-                        "flex items-center w-full px-3 py-2 text-sm font-medium text-muted-foreground hover:text-destructive hover:bg-destructive/5 rounded-md transition-colors",
+                        "flex items-center w-full px-3 py-2 text-sm font-medium text-muted-foreground hover:text-destructive hover:bg-destructive/5 rounded-none transition-colors",
                         isCollapsed && "justify-center"
                     )}
                 >
@@ -336,7 +342,7 @@ export default function AppLayout() {
     return (
         <div className={cn("min-h-screen flex font-sans text-foreground overflow-x-hidden bg-mesh")}>
             {/* Desktop Sidebar */}
-            <div className={cn("hidden md:block fixed h-screen z-40 transition-all duration-500 p-4", isCollapsed ? "w-28" : "w-72")}>
+            <div className={cn("hidden md:block fixed h-screen z-40 transition-all duration-500 py-0 pl-0 pr-4", isCollapsed ? "w-28" : "w-72")}>
                 <SidebarContent {...sidebarProps} />
             </div>
 
@@ -352,31 +358,56 @@ export default function AppLayout() {
             </div>
 
             {/* Mobile Sidebar Overlay */}
-            {isMobileOpen && (
-                <div className="fixed inset-0 z-50 md:hidden">
-                    <div
-                        className="absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity"
-                        onClick={() => setIsMobileOpen(false)}
-                    />
-                    <div className="absolute inset-y-0 left-0 w-72 bg-transparent shadow-xl animate-in slide-in-from-left duration-300 flex flex-col h-full p-4">
-                        <SidebarContent {...sidebarProps} />
-                    </div>
-                </div>
-            )}
+            <AnimatePresence>
+                {isMobileOpen && (
+                    <motion.div 
+                        initial="initial"
+                        animate="animate"
+                        exit="exit"
+                        className="fixed inset-0 z-50 md:hidden"
+                    >
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            transition={{ duration: 0.2 }}
+                            className="absolute inset-0 bg-black/35 backdrop-blur-[4px]"
+                            onClick={() => setIsMobileOpen(false)}
+                        />
+                        <motion.div
+                            variants={sidebarVariants}
+                            className="absolute inset-y-0 left-0 w-72 bg-transparent shadow-xl flex flex-col h-full py-0 pl-0 pr-4"
+                        >
+                            <SidebarContent {...sidebarProps} />
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
 
             {/* Main Content */}
             <div className={cn(
                 "flex-1 min-h-screen transition-all duration-500 pt-16 md:pt-0",
-                isCollapsed ? "md:ml-20" : "md:ml-64"
+                isCollapsed ? "md:ml-24" : "md:ml-72"
             )}>
                 <OfflineNotice />
                 <main className={cn(
-                    "animate-fade-in",
+                    "relative overflow-hidden",
                     location.pathname === '/hotels' 
                         ? "h-[calc(100vh-4rem)] md:h-screen w-full p-0" 
                         : "max-w-7xl mx-auto p-4 sm:p-6 lg:p-8"
                 )}>
-                    <Outlet />
+                    <AnimatePresence mode="wait">
+                        <motion.div
+                            key={location.pathname}
+                            variants={pageVariants}
+                            initial="initial"
+                            animate="animate"
+                            exit="exit"
+                            className="w-full h-full"
+                        >
+                            <Outlet />
+                        </motion.div>
+                    </AnimatePresence>
                 </main>
             </div>
         </div>

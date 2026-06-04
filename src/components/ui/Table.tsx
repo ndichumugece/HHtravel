@@ -1,5 +1,8 @@
 import * as React from "react"
+import { motion } from "framer-motion"
+import type { HTMLMotionProps } from "framer-motion"
 import { cn } from "../../lib/utils"
+import { listContainerVariants, listItemVariants } from "../../lib/motion"
 
 const Table = React.forwardRef<
     HTMLTableElement,
@@ -25,10 +28,13 @@ TableHeader.displayName = "TableHeader"
 
 const TableBody = React.forwardRef<
     HTMLTableSectionElement,
-    React.HTMLAttributes<HTMLTableSectionElement>
+    HTMLMotionProps<"tbody">
 >(({ className, ...props }, ref) => (
-    <tbody
+    <motion.tbody
         ref={ref}
+        variants={listContainerVariants}
+        initial="initial"
+        animate="animate"
         className={cn("[&_tr:last-child]:border-0", className)}
         {...props}
     />
@@ -52,12 +58,13 @@ TableFooter.displayName = "TableFooter"
 
 const TableRow = React.forwardRef<
     HTMLTableRowElement,
-    React.HTMLAttributes<HTMLTableRowElement>
+    HTMLMotionProps<"tr">
 >(({ className, ...props }, ref) => (
-    <tr
+    <motion.tr
         ref={ref}
+        variants={listItemVariants}
         className={cn(
-            "border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted",
+            "border-b transition-colors hover:bg-black/[0.015] data-[state=selected]:bg-muted",
             className
         )}
         {...props}
