@@ -70,8 +70,10 @@ function App() {
               {/* Dashboard - Admin Only */}
               <Route element={<ProtectedRoute allowedRoles={['admin']} />}>
                 <Route path="/" element={<Dashboard />} />
-                <Route path="/hotels" element={<Hotels />} />
               </Route>
+
+              {/* Hotels */}
+              <Route path="/hotels" element={<Hotels />} />
 
               {/* Properties */}
               <Route path="/properties" element={<PropertiesList />} />

@@ -248,9 +248,9 @@ export default function AppLayout() {
             ]
         },
         { name: 'Calendar', href: '/calendar', icon: CalendarIcon },
+        { name: 'Hotels', href: '/hotels', icon: Hotel },
         ...(role === 'admin' ? [
             { name: 'Dashboard', href: '/', icon: LayoutDashboard },
-            { name: 'Hotels', href: '/hotels', icon: Hotel },
             {
                 name: 'Administration',
                 icon: Shield,
