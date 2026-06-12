@@ -4,7 +4,7 @@ import { supabase } from '../../lib/supabase';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../../components/ui/Card';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Mail } from 'lucide-react';
 
 export default function SignUp() {
     const [searchParams] = useSearchParams();
@@ -17,6 +17,7 @@ export default function SignUp() {
     const [loading, setLoading] = useState(!!token);
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [isSubmitted, setIsSubmitted] = useState(false);
 
     useEffect(() => {
         if (token) {
@@ -71,8 +72,7 @@ export default function SignUp() {
             // Note: If email confirmation is enabled, they can't login yet.
             // If disabled, they are logged in.
 
-            alert('Account created successfully! You can now log in.');
-            navigate('/login');
+            setIsSubmitted(true);
 
         } catch (err: any) {
             console.error('Sign up error:', err);
@@ -86,6 +86,36 @@ export default function SignUp() {
         return (
             <div className="min-h-screen flex items-center justify-center bg-gray-50">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+        );
+    }
+
+    if (isSubmitted) {
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
+                <Card className="w-full max-w-md">
+                    <CardHeader className="space-y-1 text-center">
+                        <div className="mx-auto my-4 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
+                            <Mail className="h-6 w-6 text-primary" />
+                        </div>
+                        <CardTitle className="text-2xl font-bold">Check your email</CardTitle>
+                        <CardDescription>
+                            We have sent a verification link to
+                        </CardDescription>
+                        <p className="font-semibold text-primary">{email}</p>
+                    </CardHeader>
+                    <CardContent className="space-y-4 text-center">
+                        <p className="text-sm text-muted-foreground">
+                            Please check your inbox (and spam folder) and click the link to confirm and activate your account.
+                        </p>
+                        <Button 
+                            className="w-full mt-4" 
+                            onClick={() => navigate('/login')}
+                        >
+                            Go to Login
+                        </Button>
+                    </CardContent>
+                </Card>
             </div>
         );
     }
