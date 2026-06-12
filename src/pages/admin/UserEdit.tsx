@@ -67,6 +67,12 @@ export default function UserEdit() {
                 if (error) throw error;
                 navigate('/users');
             } else {
+                // Delete any existing pending invite for this email to avoid unique constraint violations
+                await supabase
+                    .from('user_invites')
+                    .delete()
+                    .eq('email', profile.email);
+
                 // Create Invitation
                 const { data, error } = await supabase
                     .from('user_invites')
